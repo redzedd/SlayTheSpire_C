@@ -32,21 +32,21 @@
 |---|---|---|
 |URP|com.unity.render-pipelines.universal 17.4.0|Render pipeline. Settings live in `Assets/Settings/`|
 |Input System|com.unity.inputsystem 1.19.0|Input. Template `.inputactions` exists but is not referenced by any code yet|
-|uGUI|com.unity.ugui 2.0.0|UI candidate route (see §2.1 below — UI route NOT decided yet)|
+|uGUI|com.unity.ugui 2.0.0|**IN USE — the decided UI route.** All game UI is uGUI Canvas|
+|DOTween Pro|`Assets/Plugins/Demigiant/` (version unverified)|**IN USE from M4** — all UI motion/tweens. Read global skill `dotween-pro` before writing tween code|
+|Animancer|`Packages/com.kybernetik.animancer` (embedded)|**INSTALLED, NOT USED in vertical slice** — reserved for the art-integration phase; do not reference it yet|
 |Unity Test Framework|com.unity.test-framework 1.6.0|**IN USE** by `STS.Core.Tests`|
 |AI Assistant|com.unity.ai.assistant 2.17.0-pre.1|**Do NOT remove.** [推論] Provides the `IRunCommand` dynamic-execution base that unity-mcp `Unity_RunCommand` runs on (verify skill depends on it)|
 |Visual Scripting|com.unity.visualscripting 1.9.11|**INSTALLED BUT UNUSED — do NOT use.** All gameplay logic is written in C#|
 |Timeline / Multiplayer Center / Collab Proxy|template defaults|**UNUSED** — template leftovers, do not build on them without asking|
 
-**Not installed — do not suggest / do not reference without asking first:** DOTween, Cinemachine, Animancer, any third-party plugin. Adding packages requires explicit user approval (global rule).
+**Not installed — do not suggest / do not reference without asking first:** Cinemachine, any other third-party plugin. Adding packages requires explicit user approval (global rule).
 
-### 2.1 UI route — NOT DECIDED YET (decide at the first real UI task)
+### 2.1 UI route — DECIDED: uGUI + DOTween (2026-08-03, user-confirmed)
 
-Analysis done 2026-08-03; the user will pick when the first UI task arrives. Do NOT start UI work without settling this:
-
-- **Option A: uGUI + DOTween (recommended by analysis):** mature route for card feel — free card transforms, fan-shaped hands, drag physics, punch/shake effects, particle-with-UI mixing. Requires installing DOTween (ask first). Global skills `dotween-pro` + `ui-motion-fx` apply.
-- **Option B: UI Toolkit:** Unity 6 native, global skill `unity-ui-toolkit` applies, but weaker ecosystem for card-game-style free-form animation; higher risk for this genre.
-- Until decided: any UI prototype goes in a throwaway scene, and nothing may depend on either route.
+- All game UI is uGUI (Canvas) + DOTween Pro. **UI Toolkit (UXML/USS) is banned in this project** — do not add either.
+- Read global skills `dotween-pro` + `ui-motion-fx` BEFORE writing any UI/tween code (tween lifecycle/autoKill are known traps).
+- EventSystem must use `InputSystemUIInputModule` (Input System rule); forgetting this makes uGUI drag silently dead.
 
 ### Usage Rules
 
@@ -70,8 +70,11 @@ Analysis done 2026-08-03; the user will pick when the first UI task arrives. Do 
 
 ### Current Systems Map (verified against code 2026-08-03 — refresh via /harness-audit)
 
-- **Combat math:** `STS.Core.Combat.CombatMath` (`Assets/Scripts/Core/Combat/CombatMath.cs`) — attack damage formula (strength add → weak ×0.75 → vulnerable ×1.5, float-multiply then single floor) + block absorption. This is the ONLY gameplay code that exists.
-- **Tests:** `Assets/Scripts/Tests/EditMode/CombatMathTests.cs` (assembly `STS.Core.Tests`) — 9 tests, all green (2026-08-03). **This pair is the template: every new pure-logic module gets the same treatment (logic in STS.Core, NUnit tests in STS.Core.Tests).**
+- **Combat math:** `STS.Core.Combat.CombatMath` — attack damage (strength add → weak ×0.75 → vulnerable ×1.5, float-multiply then single floor) + block absorption; `BlockMath` — block gain (dexterity add → frail ×0.75, floor). Damage/block modifiers live ONLY in these two classes; hooks must not become a second damage pipeline.
+- **Combat engine (M1, 2026-08-03):** `STS.Core.Combat.CombatEngine` — command-in/event-out (UI consumes the `CombatEvent` queue, never queries back mid-playback), `CombatPhase` turn state machine, piles (draw/hand/discard/exhaust, hand cap 10, empty-pile reshuffle via Shuffle rng stream), energy. Block clears at the START of the owner's turn (StS rule) — there is a test locking this. `EffectResolver` resolves `EffectStep[]`; M1 ops: Damage/Block/ApplyStatus/Draw/GainEnergy; out-of-scope ops/AmountKinds THROW NotSupportedException — deliberate, never "fix" into silent skips. `CombatSetup`/`EnemySetup` are M1 stand-ins until EnemyDef/EncounterDef arrive (M2).
+- **RNG:** `STS.Core.Rng.RngStream` (SplitMix64; deliberately a class, not struct — copy semantics would silently fork streams) + `RunRng` named streams (Map/CardReward/PotionReward/RelicReward/Shuffle/EnemyAi/CombatMisc). Determinism is the testing backbone; never use System.Random.
+- **Cards:** `STS.Core.Cards` — `CardDef` (upgrade = separate def, id convention `strike`/`strike+`), `CardInstance` (InstanceId for UI tracking), `EffectStep` (flat op schema, maps 1:1 to future JSON). `STS.Core.Content.IContentDb` is the only content lookup the engine sees.
+- **Tests:** `Assets/Scripts/Tests/EditMode/` — 34 tests, all green (2026-08-03): CombatMathTests 9, RngStreamTests 7, BlockMathTests 4, CombatEngineTests 14. **Pattern: every pure-logic module gets NUnit tests in STS.Core.Tests.**
 - **Assemblies:** `STS.Core` (pure, no engine refs) / `STS.Core.Tests` (Editor-only, references STS.Core + nunit). New runtime glue code will need a third asmdef or Assembly-CSharp.
 - **Scene:** `Assets/Scenes/SampleScene.unity` — URP template scene, empty of gameplay.
 - **Known stale paths:** `Assets/InputSystem_Actions.inputactions` is a template action map wired to nothing — treat contents as placeholder, not design.
