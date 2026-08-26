@@ -34,6 +34,15 @@ namespace STS.Core.Combat
             return 0;
         }
 
+        public StatusInstance GetStatusInstance(StatusId id)
+        {
+            for (int i = 0; i < Statuses.Count; i++)
+            {
+                if (Statuses[i].Id == id) return Statuses[i];
+            }
+            return null;
+        }
+
         /// <summary>增減狀態層數;歸零(含以下)即移除。回傳變更後層數。</summary>
         public int ModifyStatus(StatusId id, int delta)
         {

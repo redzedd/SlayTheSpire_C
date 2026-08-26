@@ -19,6 +19,7 @@ description: SlaytheSpire_C 的驗證管道——任何程式碼變更後、宣�
 2. **禁止巢狀類別**——前處理器會把巢狀類別複製一份到 namespace 層級,產生 CS1527。需要輔助類別(如 ICallbacks 實作)就寫成**並列的頂層 internal class**。
 3. 程式碼會被自動包進 namespace,不要自己寫 namespace。
 4. 執行是同步回傳,但你啟動的非同步工作(如 TestRunnerApi)在回傳後才完成 → 結果要靠落檔/console 標記回收。
+5. **程式碼含 `File.Delete` 會整包被拒**,錯誤訊息是誤導性的「User interactions are not supported for MCP tool calls」——動態執行安全層把刪檔當需確認操作。清舊檔改在 MCP 之外用 shell 做(`rm -f`),或用 `File.WriteAllText` 覆寫。診斷法:最小探針能跑、完整腳本不能跑 → 二分找出觸發 API。
 
 ## 管道 1:編譯檢查(任何程式碼變更後必跑)
 

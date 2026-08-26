@@ -7,6 +7,7 @@ namespace STS.Core.Combat
     {
         NotStarted,
         PlayerTurn,
+        /// <summary>等待 UI 回填選擇(ResolveChoice);其餘指令一律拒收。</summary>
         AwaitingChoice,
         EnemyTurn,
         Victory,
@@ -29,5 +30,11 @@ namespace STS.Core.Combat
         public readonly List<CardInstance> Hand = new List<CardInstance>();
         public readonly List<CardInstance> DiscardPile = new List<CardInstance>();
         public readonly List<CardInstance> ExhaustPile = new List<CardInstance>();
+        /// <summary>已打出的能力卡(不進棄/消耗堆)。</summary>
+        public readonly List<CardInstance> PowersPlayed = new List<CardInstance>();
+        /// <summary>藥水欄;null = 空欄。</summary>
+        public readonly List<string> PotionSlots = new List<string>();
+        /// <summary>AwaitingChoice 時要選幾張(UI 顯示用)。</summary>
+        public int PendingChoiceCount;
     }
 }

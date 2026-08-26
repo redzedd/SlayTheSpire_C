@@ -1,10 +1,12 @@
 using System.Collections.Generic;
 using STS.Core.Cards;
+using STS.Core.Relics;
 
 namespace STS.Core.Combat
 {
     /// <summary>
-    /// 開戰參數。M1 過渡型:敵人直接內嵌招式;M2 導入 EnemyDef/EncounterDef 後由其取代。
+    /// 開戰參數。M5 的 RunEngine 會從 RunState 組出這個物件;在那之前由呼叫端/測試手組。
+    /// Relics 傳實體參照:Counter 類狀態跨戰鬥持久,引擎只讀寫不重建。
     /// </summary>
     public sealed class CombatSetup
     {
@@ -12,14 +14,9 @@ namespace STS.Core.Combat
         public int PlayerMaxHp = 80;
         public int MaxEnergy = 3;
         public List<CardInstance> Deck = new List<CardInstance>();
-        public List<EnemySetup> Enemies = new List<EnemySetup>();
-    }
-
-    /// <summary>M1 簡化敵人:每回合固定執行同一組步驟。</summary>
-    public sealed class EnemySetup
-    {
-        public string Name;
-        public int Hp;
-        public EffectStep[] MoveSteps = System.Array.Empty<EffectStep>();
+        /// <summary>敵人 id 清單(經 IContentDb.GetEnemy 解析),站位順序即索引。</summary>
+        public List<string> EnemyIds = new List<string>();
+        public List<RelicInstance> Relics = new List<RelicInstance>();
+        public List<string> PotionIds = new List<string>();
     }
 }

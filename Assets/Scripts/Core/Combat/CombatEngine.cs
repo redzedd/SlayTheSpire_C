@@ -1,15 +1,17 @@
 using System;
 using System.Collections.Generic;
 using STS.Core.Cards;
+using STS.Core.Combat.Enemies;
 using STS.Core.Combat.Statuses;
 using STS.Core.Content;
+using STS.Core.Relics;
 using STS.Core.Rng;
 
 namespace STS.Core.Combat
 {
     /// <summary>
     /// 戰鬥引擎:指令進、事件序列出。每個指令在呼叫內同步結算完畢;
-    /// UI 取走 Events 照序播放動畫,期間不回查引擎。
+    /// UI 取走 Events 照序播放動畫,期間不回查引擎(GetIntentPreview 是唯一的純查詢例外)。
     /// </summary>
     public sealed class CombatEngine
     {
@@ -20,11 +22,23 @@ namespace STS.Core.Combat
         public readonly CombatState State = new CombatState();
         /// <summary>累積事件;UI 播放完呼叫 ClearEvents。</summary>
         public readonly List<CombatEvent> Events = new List<CombatEvent>();
+        /// <summary>玩家遺物,獲得順序即 hook 觸發順序。實體由呼叫端持有(Counter 跨戰鬥)。</summary>
+        public readonly List<RelicInstance> Relics = new List<RelicInstance>();
 
         private readonly IContentDb _db;
         private readonly RunRng _rng;
-        private readonly List<EnemySetup> _enemySetups = new List<EnemySetup>();
+        private readonly List<EnemyRuntime> _enemyRuntimes = new List<EnemyRuntime>();
+        private int _nextInstanceId = 1;
         private bool _endedEmitted;
+        private int _xEnergySpent;
+
+        // AwaitingChoice 暫存:中斷當下的剩餘步驟與在途卡
+        private EffectStep[] _pendingSteps;
+        private int _pendingResumeIndex;
+        private int _pendingSourceIndex;
+        private int _pendingTargetIndex;
+        private CardInstance _pendingPlayedCard;
+        private CardDef _pendingPlayedDef;
 
         public CombatEngine(IContentDb db, RunRng rng, CombatSetup setup)
         {
@@ -34,12 +48,32 @@ namespace STS.Core.Combat
 
             State.MaxEnergy = setup.MaxEnergy;
             State.Player = new CombatantState { Name = "玩家", Hp = setup.PlayerHp, MaxHp = setup.PlayerMaxHp };
-            foreach (var enemySetup in setup.Enemies)
+
+            foreach (var enemyId in setup.EnemyIds)
             {
-                _enemySetups.Add(enemySetup);
-                State.Enemies.Add(new CombatantState { Name = enemySetup.Name, Hp = enemySetup.Hp, MaxHp = enemySetup.Hp });
+                var def = _db.GetEnemy(enemyId);
+                int hp = _rng.CombatMisc.Range(def.HpMin, def.HpMax);
+                var enemy = new CombatantState { Name = def.Name, Hp = hp, MaxHp = hp };
+                foreach (var initial in def.InitialStatuses)
+                {
+                    enemy.ModifyStatus(initial.Id, initial.Stacks);
+                }
+                State.Enemies.Add(enemy);
+                var runtime = new EnemyRuntime { Def = def };
+                if (def.Ai == AiKind.Custom)
+                {
+                    runtime.GuardianThreshold = GuardianAi.InitialThreshold;
+                }
+                _enemyRuntimes.Add(runtime);
             }
+
             State.DrawPile.AddRange(setup.Deck);
+            foreach (var card in setup.Deck)
+            {
+                if (card.InstanceId >= _nextInstanceId) _nextInstanceId = card.InstanceId + 1;
+            }
+            Relics.AddRange(setup.Relics);
+            State.PotionSlots.AddRange(setup.PotionIds);
         }
 
         public void ClearEvents()
@@ -55,7 +89,12 @@ namespace STS.Core.Combat
             }
             _rng.Shuffle.Shuffle(State.DrawPile);
             Emit(new CombatEvent(EventKind.PileShuffled, amount: State.DrawPile.Count));
-            BeginPlayerTurn();
+            for (int i = 0; i < State.Enemies.Count; i++)
+            {
+                _enemyRuntimes[i].NextMoveId = EnemyAi.SelectNextMove(this, i, _enemyRuntimes[i], _rng.EnemyAi);
+                EmitIntentShown(i);
+            }
+            BeginPlayerTurn(true);
         }
 
         public bool CanPlayCard(int handIndex, int targetEnemyIndex, out string reason)
@@ -76,7 +115,7 @@ namespace STS.Core.Combat
                 reason = "此卡不可打出";
                 return false;
             }
-            if (State.Energy < def.Cost)
+            if (!def.CostIsX && State.Energy < def.Cost)
             {
                 reason = "能量不足";
                 return false;
@@ -107,23 +146,98 @@ namespace STS.Core.Combat
             var card = State.Hand[handIndex];
             var def = _db.GetCard(card.ResolvedCardId);
 
-            State.Energy -= def.Cost;
+            int cost = def.CostIsX ? State.Energy : def.Cost;
+            _xEnergySpent = def.CostIsX ? State.Energy : 0;
+            State.Energy -= cost;
             Emit(new CombatEvent(EventKind.EnergyChanged, amount: State.Energy, amount2: State.MaxEnergy));
 
             State.Hand.RemoveAt(handIndex);
             Emit(new CombatEvent(EventKind.CardPlayed, sourceIndex: PlayerIndex, targetIndex: targetEnemyIndex,
                 cardId: card.CardId, cardInstanceId: card.InstanceId));
 
-            EffectResolver.Resolve(this, def.Steps, PlayerIndex, targetEnemyIndex);
-
-            if (def.Exhausts)
+            // 出牌 hook(激怒/尖刺皮/雙節棍)在效果結算前觸發([近似] StS 時序,測試鎖定)
+            FireHook(new HookContext(HookPoint.CardPlayed, sourceIndex: PlayerIndex, cardType: def.Type));
+            if (!State.Player.IsAlive)
             {
+                CheckOutcome();
+                return;
+            }
+
+            _pendingPlayedCard = card;
+            _pendingPlayedDef = def;
+            EffectResolver.Resolve(this, def.Steps, PlayerIndex, targetEnemyIndex);
+            if (State.Phase == CombatPhase.AwaitingChoice) return;   // 等 ResolveChoice 收尾
+
+            FinishCardPlay();
+        }
+
+        /// <summary>AwaitingChoice 時由 UI 回填選擇的手牌索引(消耗它們),續跑剩餘效果。</summary>
+        public void ResolveChoice(int[] handIndices)
+        {
+            if (State.Phase != CombatPhase.AwaitingChoice)
+            {
+                throw new InvalidOperationException("目前沒有待回填的選擇");
+            }
+            if (handIndices == null || handIndices.Length != State.PendingChoiceCount)
+            {
+                throw new InvalidOperationException($"必須恰好選擇 {State.PendingChoiceCount} 張手牌");
+            }
+            var sorted = new List<int>(handIndices);
+            sorted.Sort();
+            for (int i = 1; i < sorted.Count; i++)
+            {
+                if (sorted[i] == sorted[i - 1]) throw new InvalidOperationException("選擇的手牌索引重複");
+            }
+            if (sorted.Count > 0 && (sorted[0] < 0 || sorted[sorted.Count - 1] >= State.Hand.Count))
+            {
+                throw new InvalidOperationException("選擇的手牌索引無效");
+            }
+            for (int i = sorted.Count - 1; i >= 0; i--)
+            {
+                var card = State.Hand[sorted[i]];
+                State.Hand.RemoveAt(sorted[i]);
                 State.ExhaustPile.Add(card);
                 Emit(new CombatEvent(EventKind.CardExhausted, cardId: card.CardId, cardInstanceId: card.InstanceId));
             }
-            else
+
+            State.PendingChoiceCount = 0;
+            State.Phase = CombatPhase.PlayerTurn;
+            var steps = _pendingSteps;
+            int resumeIndex = _pendingResumeIndex;
+            int source = _pendingSourceIndex;
+            int target = _pendingTargetIndex;
+            _pendingSteps = null;
+
+            EffectResolver.ResolveFrom(this, steps, resumeIndex, source, target);
+            if (State.Phase == CombatPhase.AwaitingChoice) return;   // 防衛:再次中斷(切片不會發生)
+
+            FinishCardPlay();
+        }
+
+        public void UsePotion(int slot, int targetEnemyIndex = -1)
+        {
+            if (State.Phase != CombatPhase.PlayerTurn)
             {
-                State.DiscardPile.Add(card);
+                throw new InvalidOperationException("現在不是玩家回合,無法使用藥水");
+            }
+            if (slot < 0 || slot >= State.PotionSlots.Count || State.PotionSlots[slot] == null)
+            {
+                throw new InvalidOperationException("藥水欄位無效或已空");
+            }
+            var def = _db.GetPotion(State.PotionSlots[slot]);
+            if (def.NeedsTarget)
+            {
+                if (targetEnemyIndex < 0 || targetEnemyIndex >= State.Enemies.Count
+                    || !State.Enemies[targetEnemyIndex].IsAlive)
+                {
+                    throw new InvalidOperationException("此藥水需要指定活著的敵人目標");
+                }
+            }
+            State.PotionSlots[slot] = null;
+            EffectResolver.Resolve(this, def.Steps, PlayerIndex, targetEnemyIndex);
+            if (State.Phase == CombatPhase.AwaitingChoice)
+            {
+                throw new NotSupportedException("切片藥水不支援中斷選擇型效果");
             }
             CheckOutcome();
         }
@@ -134,22 +248,78 @@ namespace STS.Core.Combat
             {
                 throw new InvalidOperationException("現在不是玩家回合,無法結束回合");
             }
-            // 棄整手(M2 在此之前插入 PlayerTurnEnd hook、手牌狀態卡結算與 Ethereal 消耗)
+            FireHook(new HookContext(HookPoint.PlayerTurnEnd, sourceIndex: PlayerIndex));
+
+            // 手牌狀態卡(燒傷型):回合結束仍在手才觸發
+            var handSnapshot = new List<CardInstance>(State.Hand);
+            for (int i = 0; i < handSnapshot.Count; i++)
+            {
+                var def = _db.GetCard(handSnapshot[i].ResolvedCardId);
+                if (def.TurnEndInHandSteps.Length > 0)
+                {
+                    EffectResolver.Resolve(this, def.TurnEndInHandSteps, PlayerIndex, -1);
+                }
+            }
+            if (!State.Player.IsAlive)
+            {
+                CheckOutcome();
+                return;
+            }
+
+            // 虛無(Ethereal)卡:回合結束在手即消耗;其餘棄整手
             for (int i = State.Hand.Count - 1; i >= 0; i--)
             {
                 var card = State.Hand[i];
+                var def = _db.GetCard(card.ResolvedCardId);
                 State.Hand.RemoveAt(i);
-                State.DiscardPile.Add(card);
-                Emit(new CombatEvent(EventKind.CardDiscarded, cardId: card.CardId, cardInstanceId: card.InstanceId));
+                if (def.Ethereal)
+                {
+                    State.ExhaustPile.Add(card);
+                    Emit(new CombatEvent(EventKind.CardExhausted, cardId: card.CardId, cardInstanceId: card.InstanceId));
+                }
+                else
+                {
+                    State.DiscardPile.Add(card);
+                    Emit(new CombatEvent(EventKind.CardDiscarded, cardId: card.CardId, cardInstanceId: card.InstanceId));
+                }
             }
+
+            DecayStatuses(PlayerIndex);
             RunEnemyTurns();
             if (State.Phase == CombatPhase.EnemyTurn)
             {
-                BeginPlayerTurn();
+                BeginPlayerTurn(false);
             }
         }
 
-        private void BeginPlayerTurn()
+        /// <summary>意圖預覽(純查詢):傷害含雙方力量/虛弱/易傷即時重算。</summary>
+        public IntentInfo GetIntentPreview(int enemyIndex)
+        {
+            if (enemyIndex < 0 || enemyIndex >= State.Enemies.Count)
+            {
+                throw new ArgumentOutOfRangeException(nameof(enemyIndex));
+            }
+            var runtime = _enemyRuntimes[enemyIndex];
+            var move = runtime.Def.GetMove(runtime.NextMoveId);
+            var enemy = State.Enemies[enemyIndex];
+            int damage = 0;
+            int hits = 0;
+            for (int i = 0; i < move.Steps.Length; i++)
+            {
+                var step = move.Steps[i];
+                if (step.Op != EffectOp.Damage) continue;
+                damage = CombatMath.CalculateAttackDamage(
+                    step.Amount,
+                    enemy.GetStatus(StatusId.Strength),
+                    enemy.GetStatus(StatusId.Weak) > 0,
+                    State.Player.GetStatus(StatusId.Vulnerable) > 0);
+                hits = step.RepeatIsX ? 0 : (step.Repeat <= 1 ? 1 : step.Repeat);
+                break;
+            }
+            return new IntentInfo(move.Intent, move.Name, damage, hits);
+        }
+
+        private void BeginPlayerTurn(bool isFirstTurn)
         {
             State.TurnNumber++;
             State.Phase = CombatPhase.PlayerTurn;
@@ -161,7 +331,13 @@ namespace STS.Core.Combat
             }
             State.Energy = State.MaxEnergy;
             Emit(new CombatEvent(EventKind.EnergyChanged, amount: State.Energy, amount2: State.MaxEnergy));
+            if (isFirstTurn)
+            {
+                // 開戰 hook 在清格擋之後、抽牌之前(R6:船錨的格擋不能被清掉)
+                FireHook(new HookContext(HookPoint.CombatStart));
+            }
             Emit(new CombatEvent(EventKind.TurnStarted, sourceIndex: PlayerIndex, amount: State.TurnNumber));
+            FireHook(new HookContext(HookPoint.PlayerTurnStart, sourceIndex: PlayerIndex));
             DrawCards(CardsPerTurn);
         }
 
@@ -179,13 +355,58 @@ namespace STS.Core.Combat
                     enemy.Block = 0;
                     Emit(new CombatEvent(EventKind.BlockCleared, sourceIndex: i));
                 }
-                Emit(new CombatEvent(EventKind.EnemyMoveStarted, sourceIndex: i));
-                EffectResolver.Resolve(this, _enemySetups[i].MoveSteps, i, PlayerIndex);
+                FireHook(new HookContext(HookPoint.EnemyTurnStart, sourceIndex: i));
+
+                var runtime = _enemyRuntimes[i];
+                string moveId = runtime.NextMoveId;
+                Emit(new CombatEvent(EventKind.EnemyMoveStarted, sourceIndex: i, cardId: moveId));
+                EffectResolver.Resolve(this, runtime.Def.GetMove(moveId).Steps, i, PlayerIndex);
 
                 if (!State.Player.IsAlive)
                 {
                     CheckOutcome();
                     return;
+                }
+
+                FireHook(new HookContext(HookPoint.EnemyTurnEnd, sourceIndex: i));
+                DecayStatuses(i);
+                EnemyAi.RecordExecuted(runtime, moveId);
+                if (enemy.IsAlive)
+                {
+                    runtime.NextMoveId = EnemyAi.SelectNextMove(this, i, runtime, _rng.EnemyAi);
+                    EmitIntentShown(i);
+                }
+            }
+            CheckOutcome();   // 敵人可能在自己回合被反傷打死(青銅鱗片反殺)
+        }
+
+        /// <summary>
+        /// 回合結束衰減。計時型狀態只在擁有者回合末 -1;「擁有者自己回合中施加」的首次衰減跳過
+        /// (JustApplied),對手回合施加的不跳——這是 StS 計時語意的重建([近似] R2,測試鎖定)。
+        /// </summary>
+        private void DecayStatuses(int ownerIndex)
+        {
+            var owner = GetCombatant(ownerIndex);
+            var snapshot = new List<StatusInstance>(owner.Statuses);
+            for (int i = 0; i < snapshot.Count; i++)
+            {
+                var status = snapshot[i];
+                if (status.Stacks <= 0) continue;
+                switch (StatusRegistry.GetDecayRule(status.Id))
+                {
+                    case DecayRule.DecrementAtOwnerTurnEnd:
+                        if (status.JustApplied)
+                        {
+                            status.JustApplied = false;
+                        }
+                        else
+                        {
+                            ApplyStatusTo(ownerIndex, status.Id, -1);
+                        }
+                        break;
+                    case DecayRule.RemoveAtOwnerTurnEnd:
+                        ApplyStatusTo(ownerIndex, status.Id, -status.Stacks);
+                        break;
                 }
             }
         }
@@ -205,6 +426,7 @@ namespace STS.Core.Combat
                 if (State.Enemies[i].IsAlive) return;
             }
             State.Phase = CombatPhase.Victory;
+            FireHook(new HookContext(HookPoint.CombatVictory));   // 燃燒之血在 CombatEnded 前結算
             EmitEnded();
         }
 
@@ -215,9 +437,34 @@ namespace STS.Core.Combat
             Emit(new CombatEvent(EventKind.CombatEnded, amount: State.Phase == CombatPhase.Victory ? 1 : 0));
         }
 
-        // ---- 供 EffectResolver 呼叫的內部操作(單一結算路,禁止繞過) ----
+        private void FinishCardPlay()
+        {
+            var card = _pendingPlayedCard;
+            var def = _pendingPlayedDef;
+            _pendingPlayedCard = null;
+            _pendingPlayedDef = null;
+            if (card == null) return;
+
+            if (def.Type == CardType.Power)
+            {
+                State.PowersPlayed.Add(card);   // 能力卡不進任何牌堆
+            }
+            else if (def.Exhausts)
+            {
+                State.ExhaustPile.Add(card);
+                Emit(new CombatEvent(EventKind.CardExhausted, cardId: card.CardId, cardInstanceId: card.InstanceId));
+            }
+            else
+            {
+                State.DiscardPile.Add(card);
+            }
+            CheckOutcome();
+        }
+
+        // ---- 供 EffectResolver / Registry 呼叫的內部操作(單一結算路,禁止繞過) ----
 
         internal RngStream CombatMiscRng => _rng.CombatMisc;
+        internal int XEnergySpent => _xEnergySpent;
 
         internal CombatantState GetCombatant(int index)
         {
@@ -252,9 +499,62 @@ namespace STS.Core.Combat
                 amount: final, amount2: result.BlockConsumed, hpLost: result.HpLost,
                 remainingBlock: result.RemainingBlock, remainingHp: result.RemainingHp));
 
-            if (!target.IsAlive && targetIndex != PlayerIndex)
+            AfterHpLoss(targetIndex, result.HpLost);
+            // 攻擊 hook(捲曲/青銅鱗片);非攻擊傷害(反傷)不觸發,否則反傷互咬無限循環
+            FireHook(new HookContext(HookPoint.AttackDealt, sourceIndex: sourceIndex, targetIndex: targetIndex, amount: result.HpLost));
+            FireHook(new HookContext(HookPoint.AttackReceived, sourceIndex: sourceIndex, targetIndex: targetIndex, amount: result.HpLost));
+        }
+
+        /// <summary>非攻擊傷害(反傷/尖刺皮):吃格擋,但不吃力量/虛弱/易傷修正,不觸發攻擊 hook。</summary>
+        internal void DealNonAttackDamage(int sourceIndex, int targetIndex, int amount)
+        {
+            var target = GetCombatant(targetIndex);
+            if (!target.IsAlive || amount <= 0) return;
+
+            var result = CombatMath.ResolveAttack(amount, target.Block, target.Hp);
+            target.Block = result.RemainingBlock;
+            target.Hp = result.RemainingHp;
+            Emit(new CombatEvent(EventKind.DamageDealt, sourceIndex: sourceIndex, targetIndex: targetIndex,
+                amount: amount, amount2: result.BlockConsumed, hpLost: result.HpLost,
+                remainingBlock: result.RemainingBlock, remainingHp: result.RemainingHp));
+            AfterHpLoss(targetIndex, result.HpLost);
+        }
+
+        /// <summary>直接失血(燒傷型):無視格擋。</summary>
+        internal void LoseHpDirect(int index, int amount)
+        {
+            var combatant = GetCombatant(index);
+            if (!combatant.IsAlive || amount <= 0) return;
+            int loss = amount > combatant.Hp ? combatant.Hp : amount;
+            combatant.Hp -= loss;
+            Emit(new CombatEvent(EventKind.HpLost, targetIndex: index, amount: loss, remainingHp: combatant.Hp));
+            AfterHpLoss(index, loss);
+        }
+
+        internal void HealHp(int index, int amount)
+        {
+            var combatant = GetCombatant(index);
+            if (!combatant.IsAlive || amount <= 0) return;
+            int healed = combatant.Hp + amount > combatant.MaxHp ? combatant.MaxHp - combatant.Hp : amount;
+            if (healed <= 0) return;
+            combatant.Hp += healed;
+            Emit(new CombatEvent(EventKind.HpHealed, targetIndex: index, amount: healed, remainingHp: combatant.Hp));
+        }
+
+        private void AfterHpLoss(int index, int hpLost)
+        {
+            if (hpLost <= 0) return;
+            if (index == PlayerIndex) return;
+            var target = GetCombatant(index);
+            if (!target.IsAlive)
             {
-                Emit(new CombatEvent(EventKind.EnemyDied, targetIndex: targetIndex));
+                Emit(new CombatEvent(EventKind.EnemyDied, targetIndex: index));
+                FireHook(new HookContext(HookPoint.EnemyDied, targetIndex: index));
+            }
+            var runtime = _enemyRuntimes[index];
+            if (runtime.Def.Ai == AiKind.Custom && target.IsAlive)
+            {
+                GuardianAi.OnDamaged(this, index, runtime, hpLost);
             }
         }
 
@@ -273,13 +573,33 @@ namespace STS.Core.Combat
         internal void ApplyStatusTo(int index, StatusId status, int amount)
         {
             var combatant = GetCombatant(index);
-            if (!combatant.IsAlive) return;
+            if (!combatant.IsAlive || amount == 0) return;
+            bool isNew = combatant.GetStatus(status) == 0 && amount > 0;
             int stacks = combatant.ModifyStatus(status, amount);
+            if (isNew)
+            {
+                var instance = combatant.GetStatusInstance(status);
+                if (instance != null)
+                {
+                    instance.JustApplied = IsOwnTurnNow(index);
+                }
+            }
             Emit(new CombatEvent(EventKind.StatusChanged, targetIndex: index, amount: amount, amount2: stacks, status: status));
+        }
+
+        /// <summary>是否在該單位「自己的回合」中(JustApplied 判定用)。</summary>
+        private bool IsOwnTurnNow(int index)
+        {
+            if (index == PlayerIndex)
+            {
+                return State.Phase == CombatPhase.PlayerTurn || State.Phase == CombatPhase.AwaitingChoice;
+            }
+            return State.Phase == CombatPhase.EnemyTurn;   // [近似] 任一敵人的回合都算敵方自己的回合
         }
 
         internal void DrawCards(int count)
         {
+            if (State.Player.GetStatus(StatusId.NoDraw) > 0) return;   // 戰吼型:本回合不能再抽
             for (int k = 0; k < count; k++)
             {
                 // 手牌滿:取消剩餘抽牌,卡留在抽牌堆([近似] R11,以測試鎖定此語意,校正期對照 wiki)
@@ -292,6 +612,7 @@ namespace STS.Core.Combat
                     State.DiscardPile.Clear();
                     _rng.Shuffle.Shuffle(State.DrawPile);
                     Emit(new CombatEvent(EventKind.PileShuffled, amount: State.DrawPile.Count));
+                    FireHook(new HookContext(HookPoint.Shuffled));
                 }
 
                 int top = State.DrawPile.Count - 1;   // 尾端當堆頂:移除 O(1)
@@ -304,8 +625,73 @@ namespace STS.Core.Combat
 
         internal void GainEnergy(int amount)
         {
+            if (amount == 0) return;
             State.Energy += amount;
             Emit(new CombatEvent(EventKind.EnergyChanged, amount: State.Energy, amount2: State.MaxEnergy));
+        }
+
+        /// <summary>生成新卡加入牌堆。手牌滿時落入棄牌堆;加入抽牌堆時插入隨機位置([近似])。</summary>
+        internal void AddCardToPile(string cardId, PileType pile)
+        {
+            var card = new CardInstance(_nextInstanceId++, cardId);
+            switch (pile)
+            {
+                case PileType.Hand:
+                    if (State.Hand.Count >= CombatState.HandLimit)
+                    {
+                        State.DiscardPile.Add(card);
+                        pile = PileType.Discard;
+                    }
+                    else
+                    {
+                        State.Hand.Add(card);
+                    }
+                    break;
+                case PileType.Draw:
+                    State.DrawPile.Insert(_rng.CombatMisc.NextInt(State.DrawPile.Count + 1), card);
+                    break;
+                case PileType.Exhaust:
+                    State.ExhaustPile.Add(card);
+                    break;
+                default:
+                    State.DiscardPile.Add(card);
+                    break;
+            }
+            Emit(new CombatEvent(EventKind.CardAddedToPile, amount: (int)pile, cardId: card.CardId, cardInstanceId: card.InstanceId));
+        }
+
+        internal void ExhaustRandomFromHand(int count)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                if (State.Hand.Count == 0) return;
+                int index = _rng.CombatMisc.NextInt(State.Hand.Count);
+                var card = State.Hand[index];
+                State.Hand.RemoveAt(index);
+                State.ExhaustPile.Add(card);
+                Emit(new CombatEvent(EventKind.CardExhausted, cardId: card.CardId, cardInstanceId: card.InstanceId));
+            }
+        }
+
+        internal void RequestChoice(EffectStep[] steps, int resumeIndex, int sourceIndex, int targetIndex, int count)
+        {
+            _pendingSteps = steps;
+            _pendingResumeIndex = resumeIndex;
+            _pendingSourceIndex = sourceIndex;
+            _pendingTargetIndex = targetIndex;
+            State.PendingChoiceCount = count;
+            State.Phase = CombatPhase.AwaitingChoice;
+            Emit(new CombatEvent(EventKind.ChoiceRequired, amount: count));
+        }
+
+        internal void EmitIntentShown(int enemyIndex)
+        {
+            Emit(new CombatEvent(EventKind.IntentShown, sourceIndex: enemyIndex, cardId: _enemyRuntimes[enemyIndex].NextMoveId));
+        }
+
+        internal void FireHook(in HookContext ctx)
+        {
+            HookBus.Fire(this, ctx);
         }
 
         private static bool RequiresEnemyTarget(CardDef def)

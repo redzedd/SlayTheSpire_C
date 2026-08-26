@@ -6,46 +6,43 @@ namespace STS.Core.Combat
 {
     /// <summary>
     /// 效果步驟解讀器。卡牌/藥水/敵招共用同一條結算路。
-    /// M1 只支援切片基礎 op;範圍外一律明確拋錯,絕不靜默跳過(假綠比紅更毒)。
+    /// 範圍外的 op(Custom)一律明確拋錯,絕不靜默跳過(假綠比紅更毒)。
+    /// ChooseExhaustFromHand 會中斷結算:剩餘步驟交回引擎暫存,待 ResolveChoice 續跑。
     /// </summary>
     internal static class EffectResolver
     {
-        // 共用目標緩衝:結算不重入(M1),重入需求出現時再改
-        private static readonly List<int> TargetBuffer = new List<int>();
-
         internal static void Resolve(CombatEngine engine, EffectStep[] steps, int sourceIndex, int chosenTargetIndex)
         {
+            ResolveFrom(engine, steps, 0, sourceIndex, chosenTargetIndex);
+        }
+
+        internal static void ResolveFrom(CombatEngine engine, EffectStep[] steps, int startIndex, int sourceIndex, int chosenTargetIndex)
+        {
             if (steps == null) return;
-            for (int s = 0; s < steps.Length; s++)
+            for (int s = startIndex; s < steps.Length; s++)
             {
-                if (!engine.GetCombatant(sourceIndex).IsAlive) return;
+                if (!engine.GetCombatant(sourceIndex).IsAlive) return;   // 施放者已死(尖刺皮/反傷情境)即中止
 
                 var step = steps[s];
-                if (step.AmountKind != AmountKind.Fixed)
-                {
-                    throw new NotSupportedException($"AmountKind {step.AmountKind} 屬 M2 範圍,尚未實作");
-                }
-                if (step.RepeatIsX)
-                {
-                    throw new NotSupportedException("RepeatIsX(X 費段數)屬 M2 範圍,尚未實作");
-                }
+                int repeat = step.RepeatIsX ? engine.XEnergySpent : (step.Repeat <= 1 ? 1 : step.Repeat);
 
-                int repeat = step.Repeat <= 1 ? 1 : step.Repeat;
                 switch (step.Op)
                 {
                     case EffectOp.Damage:
                         ResolveDamage(engine, step, sourceIndex, chosenTargetIndex, repeat);
                         break;
+
                     case EffectOp.Block:
                         for (int r = 0; r < repeat; r++)
                         {
                             var targets = CollectTargets(engine, sourceIndex, step.Target, chosenTargetIndex);
                             for (int t = 0; t < targets.Count; t++)
                             {
-                                engine.GainBlock(targets[t], step.Amount);
+                                engine.GainBlock(targets[t], ResolveAmount(engine, step, sourceIndex));
                             }
                         }
                         break;
+
                     case EffectOp.ApplyStatus:
                         for (int r = 0; r < repeat; r++)
                         {
@@ -56,14 +53,65 @@ namespace STS.Core.Combat
                             }
                         }
                         break;
+
                     case EffectOp.Draw:
-                        engine.DrawCards(step.Amount);
+                        engine.DrawCards(ResolveAmount(engine, step, sourceIndex));
                         break;
+
                     case EffectOp.GainEnergy:
-                        engine.GainEnergy(step.Amount);
+                        engine.GainEnergy(ResolveAmount(engine, step, sourceIndex));
                         break;
+
+                    case EffectOp.LoseHp:
+                        for (int r = 0; r < repeat; r++)
+                        {
+                            var targets = CollectTargets(engine, sourceIndex, step.Target, chosenTargetIndex);
+                            for (int t = 0; t < targets.Count; t++)
+                            {
+                                engine.LoseHpDirect(targets[t], ResolveAmount(engine, step, sourceIndex));
+                            }
+                        }
+                        break;
+
+                    case EffectOp.Heal:
+                        for (int r = 0; r < repeat; r++)
+                        {
+                            var targets = CollectTargets(engine, sourceIndex, step.Target, chosenTargetIndex);
+                            for (int t = 0; t < targets.Count; t++)
+                            {
+                                engine.HealHp(targets[t], ResolveAmount(engine, step, sourceIndex));
+                            }
+                        }
+                        break;
+
+                    case EffectOp.AddCardToPile:
+                    {
+                        int copies = step.SecondaryAmount <= 0 ? 1 : step.SecondaryAmount;
+                        for (int c = 0; c < copies; c++)
+                        {
+                            engine.AddCardToPile(step.CardId, step.Pile);
+                        }
+                        break;
+                    }
+
+                    case EffectOp.ExhaustRandomFromHand:
+                    {
+                        int count = step.Amount <= 0 ? 1 : step.Amount;
+                        engine.ExhaustRandomFromHand(count);
+                        break;
+                    }
+
+                    case EffectOp.ChooseExhaustFromHand:
+                    {
+                        if (engine.State.Hand.Count == 0) break;   // 沒得選就跳過本步,繼續後續步驟
+                        int count = step.Amount <= 0 ? 1 : step.Amount;
+                        if (count > engine.State.Hand.Count) count = engine.State.Hand.Count;
+                        engine.RequestChoice(steps, s + 1, sourceIndex, chosenTargetIndex, count);
+                        return;   // 中斷:剩餘步驟由 ResolveChoice 續跑
+                    }
+
                     default:
-                        throw new NotSupportedException($"EffectOp {step.Op} 屬 M2+ 範圍,尚未實作");
+                        throw new NotSupportedException($"EffectOp {step.Op} 尚未實作(Custom 屬 M3+ 逃生門)");
                 }
             }
         }
@@ -75,42 +123,85 @@ namespace STS.Core.Combat
             {
                 var targets = CollectTargets(engine, sourceIndex, step.Target, chosenTargetIndex);
                 if (targets.Count == 0) return;
+                int baseAmount = ResolveDamageBase(engine, step, sourceIndex);
                 for (int t = 0; t < targets.Count; t++)
                 {
-                    engine.DealAttackDamage(sourceIndex, targets[t], step.Amount);
+                    engine.DealAttackDamage(sourceIndex, targets[t], baseAmount);
                 }
+            }
+        }
+
+        /// <summary>非 Damage op 的數值解讀。StrengthTimes 只對 Damage 有意義,其他 op 用到就是資料錯。</summary>
+        private static int ResolveAmount(CombatEngine engine, EffectStep step, int sourceIndex)
+        {
+            switch (step.AmountKind)
+            {
+                case AmountKind.Fixed:
+                    return step.Amount;
+                case AmountKind.XEnergy:
+                    return engine.XEnergySpent;
+                case AmountKind.CurrentBlock:
+                    return engine.GetCombatant(sourceIndex).Block;
+                default:
+                    throw new NotSupportedException($"AmountKind {step.AmountKind} 不適用於 {step.Op}");
+            }
+        }
+
+        /// <summary>
+        /// Damage 的基礎值解讀。StrengthTimes:力量以 SecondaryAmount 倍計——
+        /// 基礎值先加上 力量×(倍率-1),再走 CombatMath(那裡會再加一次力量),總計恰為 N 倍。
+        /// </summary>
+        private static int ResolveDamageBase(CombatEngine engine, EffectStep step, int sourceIndex)
+        {
+            switch (step.AmountKind)
+            {
+                case AmountKind.Fixed:
+                    return step.Amount;
+                case AmountKind.XEnergy:
+                    return engine.XEnergySpent;
+                case AmountKind.CurrentBlock:
+                    return engine.GetCombatant(sourceIndex).Block;
+                case AmountKind.StrengthTimes:
+                {
+                    int multiplier = step.SecondaryAmount <= 1 ? 1 : step.SecondaryAmount;
+                    int strength = engine.GetCombatant(sourceIndex).GetStatus(Statuses.StatusId.Strength);
+                    return step.Amount + strength * (multiplier - 1);
+                }
+                default:
+                    throw new NotSupportedException($"AmountKind {step.AmountKind} 尚未實作");
             }
         }
 
         /// <summary>目標語意相對於施放者:敵人施放時 TargetEnemy/AllEnemies/RandomEnemy 都指玩家。只收活著的目標。</summary>
         private static List<int> CollectTargets(CombatEngine engine, int sourceIndex, EffectTarget target, int chosenTargetIndex)
         {
-            TargetBuffer.Clear();
+            // 每次配置新緩衝:hook 反應可能巢狀觸發結算,共用靜態緩衝會被污染(邏輯層,不在每幀熱路徑)
+            var buffer = new List<int>(4);
             if (sourceIndex == CombatEngine.PlayerIndex)
             {
                 switch (target)
                 {
                     case EffectTarget.Self:
-                        TargetBuffer.Add(CombatEngine.PlayerIndex);
+                        buffer.Add(CombatEngine.PlayerIndex);
                         break;
                     case EffectTarget.TargetEnemy:
                         if (chosenTargetIndex >= 0
                             && chosenTargetIndex < engine.State.Enemies.Count
                             && engine.State.Enemies[chosenTargetIndex].IsAlive)
                         {
-                            TargetBuffer.Add(chosenTargetIndex);
+                            buffer.Add(chosenTargetIndex);
                         }
                         break;
                     case EffectTarget.AllEnemies:
-                        engine.CollectLivingEnemies(TargetBuffer);
+                        engine.CollectLivingEnemies(buffer);
                         break;
                     case EffectTarget.RandomEnemy:
-                        engine.CollectLivingEnemies(TargetBuffer);
-                        if (TargetBuffer.Count > 1)
+                        engine.CollectLivingEnemies(buffer);
+                        if (buffer.Count > 1)
                         {
-                            int picked = TargetBuffer[engine.CombatMiscRng.NextInt(TargetBuffer.Count)];
-                            TargetBuffer.Clear();
-                            TargetBuffer.Add(picked);
+                            int picked = buffer[engine.CombatMiscRng.NextInt(buffer.Count)];
+                            buffer.Clear();
+                            buffer.Add(picked);
                         }
                         break;
                 }
@@ -119,14 +210,14 @@ namespace STS.Core.Combat
             {
                 if (target == EffectTarget.Self)
                 {
-                    TargetBuffer.Add(sourceIndex);
+                    buffer.Add(sourceIndex);
                 }
                 else if (engine.State.Player.IsAlive)
                 {
-                    TargetBuffer.Add(CombatEngine.PlayerIndex);
+                    buffer.Add(CombatEngine.PlayerIndex);
                 }
             }
-            return TargetBuffer;
+            return buffer;
         }
     }
 }
