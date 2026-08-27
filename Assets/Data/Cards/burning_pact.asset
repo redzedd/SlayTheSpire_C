@@ -1,0 +1,76 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 864927395ecc3534e9fd9f61f33a2072, type: 3}
+  m_Name: burning_pact
+  m_EditorClassIdentifier: STS.Game::STS.Game.DataAssets.CardDataAsset
+  id: burning_pact
+  type: 1
+  rarity: 2
+  costIsX: 0
+  unplayable: 0
+  exhausts: 0
+  ethereal: 0
+  baseName: "\u71C3\u71D2\u5951\u7D04"
+  baseCost: 1
+  baseDescription: "\u6D88\u8017 1 \u5F35\u624B\u724C,\u62BD 2 \u5F35\u724C\u3002"
+  baseSteps:
+  - op: 9
+    target: 0
+    amount: 1
+    amountKind: 0
+    secondaryAmount: 0
+    repeat: 0
+    repeatIsX: 0
+    status: 0
+    cardId: 
+    pile: 2
+    customId: 
+  - op: 3
+    target: 0
+    amount: 2
+    amountKind: 0
+    secondaryAmount: 0
+    repeat: 0
+    repeatIsX: 0
+    status: 0
+    cardId: 
+    pile: 2
+    customId: 
+  baseTurnEndSteps: []
+  hasUpgrade: 1
+  upgradeName: "\u71C3\u71D2\u5951\u7D04+"
+  upgradeCost: 1
+  upgradeDescription: "\u6D88\u8017 1 \u5F35\u624B\u724C,\u62BD 3 \u5F35\u724C\u3002"
+  upgradeSteps:
+  - op: 9
+    target: 0
+    amount: 1
+    amountKind: 0
+    secondaryAmount: 0
+    repeat: 0
+    repeatIsX: 0
+    status: 0
+    cardId: 
+    pile: 2
+    customId: 
+  - op: 3
+    target: 0
+    amount: 3
+    amountKind: 0
+    secondaryAmount: 0
+    repeat: 0
+    repeatIsX: 0
+    status: 0
+    cardId: 
+    pile: 2
+    customId: 
+  upgradeTurnEndSteps: []

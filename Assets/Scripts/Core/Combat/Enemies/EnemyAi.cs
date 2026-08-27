@@ -50,32 +50,38 @@ namespace STS.Core.Combat.Enemies
             }
         }
 
-        /// <summary>加權選招;違反 MaxConsecutive 就重擲([近似] StS 實作精神),10 次仍違規走決定性 fallback。</summary>
+        /// <summary>
+        /// 加權選招;違反 MaxConsecutive 就重擲([近似] StS 實作精神),10 次仍違規走決定性 fallback。
+        /// 權重 ≤ 0 = 不參與加權選招(只給開場腳本用的招,如地精巨漢的戰嚎)。
+        /// </summary>
         private static string SelectWeighted(EnemyDef def, EnemyRuntime rt, RngStream aiRng)
         {
+            int total = 0;
+            for (int i = 0; i < def.Moves.Length; i++)
+            {
+                if (def.Moves[i].Weight > 0) total += def.Moves[i].Weight;
+            }
+            if (total <= 0) return def.Moves[0].Id;
+
             for (int attempt = 0; attempt < 10; attempt++)
             {
-                int total = 0;
-                for (int i = 0; i < def.Moves.Length; i++)
-                {
-                    total += def.Moves[i].Weight <= 0 ? 1 : def.Moves[i].Weight;
-                }
                 int roll = aiRng.NextInt(total);
-                MoveDef chosen = def.Moves[def.Moves.Length - 1];
+                MoveDef chosen = null;
                 for (int i = 0; i < def.Moves.Length; i++)
                 {
-                    roll -= def.Moves[i].Weight <= 0 ? 1 : def.Moves[i].Weight;
+                    if (def.Moves[i].Weight <= 0) continue;
+                    roll -= def.Moves[i].Weight;
                     if (roll < 0)
                     {
                         chosen = def.Moves[i];
                         break;
                     }
                 }
-                if (!Violates(chosen, rt)) return chosen.Id;
+                if (chosen != null && !Violates(chosen, rt)) return chosen.Id;
             }
             for (int i = 0; i < def.Moves.Length; i++)
             {
-                if (!Violates(def.Moves[i], rt)) return def.Moves[i].Id;
+                if (def.Moves[i].Weight > 0 && !Violates(def.Moves[i], rt)) return def.Moves[i].Id;
             }
             return def.Moves[0].Id;
         }

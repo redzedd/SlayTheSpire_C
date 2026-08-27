@@ -1,0 +1,136 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d47d1e164fb4a0e42b8a72078b16aa32, type: 3}
+  m_Name: guardian
+  m_EditorClassIdentifier: STS.Game::STS.Game.DataAssets.EnemyDataAsset
+  id: guardian
+  enemyName: "\u5DE8\u50CF\u5B88\u885B"
+  hpMin: 240
+  hpMax: 240
+  ai: 2
+  moves:
+  - id: guardian_charge
+    moveName: "\u84C4\u80FD\u8B77\u76FE"
+    intent: 1
+    weight: 1
+    maxConsecutive: 0
+    steps:
+    - op: 1
+      target: 0
+      amount: 9
+      amountKind: 0
+      secondaryAmount: 0
+      repeat: 0
+      repeatIsX: 0
+      status: 0
+      cardId: 
+      pile: 2
+      customId: 
+  - id: guardian_bash
+    moveName: "\u88C2\u5730\u91CD\u7838"
+    intent: 0
+    weight: 1
+    maxConsecutive: 0
+    steps:
+    - op: 0
+      target: 1
+      amount: 32
+      amountKind: 0
+      secondaryAmount: 0
+      repeat: 0
+      repeatIsX: 0
+      status: 0
+      cardId: 
+      pile: 2
+      customId: 
+  - id: guardian_vent
+    moveName: "\u9AD8\u58D3\u6392\u6C23"
+    intent: 3
+    weight: 1
+    maxConsecutive: 0
+    steps:
+    - op: 2
+      target: 1
+      amount: 2
+      amountKind: 0
+      secondaryAmount: 0
+      repeat: 0
+      repeatIsX: 0
+      status: 3
+      cardId: 
+      pile: 2
+      customId: 
+    - op: 2
+      target: 1
+      amount: 2
+      amountKind: 0
+      secondaryAmount: 0
+      repeat: 0
+      repeatIsX: 0
+      status: 4
+      cardId: 
+      pile: 2
+      customId: 
+  - id: guardian_whirl
+    moveName: "\u8FF4\u65CB\u7D5E\u64CA"
+    intent: 0
+    weight: 1
+    maxConsecutive: 0
+    steps:
+    - op: 0
+      target: 1
+      amount: 5
+      amountKind: 0
+      secondaryAmount: 0
+      repeat: 4
+      repeatIsX: 0
+      status: 0
+      cardId: 
+      pile: 2
+      customId: 
+  - id: guardian_roll
+    moveName: "\u8F3E\u58D3\u6EFE\u9032"
+    intent: 0
+    weight: 1
+    maxConsecutive: 0
+    steps:
+    - op: 0
+      target: 1
+      amount: 9
+      amountKind: 0
+      secondaryAmount: 0
+      repeat: 0
+      repeatIsX: 0
+      status: 0
+      cardId: 
+      pile: 2
+      customId: 
+  - id: guardian_twin
+    moveName: "\u96D9\u81C2\u9023\u64CA"
+    intent: 0
+    weight: 1
+    maxConsecutive: 0
+    steps:
+    - op: 0
+      target: 1
+      amount: 8
+      amountKind: 0
+      secondaryAmount: 0
+      repeat: 2
+      repeatIsX: 0
+      status: 0
+      cardId: 
+      pile: 2
+      customId: 
+  openingScript: []
+  loopScript: []
+  initialStatuses: []

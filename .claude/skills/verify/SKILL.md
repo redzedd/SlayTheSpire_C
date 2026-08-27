@@ -80,14 +80,14 @@ internal class CommandScript : IRunCommand
         var api = ScriptableObject.CreateInstance<TestRunnerApi>();
         api.hideFlags = HideFlags.HideAndDontSave;
         api.RegisterCallbacks(new StsTestResultWriter());
-        var filter = new Filter { testMode = TestMode.EditMode, assemblyNames = new[] { "STS.Core.Tests" } };
+        var filter = new Filter { testMode = TestMode.EditMode, assemblyNames = new[] { "STS.Core.Tests", "STS.Content.Tests" } };
         api.Execute(new ExecutionSettings(filter));
         result.Log("EditMode 測試已啟動");
     }
 }
 ```
 
-回收結果:輪詢 `Temp/STS_TestResult.txt`(bash,約 2 秒間隔,12 秒上限),必須看到 `Passed | pass=N fail=0`;失敗時 console 掃 `STS_TEST_FAIL` 取得逐條原文。基線:2026-08-03 為 9 tests / 0.34s。
+回收結果:輪詢 `Temp/STS_TestResult.txt`(bash,約 2 秒間隔,30 秒上限),必須看到 `Passed | pass=N fail=0`;失敗時讀 `Temp/STS_TestFails.txt` 或 console 掃 `STS_TEST_FAIL`。基線:2026-08-03 M3 後為 77 tests(引擎 64+內容 13)/約 1.1s。改到 STS.Core 或 STS.Data 或 `Assets/Data/Source/*.json` 都必跑;改了 JSON 記得先跑匯入器選單 `STS/重新匯入資料(JSON→SO)`。編輯器重啟會丟掉進行中的測試回呼——結果檔 30 秒不出現就重新啟動測試,不要空等。
 
 ## 管道 3:play 煙霧(行為/場景變更後跑)
 

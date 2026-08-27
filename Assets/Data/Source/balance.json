@@ -1,0 +1,20 @@
+{
+  "normalGoldMin": 10,
+  "normalGoldMax": 20,
+  "eliteGoldMin": 25,
+  "eliteGoldMax": 35,
+  "bossGoldMin": 95,
+  "bossGoldMax": 105,
+  "cardRewardCommonWeight": 77,
+  "cardRewardUncommonWeight": 22,
+  "cardRewardRareWeight": 1,
+  "potionDropBasePercent": 40,
+  "potionDropDeltaPercent": 10,
+  "shopRemoveBaseCost": 75,
+  "shopRemoveCostIncrement": 25,
+  "restHealPercent": 30,
+  "mapColumns": 7,
+  "mapRows": 15,
+  "mapPathCount": 6,
+  "weakPoolFightCount": 3
+}

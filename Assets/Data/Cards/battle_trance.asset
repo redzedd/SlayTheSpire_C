@@ -1,0 +1,76 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 864927395ecc3534e9fd9f61f33a2072, type: 3}
+  m_Name: battle_trance
+  m_EditorClassIdentifier: STS.Game::STS.Game.DataAssets.CardDataAsset
+  id: battle_trance
+  type: 1
+  rarity: 2
+  costIsX: 0
+  unplayable: 0
+  exhausts: 0
+  ethereal: 0
+  baseName: "\u6230\u9B25\u604D\u60DA"
+  baseCost: 0
+  baseDescription: "\u62BD 3 \u5F35\u724C,\u672C\u56DE\u5408\u4E0D\u80FD\u518D\u62BD\u724C\u3002"
+  baseSteps:
+  - op: 3
+    target: 0
+    amount: 3
+    amountKind: 0
+    secondaryAmount: 0
+    repeat: 0
+    repeatIsX: 0
+    status: 0
+    cardId: 
+    pile: 2
+    customId: 
+  - op: 2
+    target: 0
+    amount: 1
+    amountKind: 0
+    secondaryAmount: 0
+    repeat: 0
+    repeatIsX: 0
+    status: 6
+    cardId: 
+    pile: 2
+    customId: 
+  baseTurnEndSteps: []
+  hasUpgrade: 1
+  upgradeName: "\u6230\u9B25\u604D\u60DA+"
+  upgradeCost: 0
+  upgradeDescription: "\u62BD 4 \u5F35\u724C,\u672C\u56DE\u5408\u4E0D\u80FD\u518D\u62BD\u724C\u3002"
+  upgradeSteps:
+  - op: 3
+    target: 0
+    amount: 4
+    amountKind: 0
+    secondaryAmount: 0
+    repeat: 0
+    repeatIsX: 0
+    status: 0
+    cardId: 
+    pile: 2
+    customId: 
+  - op: 2
+    target: 0
+    amount: 1
+    amountKind: 0
+    secondaryAmount: 0
+    repeat: 0
+    repeatIsX: 0
+    status: 6
+    cardId: 
+    pile: 2
+    customId: 
+  upgradeTurnEndSteps: []

@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0d7ab1966714654dbf8e0360c4487b5, type: 3}
+  m_Name: block_potion
+  m_EditorClassIdentifier: STS.Game::STS.Game.DataAssets.PotionDataAsset
+  id: block_potion
+  potionName: "\u9435\u58C1\u85E5\u6C34"
+  needsTarget: 0
+  steps:
+  - op: 1
+    target: 0
+    amount: 12
+    amountKind: 0
+    secondaryAmount: 0
+    repeat: 0
+    repeatIsX: 0
+    status: 0
+    cardId: 
+    pile: 2
+    customId: 

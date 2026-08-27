@@ -1,0 +1,13 @@
+{
+  "encounters": [
+    { "id": "enc_cultist", "pool": "Weak", "weight": 1, "enemyIds": [ "cultist" ] },
+    { "id": "enc_jaw_worm", "pool": "Weak", "weight": 1, "enemyIds": [ "jaw_worm" ] },
+    { "id": "enc_two_lice", "pool": "Weak", "weight": 1, "enemyIds": [ "red_louse", "green_louse" ] },
+    { "id": "enc_slimes", "pool": "Normal", "weight": 2, "enemyIds": [ "acid_slime_m", "spike_slime_m" ] },
+    { "id": "enc_three_lice", "pool": "Normal", "weight": 1, "enemyIds": [ "red_louse", "green_louse", "red_louse" ] },
+    { "id": "enc_worm_and_cultist", "pool": "Normal", "weight": 1, "enemyIds": [ "jaw_worm", "cultist" ] },
+    { "id": "enc_gremlin_nob", "pool": "Elite", "weight": 1, "enemyIds": [ "gremlin_nob" ] },
+    { "id": "enc_sentries", "pool": "Elite", "weight": 1, "enemyIds": [ "sentry", "sentry", "sentry" ] },
+    { "id": "enc_guardian", "pool": "Boss", "weight": 1, "enemyIds": [ "guardian" ] }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+    "name": "STS.Game",
+    "rootNamespace": "STS.Game",
+    "references": [
+        "STS.Core",
+        "STS.Data"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

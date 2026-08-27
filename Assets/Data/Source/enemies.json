@@ -1,0 +1,118 @@
+{
+  "enemies": [
+    {
+      "id": "cultist", "name": "唸咒教徒", "hpMin": 48, "hpMax": 54, "ai": "Loop",
+      "moves": [
+        { "id": "incant", "name": "儀式凝聚", "intent": "Buff",
+          "steps": [ { "op": "ApplyStatus", "target": "Self", "amount": 3, "status": "Ritual" } ] },
+        { "id": "dark_strike", "name": "暗影襲擊", "intent": "Attack",
+          "steps": [ { "op": "Damage", "target": "TargetEnemy", "amount": 6 } ] }
+      ],
+      "openingScript": [ "incant" ],
+      "loopScript": [ "dark_strike" ]
+    },
+    {
+      "id": "jaw_worm", "name": "顎蟲", "hpMin": 40, "hpMax": 44, "ai": "Weighted",
+      "moves": [
+        { "id": "chomp", "name": "咬噬", "intent": "Attack", "weight": 45, "maxConsecutive": 2,
+          "steps": [ { "op": "Damage", "target": "TargetEnemy", "amount": 11 } ] },
+        { "id": "thrash", "name": "甩尾", "intent": "Attack", "weight": 30, "maxConsecutive": 2,
+          "steps": [
+            { "op": "Damage", "target": "TargetEnemy", "amount": 7 },
+            { "op": "Block", "target": "Self", "amount": 5 } ] },
+        { "id": "bellow", "name": "低吼蓄力", "intent": "Buff", "weight": 25, "maxConsecutive": 1,
+          "steps": [
+            { "op": "ApplyStatus", "target": "Self", "amount": 3, "status": "Strength" },
+            { "op": "Block", "target": "Self", "amount": 6 } ] }
+      ],
+      "openingScript": [ "chomp" ]
+    },
+    {
+      "id": "red_louse", "name": "紅蝨", "hpMin": 10, "hpMax": 15, "ai": "Weighted",
+      "initialStatuses": [ { "status": "Curl", "stacks": 3 } ],
+      "moves": [
+        { "id": "bite", "name": "啃咬", "intent": "Attack", "weight": 75, "maxConsecutive": 2,
+          "steps": [ { "op": "Damage", "target": "TargetEnemy", "amount": 6 } ] },
+        { "id": "grow", "name": "甲殼硬化", "intent": "Buff", "weight": 25, "maxConsecutive": 1,
+          "steps": [ { "op": "ApplyStatus", "target": "Self", "amount": 3, "status": "Strength" } ] }
+      ]
+    },
+    {
+      "id": "green_louse", "name": "綠蝨", "hpMin": 11, "hpMax": 17, "ai": "Weighted",
+      "initialStatuses": [ { "status": "Curl", "stacks": 3 } ],
+      "moves": [
+        { "id": "bite", "name": "啃咬", "intent": "Attack", "weight": 75, "maxConsecutive": 2,
+          "steps": [ { "op": "Damage", "target": "TargetEnemy", "amount": 6 } ] },
+        { "id": "spit_web", "name": "吐絲", "intent": "Debuff", "weight": 25, "maxConsecutive": 1,
+          "steps": [ { "op": "ApplyStatus", "target": "TargetEnemy", "amount": 2, "status": "Weak" } ] }
+      ]
+    },
+    {
+      "id": "acid_slime_m", "name": "酸液史萊姆", "hpMin": 28, "hpMax": 32, "ai": "Weighted",
+      "moves": [
+        { "id": "corrosive_spit", "name": "蝕液噴吐", "intent": "Attack", "weight": 40, "maxConsecutive": 2,
+          "steps": [
+            { "op": "Damage", "target": "TargetEnemy", "amount": 7 },
+            { "op": "AddCardToPile", "target": "Self", "cardId": "slimed", "pile": "Discard" } ] },
+        { "id": "tackle", "name": "衝撞", "intent": "Attack", "weight": 30, "maxConsecutive": 1,
+          "steps": [ { "op": "Damage", "target": "TargetEnemy", "amount": 10 } ] },
+        { "id": "lick", "name": "舔舐", "intent": "Debuff", "weight": 30, "maxConsecutive": 2,
+          "steps": [ { "op": "ApplyStatus", "target": "TargetEnemy", "amount": 1, "status": "Weak" } ] }
+      ]
+    },
+    {
+      "id": "spike_slime_m", "name": "尖刺史萊姆", "hpMin": 28, "hpMax": 32, "ai": "Weighted",
+      "moves": [
+        { "id": "flame_tackle", "name": "尖刺衝撞", "intent": "Attack", "weight": 70, "maxConsecutive": 2,
+          "steps": [
+            { "op": "Damage", "target": "TargetEnemy", "amount": 8 },
+            { "op": "AddCardToPile", "target": "Self", "cardId": "slimed", "pile": "Discard" } ] },
+        { "id": "lick", "name": "舔舐", "intent": "Debuff", "weight": 30, "maxConsecutive": 1,
+          "steps": [ { "op": "ApplyStatus", "target": "TargetEnemy", "amount": 1, "status": "Frail" } ] }
+      ]
+    },
+    {
+      "id": "gremlin_nob", "name": "地精巨漢", "hpMin": 82, "hpMax": 86, "ai": "Weighted",
+      "moves": [
+        { "id": "bellow", "name": "戰嚎", "intent": "Buff", "weight": 0,
+          "steps": [ { "op": "ApplyStatus", "target": "Self", "amount": 2, "status": "Enrage" } ] },
+        { "id": "skull_bash", "name": "顱擊", "intent": "Attack", "weight": 33, "maxConsecutive": 1,
+          "steps": [
+            { "op": "Damage", "target": "TargetEnemy", "amount": 6 },
+            { "op": "ApplyStatus", "target": "TargetEnemy", "amount": 2, "status": "Vulnerable" } ] },
+        { "id": "rush", "name": "蠻衝", "intent": "Attack", "weight": 67, "maxConsecutive": 2,
+          "steps": [ { "op": "Damage", "target": "TargetEnemy", "amount": 14 } ] }
+      ],
+      "openingScript": [ "bellow" ]
+    },
+    {
+      "id": "sentry", "name": "哨衛", "hpMin": 38, "hpMax": 42, "ai": "Loop",
+      "moves": [
+        { "id": "bolt", "name": "封鎖光束", "intent": "Debuff",
+          "steps": [ { "op": "AddCardToPile", "target": "Self", "cardId": "dazed", "pile": "Discard", "secondaryAmount": 2 } ] },
+        { "id": "beam", "name": "貫穿光束", "intent": "Attack",
+          "steps": [ { "op": "Damage", "target": "TargetEnemy", "amount": 9 } ] }
+      ],
+      "loopScript": [ "bolt", "beam" ]
+    },
+    {
+      "id": "guardian", "name": "巨像守衛", "hpMin": 240, "hpMax": 240, "ai": "Custom",
+      "moves": [
+        { "id": "guardian_charge", "name": "蓄能護盾", "intent": "Defend",
+          "steps": [ { "op": "Block", "target": "Self", "amount": 9 } ] },
+        { "id": "guardian_bash", "name": "裂地重砸", "intent": "Attack",
+          "steps": [ { "op": "Damage", "target": "TargetEnemy", "amount": 32 } ] },
+        { "id": "guardian_vent", "name": "高壓排氣", "intent": "Debuff",
+          "steps": [
+            { "op": "ApplyStatus", "target": "TargetEnemy", "amount": 2, "status": "Weak" },
+            { "op": "ApplyStatus", "target": "TargetEnemy", "amount": 2, "status": "Vulnerable" } ] },
+        { "id": "guardian_whirl", "name": "迴旋絞擊", "intent": "Attack",
+          "steps": [ { "op": "Damage", "target": "TargetEnemy", "amount": 5, "repeat": 4 } ] },
+        { "id": "guardian_roll", "name": "輾壓滾進", "intent": "Attack",
+          "steps": [ { "op": "Damage", "target": "TargetEnemy", "amount": 9 } ] },
+        { "id": "guardian_twin", "name": "雙臂連擊", "intent": "Attack",
+          "steps": [ { "op": "Damage", "target": "TargetEnemy", "amount": 8, "repeat": 2 } ] }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,280 @@
+{
+  "cards": [
+    {
+      "id": "strike", "type": "Attack", "rarity": "Starter",
+      "base": { "name": "打擊", "cost": 1, "description": "造成 {dmg} 點傷害。",
+        "steps": [ { "op": "Damage", "target": "TargetEnemy", "amount": 6 } ] },
+      "upgrade": { "name": "打擊+", "cost": 1, "description": "造成 {dmg} 點傷害。",
+        "steps": [ { "op": "Damage", "target": "TargetEnemy", "amount": 9 } ] }
+    },
+    {
+      "id": "defend", "type": "Skill", "rarity": "Starter",
+      "base": { "name": "防禦", "cost": 1, "description": "獲得 {blk} 點格擋。",
+        "steps": [ { "op": "Block", "target": "Self", "amount": 5 } ] },
+      "upgrade": { "name": "防禦+", "cost": 1, "description": "獲得 {blk} 點格擋。",
+        "steps": [ { "op": "Block", "target": "Self", "amount": 8 } ] }
+    },
+    {
+      "id": "bash", "type": "Attack", "rarity": "Starter",
+      "base": { "name": "痛擊", "cost": 2, "description": "造成 {dmg} 點傷害,施加 2 層易傷。",
+        "steps": [
+          { "op": "Damage", "target": "TargetEnemy", "amount": 8 },
+          { "op": "ApplyStatus", "target": "TargetEnemy", "amount": 2, "status": "Vulnerable" } ] },
+      "upgrade": { "name": "痛擊+", "cost": 2, "description": "造成 {dmg} 點傷害,施加 3 層易傷。",
+        "steps": [
+          { "op": "Damage", "target": "TargetEnemy", "amount": 10 },
+          { "op": "ApplyStatus", "target": "TargetEnemy", "amount": 3, "status": "Vulnerable" } ] }
+    },
+    {
+      "id": "twin_strike", "type": "Attack", "rarity": "Common",
+      "base": { "name": "雙連擊", "cost": 1, "description": "造成 {dmg} 點傷害兩次。",
+        "steps": [ { "op": "Damage", "target": "TargetEnemy", "amount": 5, "repeat": 2 } ] },
+      "upgrade": { "name": "雙連擊+", "cost": 1, "description": "造成 {dmg} 點傷害兩次。",
+        "steps": [ { "op": "Damage", "target": "TargetEnemy", "amount": 7, "repeat": 2 } ] }
+    },
+    {
+      "id": "cleave", "type": "Attack", "rarity": "Common",
+      "base": { "name": "橫掃", "cost": 1, "description": "對所有敵人造成 {dmg} 點傷害。",
+        "steps": [ { "op": "Damage", "target": "AllEnemies", "amount": 8 } ] },
+      "upgrade": { "name": "橫掃+", "cost": 1, "description": "對所有敵人造成 {dmg} 點傷害。",
+        "steps": [ { "op": "Damage", "target": "AllEnemies", "amount": 11 } ] }
+    },
+    {
+      "id": "pommel_hit", "type": "Attack", "rarity": "Common",
+      "base": { "name": "鐵柄擊", "cost": 1, "description": "造成 {dmg} 點傷害,抽 1 張牌。",
+        "steps": [
+          { "op": "Damage", "target": "TargetEnemy", "amount": 9 },
+          { "op": "Draw", "target": "Self", "amount": 1 } ] },
+      "upgrade": { "name": "鐵柄擊+", "cost": 1, "description": "造成 {dmg} 點傷害,抽 2 張牌。",
+        "steps": [
+          { "op": "Damage", "target": "TargetEnemy", "amount": 10 },
+          { "op": "Draw", "target": "Self", "amount": 2 } ] }
+    },
+    {
+      "id": "body_slam", "type": "Attack", "rarity": "Common",
+      "base": { "name": "全身撞擊", "cost": 1, "description": "造成等同你當前格擋值的傷害。",
+        "steps": [ { "op": "Damage", "target": "TargetEnemy", "amountKind": "CurrentBlock" } ] },
+      "upgrade": { "name": "全身撞擊+", "cost": 0, "description": "造成等同你當前格擋值的傷害。",
+        "steps": [ { "op": "Damage", "target": "TargetEnemy", "amountKind": "CurrentBlock" } ] }
+    },
+    {
+      "id": "heavy_blade", "type": "Attack", "rarity": "Common",
+      "base": { "name": "千鈞斬", "cost": 2, "description": "造成 {dmg} 點傷害,力量效果以 3 倍計算。",
+        "steps": [ { "op": "Damage", "target": "TargetEnemy", "amount": 14, "amountKind": "StrengthTimes", "secondaryAmount": 3 } ] },
+      "upgrade": { "name": "千鈞斬+", "cost": 2, "description": "造成 {dmg} 點傷害,力量效果以 5 倍計算。",
+        "steps": [ { "op": "Damage", "target": "TargetEnemy", "amount": 14, "amountKind": "StrengthTimes", "secondaryAmount": 5 } ] }
+    },
+    {
+      "id": "iron_wave", "type": "Attack", "rarity": "Common",
+      "base": { "name": "鐵浪", "cost": 1, "description": "獲得 {blk} 點格擋,造成 {dmg} 點傷害。",
+        "steps": [
+          { "op": "Block", "target": "Self", "amount": 5 },
+          { "op": "Damage", "target": "TargetEnemy", "amount": 5 } ] },
+      "upgrade": { "name": "鐵浪+", "cost": 1, "description": "獲得 {blk} 點格擋,造成 {dmg} 點傷害。",
+        "steps": [
+          { "op": "Block", "target": "Self", "amount": 7 },
+          { "op": "Damage", "target": "TargetEnemy", "amount": 7 } ] }
+    },
+    {
+      "id": "clothesline", "type": "Attack", "rarity": "Common",
+      "base": { "name": "貫臂擊", "cost": 2, "description": "造成 {dmg} 點傷害,施加 2 層虛弱。",
+        "steps": [
+          { "op": "Damage", "target": "TargetEnemy", "amount": 12 },
+          { "op": "ApplyStatus", "target": "TargetEnemy", "amount": 2, "status": "Weak" } ] },
+      "upgrade": { "name": "貫臂擊+", "cost": 2, "description": "造成 {dmg} 點傷害,施加 3 層虛弱。",
+        "steps": [
+          { "op": "Damage", "target": "TargetEnemy", "amount": 14 },
+          { "op": "ApplyStatus", "target": "TargetEnemy", "amount": 3, "status": "Weak" } ] }
+    },
+    {
+      "id": "anger", "type": "Attack", "rarity": "Common",
+      "base": { "name": "憤怒", "cost": 0, "description": "造成 {dmg} 點傷害,複製一張憤怒到棄牌堆。",
+        "steps": [
+          { "op": "Damage", "target": "TargetEnemy", "amount": 6 },
+          { "op": "AddCardToPile", "target": "Self", "cardId": "anger", "pile": "Discard" } ] },
+      "upgrade": { "name": "憤怒+", "cost": 0, "description": "造成 {dmg} 點傷害,複製一張憤怒到棄牌堆。",
+        "steps": [
+          { "op": "Damage", "target": "TargetEnemy", "amount": 8 },
+          { "op": "AddCardToPile", "target": "Self", "cardId": "anger", "pile": "Discard" } ] }
+    },
+    {
+      "id": "sword_boomerang", "type": "Attack", "rarity": "Common",
+      "base": { "name": "迴旋劍", "cost": 1, "description": "對隨機敵人造成 3 點傷害 3 次。",
+        "steps": [ { "op": "Damage", "target": "RandomEnemy", "amount": 3, "repeat": 3 } ] },
+      "upgrade": { "name": "迴旋劍+", "cost": 1, "description": "對隨機敵人造成 3 點傷害 4 次。",
+        "steps": [ { "op": "Damage", "target": "RandomEnemy", "amount": 3, "repeat": 4 } ] }
+    },
+    {
+      "id": "flex", "type": "Skill", "rarity": "Common",
+      "base": { "name": "鼓足蠻力", "cost": 0, "description": "獲得 2 點力量,回合結束時失去 2 點力量。",
+        "steps": [
+          { "op": "ApplyStatus", "target": "Self", "amount": 2, "status": "Strength" },
+          { "op": "ApplyStatus", "target": "Self", "amount": 2, "status": "LoseStrengthAtTurnEnd" } ] },
+      "upgrade": { "name": "鼓足蠻力+", "cost": 0, "description": "獲得 4 點力量,回合結束時失去 4 點力量。",
+        "steps": [
+          { "op": "ApplyStatus", "target": "Self", "amount": 4, "status": "Strength" },
+          { "op": "ApplyStatus", "target": "Self", "amount": 4, "status": "LoseStrengthAtTurnEnd" } ] }
+    },
+    {
+      "id": "shrug_it_off", "type": "Skill", "rarity": "Common",
+      "base": { "name": "甩臂卸勁", "cost": 1, "description": "獲得 {blk} 點格擋,抽 1 張牌。",
+        "steps": [
+          { "op": "Block", "target": "Self", "amount": 8 },
+          { "op": "Draw", "target": "Self", "amount": 1 } ] },
+      "upgrade": { "name": "甩臂卸勁+", "cost": 1, "description": "獲得 {blk} 點格擋,抽 1 張牌。",
+        "steps": [
+          { "op": "Block", "target": "Self", "amount": 11 },
+          { "op": "Draw", "target": "Self", "amount": 1 } ] }
+    },
+    {
+      "id": "true_grit", "type": "Skill", "rarity": "Common",
+      "base": { "name": "咬牙堅毅", "cost": 1, "description": "獲得 {blk} 點格擋,隨機消耗 1 張手牌。",
+        "steps": [
+          { "op": "Block", "target": "Self", "amount": 7 },
+          { "op": "ExhaustRandomFromHand", "target": "Self", "amount": 1 } ] },
+      "upgrade": { "name": "咬牙堅毅+", "cost": 1, "description": "獲得 {blk} 點格擋,選擇消耗 1 張手牌。",
+        "steps": [
+          { "op": "Block", "target": "Self", "amount": 9 },
+          { "op": "ChooseExhaustFromHand", "target": "Self", "amount": 1 } ] }
+    },
+    {
+      "id": "whirlwind", "type": "Attack", "rarity": "Uncommon", "costIsX": true,
+      "base": { "name": "旋風斬", "cost": 0, "description": "消耗全部能量,對所有敵人造成 {dmg} 點傷害 X 次。",
+        "steps": [ { "op": "Damage", "target": "AllEnemies", "amount": 5, "repeatIsX": true } ] },
+      "upgrade": { "name": "旋風斬+", "cost": 0, "description": "消耗全部能量,對所有敵人造成 {dmg} 點傷害 X 次。",
+        "steps": [ { "op": "Damage", "target": "AllEnemies", "amount": 8, "repeatIsX": true } ] }
+    },
+    {
+      "id": "uppercut", "type": "Attack", "rarity": "Uncommon",
+      "base": { "name": "上鉤重拳", "cost": 2, "description": "造成 {dmg} 點傷害,施加 1 層虛弱與 1 層易傷。",
+        "steps": [
+          { "op": "Damage", "target": "TargetEnemy", "amount": 13 },
+          { "op": "ApplyStatus", "target": "TargetEnemy", "amount": 1, "status": "Weak" },
+          { "op": "ApplyStatus", "target": "TargetEnemy", "amount": 1, "status": "Vulnerable" } ] },
+      "upgrade": { "name": "上鉤重拳+", "cost": 2, "description": "造成 {dmg} 點傷害,施加 2 層虛弱與 2 層易傷。",
+        "steps": [
+          { "op": "Damage", "target": "TargetEnemy", "amount": 13 },
+          { "op": "ApplyStatus", "target": "TargetEnemy", "amount": 2, "status": "Weak" },
+          { "op": "ApplyStatus", "target": "TargetEnemy", "amount": 2, "status": "Vulnerable" } ] }
+    },
+    {
+      "id": "ghostly_armor", "type": "Skill", "rarity": "Uncommon", "ethereal": true,
+      "base": { "name": "縹緲護甲", "cost": 1, "description": "虛無。獲得 {blk} 點格擋。",
+        "steps": [ { "op": "Block", "target": "Self", "amount": 10 } ] },
+      "upgrade": { "name": "縹緲護甲+", "cost": 1, "description": "虛無。獲得 {blk} 點格擋。",
+        "steps": [ { "op": "Block", "target": "Self", "amount": 13 } ] }
+    },
+    {
+      "id": "burning_pact", "type": "Skill", "rarity": "Uncommon",
+      "base": { "name": "燃燒契約", "cost": 1, "description": "消耗 1 張手牌,抽 2 張牌。",
+        "steps": [
+          { "op": "ChooseExhaustFromHand", "target": "Self", "amount": 1 },
+          { "op": "Draw", "target": "Self", "amount": 2 } ] },
+      "upgrade": { "name": "燃燒契約+", "cost": 1, "description": "消耗 1 張手牌,抽 3 張牌。",
+        "steps": [
+          { "op": "ChooseExhaustFromHand", "target": "Self", "amount": 1 },
+          { "op": "Draw", "target": "Self", "amount": 3 } ] }
+    },
+    {
+      "id": "inflame", "type": "Power", "rarity": "Uncommon",
+      "base": { "name": "燃心", "cost": 1, "description": "獲得 2 點力量。",
+        "steps": [ { "op": "ApplyStatus", "target": "Self", "amount": 2, "status": "Strength" } ] },
+      "upgrade": { "name": "燃心+", "cost": 1, "description": "獲得 3 點力量。",
+        "steps": [ { "op": "ApplyStatus", "target": "Self", "amount": 3, "status": "Strength" } ] }
+    },
+    {
+      "id": "metallicize", "type": "Power", "rarity": "Uncommon",
+      "base": { "name": "金屬化身", "cost": 1, "description": "每回合結束時獲得 3 點格擋。",
+        "steps": [ { "op": "ApplyStatus", "target": "Self", "amount": 3, "status": "Metallicize" } ] },
+      "upgrade": { "name": "金屬化身+", "cost": 1, "description": "每回合結束時獲得 4 點格擋。",
+        "steps": [ { "op": "ApplyStatus", "target": "Self", "amount": 4, "status": "Metallicize" } ] }
+    },
+    {
+      "id": "shockwave", "type": "Skill", "rarity": "Uncommon", "exhausts": true,
+      "base": { "name": "震盪波", "cost": 2, "description": "消耗。對所有敵人施加 3 層虛弱與 3 層易傷。",
+        "steps": [
+          { "op": "ApplyStatus", "target": "AllEnemies", "amount": 3, "status": "Weak" },
+          { "op": "ApplyStatus", "target": "AllEnemies", "amount": 3, "status": "Vulnerable" } ] },
+      "upgrade": { "name": "震盪波+", "cost": 2, "description": "消耗。對所有敵人施加 5 層虛弱與 5 層易傷。",
+        "steps": [
+          { "op": "ApplyStatus", "target": "AllEnemies", "amount": 5, "status": "Weak" },
+          { "op": "ApplyStatus", "target": "AllEnemies", "amount": 5, "status": "Vulnerable" } ] }
+    },
+    {
+      "id": "entrench", "type": "Skill", "rarity": "Uncommon",
+      "base": { "name": "深壕築壘", "cost": 2, "description": "獲得等同你當前格擋值的格擋(翻倍)。",
+        "steps": [ { "op": "Block", "target": "Self", "amountKind": "CurrentBlock" } ] },
+      "upgrade": { "name": "深壕築壘+", "cost": 1, "description": "獲得等同你當前格擋值的格擋(翻倍)。",
+        "steps": [ { "op": "Block", "target": "Self", "amountKind": "CurrentBlock" } ] }
+    },
+    {
+      "id": "battle_trance", "type": "Skill", "rarity": "Uncommon",
+      "base": { "name": "戰鬥恍惚", "cost": 0, "description": "抽 3 張牌,本回合不能再抽牌。",
+        "steps": [
+          { "op": "Draw", "target": "Self", "amount": 3 },
+          { "op": "ApplyStatus", "target": "Self", "amount": 1, "status": "NoDraw" } ] },
+      "upgrade": { "name": "戰鬥恍惚+", "cost": 0, "description": "抽 4 張牌,本回合不能再抽牌。",
+        "steps": [
+          { "op": "Draw", "target": "Self", "amount": 4 },
+          { "op": "ApplyStatus", "target": "Self", "amount": 1, "status": "NoDraw" } ] }
+    },
+    {
+      "id": "demon_form", "type": "Power", "rarity": "Rare",
+      "base": { "name": "惡魔化身", "cost": 3, "description": "每回合開始時獲得 2 點力量。",
+        "steps": [ { "op": "ApplyStatus", "target": "Self", "amount": 2, "status": "DemonForm" } ] },
+      "upgrade": { "name": "惡魔化身+", "cost": 3, "description": "每回合開始時獲得 3 點力量。",
+        "steps": [ { "op": "ApplyStatus", "target": "Self", "amount": 3, "status": "DemonForm" } ] }
+    },
+    {
+      "id": "offering", "type": "Skill", "rarity": "Rare", "exhausts": true,
+      "base": { "name": "瀝血獻祭", "cost": 0, "description": "消耗。失去 6 點生命,獲得 2 點能量,抽 3 張牌。",
+        "steps": [
+          { "op": "LoseHp", "target": "Self", "amount": 6 },
+          { "op": "GainEnergy", "target": "Self", "amount": 2 },
+          { "op": "Draw", "target": "Self", "amount": 3 } ] },
+      "upgrade": { "name": "瀝血獻祭+", "cost": 0, "description": "消耗。失去 6 點生命,獲得 2 點能量,抽 5 張牌。",
+        "steps": [
+          { "op": "LoseHp", "target": "Self", "amount": 6 },
+          { "op": "GainEnergy", "target": "Self", "amount": 2 },
+          { "op": "Draw", "target": "Self", "amount": 5 } ] }
+    },
+    {
+      "id": "bludgeon", "type": "Attack", "rarity": "Rare",
+      "base": { "name": "巨錘粉碎", "cost": 3, "description": "造成 {dmg} 點傷害。",
+        "steps": [ { "op": "Damage", "target": "TargetEnemy", "amount": 32 } ] },
+      "upgrade": { "name": "巨錘粉碎+", "cost": 3, "description": "造成 {dmg} 點傷害。",
+        "steps": [ { "op": "Damage", "target": "TargetEnemy", "amount": 42 } ] }
+    },
+    {
+      "id": "impervious", "type": "Skill", "rarity": "Rare", "exhausts": true,
+      "base": { "name": "固若金湯", "cost": 2, "description": "消耗。獲得 {blk} 點格擋。",
+        "steps": [ { "op": "Block", "target": "Self", "amount": 30 } ] },
+      "upgrade": { "name": "固若金湯+", "cost": 2, "description": "消耗。獲得 {blk} 點格擋。",
+        "steps": [ { "op": "Block", "target": "Self", "amount": 40 } ] }
+    },
+    {
+      "id": "immolate", "type": "Attack", "rarity": "Rare",
+      "base": { "name": "烈焰焚身", "cost": 2, "description": "對所有敵人造成 {dmg} 點傷害,一張燒傷進入棄牌堆。",
+        "steps": [
+          { "op": "Damage", "target": "AllEnemies", "amount": 21 },
+          { "op": "AddCardToPile", "target": "Self", "cardId": "burn", "pile": "Discard" } ] },
+      "upgrade": { "name": "烈焰焚身+", "cost": 2, "description": "對所有敵人造成 {dmg} 點傷害,一張燒傷進入棄牌堆。",
+        "steps": [
+          { "op": "Damage", "target": "AllEnemies", "amount": 28 },
+          { "op": "AddCardToPile", "target": "Self", "cardId": "burn", "pile": "Discard" } ] }
+    },
+    {
+      "id": "burn", "type": "Status", "rarity": "Common", "unplayable": true,
+      "base": { "name": "燒傷", "cost": 0, "description": "不可打出。回合結束時若在手牌,失去 2 點生命。",
+        "turnEndInHandSteps": [ { "op": "LoseHp", "target": "Self", "amount": 2 } ] }
+    },
+    {
+      "id": "dazed", "type": "Status", "rarity": "Common", "unplayable": true, "ethereal": true,
+      "base": { "name": "暈眩", "cost": 0, "description": "不可打出。虛無。" }
+    },
+    {
+      "id": "slimed", "type": "Status", "rarity": "Common", "exhausts": true,
+      "base": { "name": "黏液", "cost": 1, "description": "消耗。" }
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "potions": [
+    { "id": "fire_potion", "name": "火焰藥水", "needsTarget": true,
+      "steps": [ { "op": "Damage", "target": "TargetEnemy", "amount": 20 } ] },
+    { "id": "block_potion", "name": "鐵壁藥水",
+      "steps": [ { "op": "Block", "target": "Self", "amount": 12 } ] },
+    { "id": "strength_potion", "name": "力量藥水",
+      "steps": [ { "op": "ApplyStatus", "target": "Self", "amount": 2, "status": "Strength" } ] }
+  ]
+}

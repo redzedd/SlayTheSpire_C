@@ -1,0 +1,97 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d47d1e164fb4a0e42b8a72078b16aa32, type: 3}
+  m_Name: jaw_worm
+  m_EditorClassIdentifier: STS.Game::STS.Game.DataAssets.EnemyDataAsset
+  id: jaw_worm
+  enemyName: "\u984E\u87F2"
+  hpMin: 40
+  hpMax: 44
+  ai: 1
+  moves:
+  - id: chomp
+    moveName: "\u54AC\u566C"
+    intent: 0
+    weight: 45
+    maxConsecutive: 2
+    steps:
+    - op: 0
+      target: 1
+      amount: 11
+      amountKind: 0
+      secondaryAmount: 0
+      repeat: 0
+      repeatIsX: 0
+      status: 0
+      cardId: 
+      pile: 2
+      customId: 
+  - id: thrash
+    moveName: "\u7529\u5C3E"
+    intent: 0
+    weight: 30
+    maxConsecutive: 2
+    steps:
+    - op: 0
+      target: 1
+      amount: 7
+      amountKind: 0
+      secondaryAmount: 0
+      repeat: 0
+      repeatIsX: 0
+      status: 0
+      cardId: 
+      pile: 2
+      customId: 
+    - op: 1
+      target: 0
+      amount: 5
+      amountKind: 0
+      secondaryAmount: 0
+      repeat: 0
+      repeatIsX: 0
+      status: 0
+      cardId: 
+      pile: 2
+      customId: 
+  - id: bellow
+    moveName: "\u4F4E\u543C\u84C4\u529B"
+    intent: 2
+    weight: 25
+    maxConsecutive: 1
+    steps:
+    - op: 2
+      target: 0
+      amount: 3
+      amountKind: 0
+      secondaryAmount: 0
+      repeat: 0
+      repeatIsX: 0
+      status: 1
+      cardId: 
+      pile: 2
+      customId: 
+    - op: 1
+      target: 0
+      amount: 6
+      amountKind: 0
+      secondaryAmount: 0
+      repeat: 0
+      repeatIsX: 0
+      status: 0
+      cardId: 
+      pile: 2
+      customId: 
+  openingScript:
+  - chomp
+  loopScript: []
+  initialStatuses: []

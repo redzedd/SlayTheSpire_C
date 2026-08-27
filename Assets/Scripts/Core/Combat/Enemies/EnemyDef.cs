@@ -73,11 +73,21 @@ namespace STS.Core.Combat.Enemies
         }
     }
 
-    /// <summary>遭遇定義(M5 的 Run 層使用;引擎目前吃 CombatSetup)。</summary>
+    public enum EncounterPool
+    {
+        Weak,
+        Normal,
+        Elite,
+        Boss
+    }
+
+    /// <summary>遭遇定義(M5 的 Run 層抽池使用;引擎目前吃 CombatSetup)。</summary>
     public sealed class EncounterDef
     {
         public string Id;
         public string[] EnemyIds = System.Array.Empty<string>();
+        public EncounterPool Pool = EncounterPool.Normal;
+        public int Weight = 1;
     }
 
     /// <summary>意圖預覽——UI 顯示用的純查詢結果,傷害含力量/虛弱/易傷即時重算。</summary>

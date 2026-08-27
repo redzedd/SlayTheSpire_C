@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fd0705723b45f2e468ea98be8dbfdc7a, type: 3}
+  m_Name: Balance
+  m_EditorClassIdentifier: STS.Game::STS.Game.DataAssets.BalanceAsset
+  normalGoldMin: 10
+  normalGoldMax: 20
+  eliteGoldMin: 25
+  eliteGoldMax: 35
+  bossGoldMin: 95
+  bossGoldMax: 105
+  cardRewardCommonWeight: 77
+  cardRewardUncommonWeight: 22
+  cardRewardRareWeight: 1
+  potionDropBasePercent: 40
+  potionDropDeltaPercent: 10
+  shopRemoveBaseCost: 75
+  shopRemoveCostIncrement: 25
+  restHealPercent: 30
+  mapColumns: 7
+  mapRows: 15
+  mapPathCount: 6
+  weakPoolFightCount: 3

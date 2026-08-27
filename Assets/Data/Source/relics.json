@@ -1,0 +1,14 @@
+{
+  "relics": [
+    { "id": "burning_blood", "name": "沸騰之血", "rarity": "Starter", "description": "戰鬥勝利後,回復 6 點生命。" },
+    { "id": "anchor", "name": "沉重船錨", "rarity": "Common", "description": "開戰時獲得 10 點格擋。" },
+    { "id": "vajra", "name": "鎏金杵", "rarity": "Common", "description": "開戰時獲得 1 點力量。" },
+    { "id": "bag_of_marbles", "name": "玻璃彈珠袋", "rarity": "Common", "description": "開戰時使所有敵人獲得 1 層易傷。" },
+    { "id": "bag_of_preparation", "name": "整備行囊", "rarity": "Common", "description": "開戰時額外抽 2 張牌。" },
+    { "id": "blood_vial", "name": "血之小瓶", "rarity": "Common", "description": "開戰時回復 2 點生命。" },
+    { "id": "lantern", "name": "提燈", "rarity": "Common", "description": "開戰時獲得 1 點能量。" },
+    { "id": "orichalcum", "name": "山銅殘片", "rarity": "Common", "description": "回合結束時若沒有格擋,獲得 6 點格擋。" },
+    { "id": "nunchaku", "name": "雙節棍", "rarity": "Common", "description": "每打出 10 張攻擊牌,獲得 1 點能量。" },
+    { "id": "bronze_scales", "name": "青銅鱗片", "rarity": "Common", "description": "受到攻擊時,對攻擊者反彈 3 點傷害。" }
+  ]
+}

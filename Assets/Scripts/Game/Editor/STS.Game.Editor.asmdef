@@ -1,0 +1,20 @@
+{
+    "name": "STS.Game.Editor",
+    "rootNamespace": "STS.Game.Editor",
+    "references": [
+        "STS.Core",
+        "STS.Data",
+        "STS.Game"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

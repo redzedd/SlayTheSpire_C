@@ -10,43 +10,32 @@ namespace STS.Core.Relics
     /// </summary>
     internal static class RelicRegistry
     {
-        internal const string BurningBlood = "burning_blood";     // 戰勝後回血
-        internal const string Anchor = "anchor";                  // 開戰獲得格擋
-        internal const string Vajra = "vajra";                    // 開戰獲得力量
-        internal const string BagOfMarbles = "bag_of_marbles";    // 開戰全體敵人易傷
-        internal const string BagOfPreparation = "bag_of_preparation"; // 開戰多抽
-        internal const string BloodVial = "blood_vial";           // 開戰回血
-        internal const string Lantern = "lantern";                // 開戰獲得能量
-        internal const string Orichalcum = "orichalcum";          // 回合末無格擋則補格擋
-        internal const string Nunchaku = "nunchaku";              // 每打出十張攻擊牌回能
-        internal const string BronzeScales = "bronze_scales";     // 受攻擊反傷
-
         internal static void OnHook(CombatEngine engine, RelicInstance relic, in HookContext ctx)
         {
             switch (relic.Id)
             {
-                case BurningBlood:
+                case RelicIds.BurningBlood:
                     if (ctx.Point == HookPoint.CombatVictory)
                     {
                         engine.HealHp(CombatEngine.PlayerIndex, 6);
                     }
                     break;
 
-                case Anchor:
+                case RelicIds.Anchor:
                     if (ctx.Point == HookPoint.CombatStart)
                     {
                         engine.GainBlock(CombatEngine.PlayerIndex, 10);
                     }
                     break;
 
-                case Vajra:
+                case RelicIds.Vajra:
                     if (ctx.Point == HookPoint.CombatStart)
                     {
                         engine.ApplyStatusTo(CombatEngine.PlayerIndex, StatusId.Strength, 1);
                     }
                     break;
 
-                case BagOfMarbles:
+                case RelicIds.BagOfMarbles:
                     if (ctx.Point == HookPoint.CombatStart)
                     {
                         for (int i = 0; i < engine.State.Enemies.Count; i++)
@@ -59,35 +48,35 @@ namespace STS.Core.Relics
                     }
                     break;
 
-                case BagOfPreparation:
+                case RelicIds.BagOfPreparation:
                     if (ctx.Point == HookPoint.CombatStart)
                     {
                         engine.DrawCards(2);
                     }
                     break;
 
-                case BloodVial:
+                case RelicIds.BloodVial:
                     if (ctx.Point == HookPoint.CombatStart)
                     {
                         engine.HealHp(CombatEngine.PlayerIndex, 2);
                     }
                     break;
 
-                case Lantern:
+                case RelicIds.Lantern:
                     if (ctx.Point == HookPoint.CombatStart)
                     {
                         engine.GainEnergy(1);
                     }
                     break;
 
-                case Orichalcum:
+                case RelicIds.Orichalcum:
                     if (ctx.Point == HookPoint.PlayerTurnEnd && engine.State.Player.Block == 0)
                     {
                         engine.GainBlock(CombatEngine.PlayerIndex, 6);
                     }
                     break;
 
-                case Nunchaku:
+                case RelicIds.Nunchaku:
                     if (ctx.Point == HookPoint.CardPlayed
                         && ctx.SourceIndex == CombatEngine.PlayerIndex
                         && ctx.CardType == Cards.CardType.Attack)
@@ -101,7 +90,7 @@ namespace STS.Core.Relics
                     }
                     break;
 
-                case BronzeScales:
+                case RelicIds.BronzeScales:
                     if (ctx.Point == HookPoint.AttackReceived
                         && ctx.TargetIndex == CombatEngine.PlayerIndex
                         && ctx.SourceIndex != CombatEngine.PlayerIndex
