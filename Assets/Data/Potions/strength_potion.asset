@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: STS.Game::STS.Game.DataAssets.PotionDataAsset
   id: strength_potion
   potionName: "\u529B\u91CF\u85E5\u6C34"
+  description: "\u7372\u5F97 2 \u9EDE\u529B\u91CF\u3002"
   needsTarget: 0
   steps:
   - op: 2

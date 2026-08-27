@@ -9,6 +9,7 @@ namespace STS.Game.DataAssets
     {
         [Tooltip("藥水 id")] public string id;
         [Tooltip("顯示名稱")] public string potionName;
+        [Tooltip("效果說明(tooltip 顯示)")] [TextArea] public string description;
         [Tooltip("使用時是否需要指定敵人目標")] public bool needsTarget;
         [Tooltip("效果步驟")] public EffectStepData[] steps = System.Array.Empty<EffectStepData>();
 
@@ -18,6 +19,7 @@ namespace STS.Game.DataAssets
             {
                 Id = id,
                 Name = potionName,
+                Description = description,
                 NeedsTarget = needsTarget,
                 Steps = EffectStepData.ToSteps(steps)
             };

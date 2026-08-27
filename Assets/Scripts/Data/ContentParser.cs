@@ -25,6 +25,7 @@ namespace STS.Data
         public readonly List<RelicDef> Relics = new List<RelicDef>();
         public readonly List<PotionDef> Potions = new List<PotionDef>();
         public readonly List<EncounterDef> Encounters = new List<EncounterDef>();
+        public readonly List<StatusDef> Statuses = new List<StatusDef>();
         public BalanceDef Balance = new BalanceDef();
     }
 
@@ -40,7 +41,7 @@ namespace STS.Data
         };
 
         public static RawContent ParseRaw(string cardsJson, string enemiesJson, string relicsJson,
-            string potionsJson, string encountersJson, string balanceJson)
+            string potionsJson, string encountersJson, string balanceJson, string statusesJson = null)
         {
             return new RawContent
             {
@@ -49,6 +50,9 @@ namespace STS.Data
                 Relics = Deserialize<RelicsFileDto>(relicsJson, "relics.json"),
                 Potions = Deserialize<PotionsFileDto>(potionsJson, "potions.json"),
                 Encounters = Deserialize<EncountersFileDto>(encountersJson, "encounters.json"),
+                Statuses = string.IsNullOrEmpty(statusesJson)
+                    ? new StatusesFileDto()
+                    : Deserialize<StatusesFileDto>(statusesJson, "statuses.json"),
                 Balance = Deserialize<BalanceDto>(balanceJson, "balance.json")
             };
         }
@@ -182,6 +186,7 @@ namespace STS.Data
                 {
                     Id = dto.id,
                     Name = dto.name,
+                    Description = dto.description,
                     NeedsTarget = dto.needsTarget,
                     Steps = steps
                 });
@@ -205,6 +210,25 @@ namespace STS.Data
                     Pool = ParseEnum<EncounterPool>(dto.pool, $"encounters.json:{dto.id}.pool"),
                     Weight = dto.weight
                 });
+            }
+
+            // ---- 狀態文字:每個 StatusId(None 除外)都必須有一筆,否則 tooltip 會開天窗 ----
+            if (raw.Statuses != null && raw.Statuses.statuses.Count > 0)
+            {
+                var seenStatuses = new HashSet<StatusId>();
+                foreach (var dto in raw.Statuses.statuses)
+                {
+                    var id = ParseEnum<StatusId>(dto.id, "statuses.json:id");
+                    Require(id != StatusId.None, "statuses.json:不得為 None");
+                    Require(seenStatuses.Add(id), $"statuses.json:狀態重複——{dto.id}");
+                    Require(!string.IsNullOrEmpty(dto.name), $"statuses.json:{dto.id} 缺名稱");
+                    content.Statuses.Add(new StatusDef { Id = id, Name = dto.name, Description = dto.description });
+                }
+                foreach (StatusId id in Enum.GetValues(typeof(StatusId)))
+                {
+                    if (id == StatusId.None) continue;
+                    Require(seenStatuses.Contains(id), $"statuses.json:缺少狀態文字——{id}(程式有這個狀態,資料沒有)");
+                }
             }
 
             // ---- 平衡(起始配置的參照要驗:壞 id 會讓每一輪都開不了局) ----

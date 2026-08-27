@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using STS.Core.Cards;
 using STS.Core.Combat.Enemies;
+using STS.Core.Combat.Statuses;
 using STS.Core.Potions;
 using STS.Core.Relics;
 
@@ -19,5 +20,7 @@ namespace STS.Core.Content
         BalanceDef Balance { get; }
         RelicDef GetRelicDef(string relicId);
         EncounterDef GetEncounter(string encounterId);
+        /// <summary>狀態的名稱/說明(tooltip 用);查無定義回 null,由呼叫端決定退路。</summary>
+        StatusDef GetStatusDef(StatusId statusId);
     }
 }

@@ -84,8 +84,17 @@ namespace STS.Data.Dto
     {
         public string id;
         public string name;
+        public string description;
         public bool needsTarget;
         public List<StepDto> steps = new List<StepDto>();
+    }
+
+    public sealed class StatusDto
+    {
+        public string id;
+        public string name;
+        /// <summary>可含 {n} 佔位符,顯示時代入層數。</summary>
+        public string description;
     }
 
     public sealed class EncounterDto
@@ -101,6 +110,7 @@ namespace STS.Data.Dto
     public sealed class RelicsFileDto { public List<RelicDto> relics = new List<RelicDto>(); }
     public sealed class PotionsFileDto { public List<PotionDto> potions = new List<PotionDto>(); }
     public sealed class EncountersFileDto { public List<EncounterDto> encounters = new List<EncounterDto>(); }
+    public sealed class StatusesFileDto { public List<StatusDto> statuses = new List<StatusDto>(); }
 
     public sealed class BalanceDto
     {
@@ -142,7 +152,7 @@ namespace STS.Data.Dto
         public int weakPoolFightCount = 3;
     }
 
-    /// <summary>六份 JSON 的原始承接(匯入器直接用它灌 SO)。</summary>
+    /// <summary>七份 JSON 的原始承接(匯入器直接用它灌 SO)。</summary>
     public sealed class RawContent
     {
         public CardsFileDto Cards;
@@ -150,6 +160,7 @@ namespace STS.Data.Dto
         public RelicsFileDto Relics;
         public PotionsFileDto Potions;
         public EncountersFileDto Encounters;
+        public StatusesFileDto Statuses;
         public BalanceDto Balance;
     }
 }

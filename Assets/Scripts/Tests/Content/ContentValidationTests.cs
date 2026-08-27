@@ -110,6 +110,39 @@ namespace STS.Content.Tests
         }
 
         [Test]
+        public void 狀態文字_每個程式狀態都有一筆_且能代入層數()
+        {
+            foreach (Core.Combat.Statuses.StatusId id in System.Enum.GetValues(typeof(Core.Combat.Statuses.StatusId)))
+            {
+                if (id == Core.Combat.Statuses.StatusId.None) continue;
+                var def = _db.GetStatusDef(id);
+                Assert.IsNotNull(def, $"狀態 {id} 沒有對應文字(tooltip 會開天窗)");
+                Assert.IsNotEmpty(def.Name, $"狀態 {id} 缺名稱");
+                Assert.IsNotEmpty(def.Description, $"狀態 {id} 缺說明");
+                // {n} 一定要被代掉,不能讓佔位符出現在玩家眼前
+                Assert.IsFalse(def.FormatDescription(3).Contains("{n}"), $"狀態 {id} 的 {{n}} 未被代入");
+            }
+        }
+
+        [Test]
+        public void 易傷與力量_說明文字帶出關鍵規則()
+        {
+            var vulnerable = _db.GetStatusDef(Core.Combat.Statuses.StatusId.Vulnerable);
+            StringAssert.Contains("50%", vulnerable.Description);
+            var strength = _db.GetStatusDef(Core.Combat.Statuses.StatusId.Strength);
+            StringAssert.Contains("3", strength.FormatDescription(3));
+        }
+
+        [Test]
+        public void 藥水_都有效果說明()
+        {
+            foreach (var pair in _db.AllPotions)
+            {
+                Assert.IsNotEmpty(pair.Value.Description, $"藥水 {pair.Key} 缺說明(tooltip 會空白)");
+            }
+        }
+
+        [Test]
         public void 壞資料_未知欄位_被嚴格模式擋下()
         {
             string bad = "{ \"cards\": [ { \"id\": \"x\", \"typo_field\": 1, \"base\": { \"name\": \"x\", \"cost\": 0, \"steps\": [] } } ] }";
@@ -150,7 +183,8 @@ namespace STS.Content.Tests
                 File.ReadAllText(Path.Combine(Dir, "relics.json")),
                 File.ReadAllText(Path.Combine(Dir, "potions.json")),
                 File.ReadAllText(Path.Combine(Dir, "encounters.json")),
-                File.ReadAllText(Path.Combine(Dir, "balance.json")));
+                File.ReadAllText(Path.Combine(Dir, "balance.json")),
+                File.ReadAllText(Path.Combine(Dir, "statuses.json")));
             return ContentParser.BuildDefs(raw);
         }
     }

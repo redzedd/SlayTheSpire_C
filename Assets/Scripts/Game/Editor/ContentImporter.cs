@@ -29,7 +29,8 @@ namespace STS.Game.Editor
                     ReadSource("relics.json"),
                     ReadSource("potions.json"),
                     ReadSource("encounters.json"),
-                    ReadSource("balance.json"));
+                    ReadSource("balance.json"),
+                    ReadSource("statuses.json"));
                 ContentParser.BuildDefs(raw);   // 全量驗證閘門:過不了就中止,不碰任何資產
 
                 // 放 Resources:GameController 執行期自癒載入的錨點
@@ -39,6 +40,7 @@ namespace STS.Game.Editor
                 db.relics.Clear();
                 db.potions.Clear();
                 db.encounters.Clear();
+                db.statuses.Clear();
 
                 foreach (var dto in raw.Cards.cards)
                 {
@@ -69,6 +71,7 @@ namespace STS.Game.Editor
                     var asset = LoadOrCreate<PotionDataAsset>($"Assets/Data/Potions/{dto.id}.asset");
                     asset.id = dto.id;
                     asset.potionName = dto.name;
+                    asset.description = dto.description;
                     asset.needsTarget = dto.needsTarget;
                     asset.steps = ToStepData(dto.steps);
                     EditorUtility.SetDirty(asset);
@@ -85,6 +88,16 @@ namespace STS.Game.Editor
                     db.encounters.Add(asset);
                 }
 
+                foreach (var dto in raw.Statuses.statuses)
+                {
+                    var asset = LoadOrCreate<StatusDataAsset>($"Assets/Data/Statuses/{dto.id}.asset");
+                    asset.id = ParseEnum<Core.Combat.Statuses.StatusId>(dto.id);
+                    asset.statusName = dto.name;
+                    asset.description = dto.description;
+                    EditorUtility.SetDirty(asset);
+                    db.statuses.Add(asset);
+                }
+
                 var balanceAsset = LoadOrCreate<BalanceAsset>("Assets/Data/Balance.asset");
                 ApplyBalance(balanceAsset, raw.Balance);
                 EditorUtility.SetDirty(balanceAsset);
@@ -92,7 +105,7 @@ namespace STS.Game.Editor
 
                 EditorUtility.SetDirty(db);
                 AssetDatabase.SaveAssets();
-                Debug.Log($"STS 匯入完成:卡 {raw.Cards.cards.Count}、敵 {raw.Enemies.enemies.Count}、遺物 {raw.Relics.relics.Count}、藥水 {raw.Potions.potions.Count}、遭遇 {raw.Encounters.encounters.Count}。");
+                Debug.Log($"STS 匯入完成:卡 {raw.Cards.cards.Count}、敵 {raw.Enemies.enemies.Count}、遺物 {raw.Relics.relics.Count}、藥水 {raw.Potions.potions.Count}、遭遇 {raw.Encounters.encounters.Count}、狀態文字 {raw.Statuses.statuses.Count}。");
             }
             catch (ContentValidationException e)
             {

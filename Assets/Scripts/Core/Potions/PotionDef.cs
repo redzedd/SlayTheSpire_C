@@ -7,6 +7,8 @@ namespace STS.Core.Potions
     {
         public string Id;
         public string Name;
+        /// <summary>效果說明(tooltip 顯示)。</summary>
+        public string Description;
         public EffectStep[] Steps = System.Array.Empty<EffectStep>();
         public bool NeedsTarget;
     }

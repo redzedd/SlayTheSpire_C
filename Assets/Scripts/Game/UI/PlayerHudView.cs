@@ -16,7 +16,9 @@ namespace STS.Game.UI
 
         public static PlayerHudView Build(Transform parent)
         {
-            var root = UiKit.CreateRect("玩家面板", parent);
+            // 面板底板同時是 hover 感應區(透明 Image 仍會吃射線),讓玩家能指自己看狀態
+            var background = UiKit.CreatePanel("玩家面板", parent, new Color(0.1f, 0.1f, 0.14f, 0.55f));
+            var root = background.rectTransform;
             UiKit.Place(root, new Vector2(230f, 260f), new Vector2(420f, 200f), new Vector2(0f, 0f));
             var view = root.gameObject.AddComponent<PlayerHudView>();
 

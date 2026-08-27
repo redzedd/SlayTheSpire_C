@@ -16,6 +16,7 @@ namespace STS.Game.DataAssets
         [Tooltip("全部遺物資產")] public List<RelicDataAsset> relics = new List<RelicDataAsset>();
         [Tooltip("全部藥水資產")] public List<PotionDataAsset> potions = new List<PotionDataAsset>();
         [Tooltip("全部遭遇資產")] public List<EncounterAsset> encounters = new List<EncounterAsset>();
+        [Tooltip("狀態文字資產(tooltip 用)")] public List<StatusDataAsset> statuses = new List<StatusDataAsset>();
         [Tooltip("平衡參數資產")] public BalanceAsset balance;
 
         /// <summary>轉出引擎消費的內容庫。每個 Run 開始時呼叫一次即可。</summary>
@@ -41,6 +42,10 @@ namespace STS.Game.DataAssets
             foreach (var encounter in encounters)
             {
                 if (encounter != null) content.Encounters.Add(encounter.ToDef());
+            }
+            foreach (var status in statuses)
+            {
+                if (status != null) content.Statuses.Add(status.ToDef());
             }
             if (balance != null)
             {

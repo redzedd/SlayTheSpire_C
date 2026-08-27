@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using STS.Core.Cards;
 using STS.Core.Combat.Enemies;
+using STS.Core.Combat.Statuses;
 using STS.Core.Content;
 using STS.Core.Potions;
 using STS.Core.Relics;
@@ -18,6 +19,7 @@ namespace STS.Data
         private readonly Dictionary<string, PotionDef> _potions = new Dictionary<string, PotionDef>();
         private readonly Dictionary<string, RelicDef> _relics = new Dictionary<string, RelicDef>();
         private readonly Dictionary<string, EncounterDef> _encounters = new Dictionary<string, EncounterDef>();
+        private readonly Dictionary<StatusId, StatusDef> _statuses = new Dictionary<StatusId, StatusDef>();
 
         public BalanceDef Balance { get; private set; } = new BalanceDef();
         public IReadOnlyDictionary<string, CardDef> AllCards => _cards;
@@ -33,6 +35,12 @@ namespace STS.Data
 
         public RelicDef GetRelicDef(string relicId) => GetRelic(relicId);
 
+        /// <summary>查無定義回 null——tooltip 退回顯示縮寫,不因缺文字而炸掉戰鬥。</summary>
+        public StatusDef GetStatusDef(StatusId statusId)
+        {
+            return _statuses.TryGetValue(statusId, out var def) ? def : null;
+        }
+
         public static ContentDb From(ParsedContent content)
         {
             var db = new ContentDb();
@@ -41,6 +49,7 @@ namespace STS.Data
             foreach (var potion in content.Potions) db._potions.Add(potion.Id, potion);
             foreach (var relic in content.Relics) db._relics.Add(relic.Id, relic);
             foreach (var encounter in content.Encounters) db._encounters.Add(encounter.Id, encounter);
+            foreach (var status in content.Statuses) db._statuses[status.Id] = status;
             db.Balance = content.Balance;
             return db;
         }

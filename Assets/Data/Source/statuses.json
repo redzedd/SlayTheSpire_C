@@ -1,0 +1,30 @@
+{
+  "statuses": [
+    { "id": "Strength", "name": "力量",
+      "description": "每次攻擊造成的傷害增加 {n} 點。" },
+    { "id": "Dexterity", "name": "敏捷",
+      "description": "每次獲得的格擋增加 {n} 點。" },
+    { "id": "Weak", "name": "虛弱",
+      "description": "造成的攻擊傷害減少 25%。剩餘 {n} 回合,每回合結束遞減 1 層。" },
+    { "id": "Vulnerable", "name": "易傷",
+      "description": "受到的攻擊傷害增加 50%。剩餘 {n} 回合,每回合結束遞減 1 層。" },
+    { "id": "Frail", "name": "脆弱",
+      "description": "獲得的格擋減少 25%。剩餘 {n} 回合,每回合結束遞減 1 層。" },
+    { "id": "NoDraw", "name": "禁抽",
+      "description": "本回合無法再抽牌,回合結束時解除。" },
+    { "id": "Ritual", "name": "儀式",
+      "description": "每回合結束時獲得 {n} 點力量。" },
+    { "id": "Enrage", "name": "激怒",
+      "description": "每當玩家打出一張技能牌,獲得 {n} 點力量。" },
+    { "id": "Curl", "name": "捲曲",
+      "description": "首次受到攻擊而掉血時獲得 {n} 點格擋,隨後消失。" },
+    { "id": "Metallicize", "name": "金屬化",
+      "description": "每回合結束時獲得 {n} 點格擋(能活過對手的回合)。" },
+    { "id": "DemonForm", "name": "惡魔化",
+      "description": "每回合開始時獲得 {n} 點力量。" },
+    { "id": "SharpHide", "name": "尖刺皮",
+      "description": "每當玩家打出一張攻擊牌,對其造成 {n} 點傷害。" },
+    { "id": "LoseStrengthAtTurnEnd", "name": "力量流失",
+      "description": "本回合結束時失去 {n} 點力量。" }
+  ]
+}

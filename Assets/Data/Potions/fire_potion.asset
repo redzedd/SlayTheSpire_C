@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: STS.Game::STS.Game.DataAssets.PotionDataAsset
   id: fire_potion
   potionName: "\u706B\u7130\u85E5\u6C34"
+  description: "\u5C0D\u4E00\u540D\u6575\u4EBA\u9020\u6210 20 \u9EDE\u50B7\u5BB3\u3002"
   needsTarget: 1
   steps:
   - op: 0

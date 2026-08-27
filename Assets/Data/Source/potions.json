@@ -1,10 +1,13 @@
 {
   "potions": [
     { "id": "fire_potion", "name": "火焰藥水", "needsTarget": true,
+      "description": "對一名敵人造成 20 點傷害。",
       "steps": [ { "op": "Damage", "target": "TargetEnemy", "amount": 20 } ] },
     { "id": "block_potion", "name": "鐵壁藥水",
+      "description": "獲得 12 點格擋。",
       "steps": [ { "op": "Block", "target": "Self", "amount": 12 } ] },
     { "id": "strength_potion", "name": "力量藥水",
+      "description": "獲得 2 點力量。",
       "steps": [ { "op": "ApplyStatus", "target": "Self", "amount": 2, "status": "Strength" } ] }
   ]
 }

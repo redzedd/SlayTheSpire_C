@@ -30,6 +30,7 @@ namespace STS.Game.UI
         private TargetArrowView _arrow;
         private ChoicePanelView _choicePanel;
         private PileListOverlay _pileOverlay;
+        private TooltipView _tooltip;
         private Button _endTurnButton;
         private TextMeshProUGUI _drawPileLabel;
         private TextMeshProUGUI _discardPileLabel;
@@ -77,9 +78,9 @@ namespace STS.Game.UI
             controller._exhaustPileLabel = controller.BuildPileButton(root, "消耗堆", new Vector2(-140f, 140f),
                 new Vector2(1f, 0f), () => controller.ShowPile("消耗堆", engine.State.ExhaustPile, false));
 
-            // 藥水列(上方置左)
+            // 藥水列(遺物列下方一排)
             controller._potionBar = UiKit.CreateRect("藥水列", root);
-            UiKit.Place(controller._potionBar, new Vector2(240f, -50f), new Vector2(460f, 60f), new Vector2(0f, 1f));
+            UiKit.Place(controller._potionBar, new Vector2(240f, -130f), new Vector2(460f, 60f), new Vector2(0f, 1f));
 
             // 提示文字(出牌失敗原因)
             controller._hintText = UiKit.CreateText("提示", root, "", 30f, new Color(1f, 0.55f, 0.45f));
@@ -96,6 +97,18 @@ namespace STS.Game.UI
             controller._arrow = TargetArrowView.Build(controller._overlayRoot);
             controller._choicePanel = ChoicePanelView.Build(controller._overlayRoot, controller);
             controller._pileOverlay = PileListOverlay.Build(controller._overlayRoot);
+            controller._tooltip = TooltipView.Build(controller._overlayRoot);
+
+            // 指到敵人/自己看狀態說明;遺物列與藥水鈕的提示各自在建構處掛上
+            for (int i = 0; i < controller._enemyViews.Count; i++)
+            {
+                int index = i;
+                TooltipTrigger.Attach(controller._enemyViews[i].gameObject, controller._tooltip,
+                    () => TooltipText.敵人(game.Db, engine, index));
+            }
+            TooltipTrigger.Attach(controller._hud.gameObject, controller._tooltip,
+                () => TooltipText.玩家(game.Db, engine));
+            RelicBarView.Build(root, game.Db, engine.Relics, controller._tooltip);
 
             controller.RefreshAll();
             controller.StartPlayback();   // 消化開戰事件(洗牌/抽牌/意圖)
@@ -397,6 +410,7 @@ namespace STS.Game.UI
                     new Color(0.35f, 0.25f, 0.5f), () => OnPotionClicked(captured));
                 UiKit.Place((RectTransform)button.transform, new Vector2(slot * 150f + 75f, 0f), new Vector2(140f, 52f),
                     new Vector2(0f, 0.5f));
+                TooltipTrigger.Attach(button.gameObject, _tooltip, () => TooltipText.藥水(def));
             }
         }
 
