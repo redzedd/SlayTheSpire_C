@@ -3,7 +3,10 @@
     "rootNamespace": "STS.Game",
     "references": [
         "STS.Core",
-        "STS.Data"
+        "STS.Data",
+        "Unity.InputSystem",
+        "Unity.TextMeshPro",
+        "DOTween.Modules"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

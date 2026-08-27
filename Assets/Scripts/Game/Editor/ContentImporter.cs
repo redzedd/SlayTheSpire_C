@@ -32,7 +32,8 @@ namespace STS.Game.Editor
                     ReadSource("balance.json"));
                 ContentParser.BuildDefs(raw);   // 全量驗證閘門:過不了就中止,不碰任何資產
 
-                var db = LoadOrCreate<GameDatabaseAsset>("Assets/Data/GameDatabase.asset");
+                // 放 Resources:GameController 執行期自癒載入的錨點
+                var db = LoadOrCreate<GameDatabaseAsset>("Assets/Data/Resources/GameDatabase.asset");
                 db.cards.Clear();
                 db.enemies.Clear();
                 db.relics.Clear();

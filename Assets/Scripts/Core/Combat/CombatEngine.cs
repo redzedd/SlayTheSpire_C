@@ -292,6 +292,12 @@ namespace STS.Core.Combat
             }
         }
 
+        /// <summary>純查詢:取卡牌實體對應的定義(UI 顯示用)。</summary>
+        public CardDef GetCardDef(CardInstance card)
+        {
+            return _db.GetCard(card.ResolvedCardId);
+        }
+
         /// <summary>意圖預覽(純查詢):傷害含雙方力量/虛弱/易傷即時重算。</summary>
         public IntentInfo GetIntentPreview(int enemyIndex)
         {

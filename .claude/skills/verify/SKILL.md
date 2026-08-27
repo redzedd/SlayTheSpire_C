@@ -87,14 +87,16 @@ internal class CommandScript : IRunCommand
 }
 ```
 
-回收結果:輪詢 `Temp/STS_TestResult.txt`(bash,約 2 秒間隔,30 秒上限),必須看到 `Passed | pass=N fail=0`;失敗時讀 `Temp/STS_TestFails.txt` 或 console 掃 `STS_TEST_FAIL`。基線:2026-08-03 M3 後為 77 tests(引擎 64+內容 13)/約 1.1s。改到 STS.Core 或 STS.Data 或 `Assets/Data/Source/*.json` 都必跑;改了 JSON 記得先跑匯入器選單 `STS/重新匯入資料(JSON→SO)`。編輯器重啟會丟掉進行中的測試回呼——結果檔 30 秒不出現就重新啟動測試,不要空等。
+回收結果:輪詢 `Temp/STS_TestResult.txt`(bash,約 2 秒間隔,30 秒上限),必須看到 `Passed | pass=N fail=0`;失敗時讀 `Temp/STS_TestFails.txt` 或 console 掃 `STS_TEST_FAIL`。基線:2026-08-27 M4 後為 82 tests(引擎 69+內容 13)/約 1.1s。改到 STS.Core 或 STS.Data 或 `Assets/Data/Source/*.json` 都必跑;改了 JSON 記得先跑匯入器選單 `STS/重新匯入資料(JSON→SO)`。兩個已付代價的回呼陷阱:(a) 編輯器重啟會丟掉進行中的測試回呼;(b) **同一個 RunCommand 裡 Refresh+啟動測試,domain reload 會把回呼吃掉**——正確做法:先 Refresh 等編譯完,再用「另一個」RunCommand 單獨啟動測試。結果檔 30 秒不出現就重新啟動測試,不要空等。
 
-## 管道 3:play 煙霧(行為/場景變更後跑)
+## 管道 3:play 煙霧(行為/場景變更後跑;M4 起有具體流程)
 
-1. `Unity_ManageEditor` Action=Play(WaitForCompletion=true)。
-2. 操作受影響流程(目前專案無 gameplay,先只驗「進得去」;之後有戰鬥場景要真的出一張牌)。
-3. `Unity_ReadConsole`(Types=["Error"])掃 Exception/Error → 必須零筆。
-4. `Unity_ManageEditor` Action=Stop。**不要留在 play mode 收工。**
+1. 確認 `Assets/Scenes/Main.unity` 是 active scene(不確定就 RunCommand 查 `SceneManager.GetActiveScene().path`)。
+2. `Unity_ManageEditor` Action=Play(WaitForCompletion=true),然後 **shell sleep 3-4 秒**等開場播放結束(播放中輸入鎖定,煙霧會回「輸入鎖定中」)。
+3. RunCommand:`Object.FindFirstObjectByType<STS.Game.GameController>()` → `game.Combat.煙霧_出第一張可出的牌()`——走與拖曳出牌相同的指令路徑,回傳字串要見「已出牌」。
+4. `Unity_ReadConsole`(Types=["Error"])掃 Exception → 必須零筆。
+5. 視覺留證(可選):RunCommand `ScreenCapture.CaptureScreenshot("Temp/xxx.png")`(Overlay UI 不入相機,Camera_Capture 照不到,必須用 ScreenCapture)。
+6. `Unity_ManageEditor` Action=Stop。**不要留在 play mode 收工。**
 
 ## 管道 4:效能哨兵(之後有戰鬥場景才啟用)
 

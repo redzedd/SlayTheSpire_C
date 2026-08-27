@@ -4,7 +4,9 @@
     "references": [
         "STS.Core",
         "STS.Data",
-        "STS.Game"
+        "STS.Game",
+        "Unity.InputSystem",
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [
         "Editor"

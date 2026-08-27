@@ -30,6 +30,7 @@ namespace STS.Core.Tests
             return new CardDef
             {
                 Id = "strike", Name = "打擊", Type = CardType.Attack, Rarity = CardRarity.Starter, Cost = 1,
+                DescriptionTemplate = "造成 {dmg} 點傷害。",
                 Steps = new[] { new EffectStep(EffectOp.Damage, EffectTarget.TargetEnemy, 6) }
             };
         }
@@ -39,6 +40,7 @@ namespace STS.Core.Tests
             return new CardDef
             {
                 Id = "defend", Name = "防禦", Type = CardType.Skill, Rarity = CardRarity.Starter, Cost = 1,
+                DescriptionTemplate = "獲得 {blk} 點格擋。",
                 Steps = new[] { new EffectStep(EffectOp.Block, EffectTarget.Self, 5) }
             };
         }
@@ -48,6 +50,7 @@ namespace STS.Core.Tests
             return new CardDef
             {
                 Id = "bash", Name = "痛擊", Type = CardType.Attack, Rarity = CardRarity.Starter, Cost = 2,
+                DescriptionTemplate = "造成 {dmg} 點傷害,施加 2 層易傷。",
                 Steps = new[]
                 {
                     new EffectStep(EffectOp.Damage, EffectTarget.TargetEnemy, 8),
