@@ -11,7 +11,7 @@ namespace STS.Data
     /// 字典版 IContentDb 實作。來源可以是 JSON 解析結果(測試/匯入器)或 SO 轉出的 def(執行期),
     /// 引擎兩邊看到的是同一個介面。查無 id 直接拋錯附 id,不回 null。
     /// </summary>
-    public sealed class ContentDb : IContentDb
+    public sealed class ContentDb : IContentCatalog
     {
         private readonly Dictionary<string, CardDef> _cards = new Dictionary<string, CardDef>();
         private readonly Dictionary<string, EnemyDef> _enemies = new Dictionary<string, EnemyDef>();
@@ -24,6 +24,14 @@ namespace STS.Data
         public IReadOnlyDictionary<string, RelicDef> AllRelics => _relics;
         public IReadOnlyDictionary<string, PotionDef> AllPotions => _potions;
         public IReadOnlyDictionary<string, EncounterDef> AllEncounters => _encounters;
+
+        // IContentCatalog:Run 層的全目錄視野
+        public IEnumerable<CardDef> AllCardDefs => _cards.Values;
+        public IEnumerable<RelicDef> AllRelicDefs => _relics.Values;
+        public IEnumerable<PotionDef> AllPotionDefs => _potions.Values;
+        public IEnumerable<EncounterDef> AllEncounterDefs => _encounters.Values;
+
+        public RelicDef GetRelicDef(string relicId) => GetRelic(relicId);
 
         public static ContentDb From(ParsedContent content)
         {

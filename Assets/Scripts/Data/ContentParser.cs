@@ -207,10 +207,35 @@ namespace STS.Data
                 });
             }
 
-            // ---- 平衡 ----
+            // ---- 平衡(起始配置的參照要驗:壞 id 會讓每一輪都開不了局) ----
             var b = raw.Balance;
+            foreach (var cardId in b.startingDeckCardIds)
+            {
+                Require(cardIds.Contains(cardId), $"balance.json:起始卡組參照不存在的卡——{cardId}");
+            }
+            foreach (var relicId in b.startingRelicIds)
+            {
+                Require(relicIds.Contains(relicId), $"balance.json:起始遺物參照不存在——{relicId}");
+            }
             content.Balance = new BalanceDef
             {
+                StartHp = b.startHp, StartGold = b.startGold,
+                StartingDeckCardIds = b.startingDeckCardIds.ToArray(),
+                StartingRelicIds = b.startingRelicIds.ToArray(),
+                StartingPotionIds = b.startingPotionIds.ToArray(),
+                ShopCardCommonCost = b.shopCardCommonCost,
+                ShopCardUncommonCost = b.shopCardUncommonCost,
+                ShopCardRareCost = b.shopCardRareCost,
+                ShopRelicCost = b.shopRelicCost,
+                ShopPotionCost = b.shopPotionCost,
+                MapCombatWeight = b.mapCombatWeight,
+                MapEliteWeight = b.mapEliteWeight,
+                MapRestWeight = b.mapRestWeight,
+                MapShopWeight = b.mapShopWeight,
+                MapTreasureWeight = b.mapTreasureWeight,
+                MapMinRowForElite = b.mapMinRowForElite,
+                MapMinRowForRest = b.mapMinRowForRest,
+                MapNoRestRow = b.mapNoRestRow,
                 NormalGoldMin = b.normalGoldMin, NormalGoldMax = b.normalGoldMax,
                 EliteGoldMin = b.eliteGoldMin, EliteGoldMax = b.eliteGoldMax,
                 BossGoldMin = b.bossGoldMin, BossGoldMax = b.bossGoldMax,

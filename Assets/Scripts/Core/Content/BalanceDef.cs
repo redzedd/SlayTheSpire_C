@@ -6,6 +6,13 @@ namespace STS.Core.Content
     /// </summary>
     public sealed class BalanceDef
     {
+        // 起始配置
+        public int StartHp = 80;
+        public int StartGold = 99;
+        public string[] StartingDeckCardIds = System.Array.Empty<string>();
+        public string[] StartingRelicIds = System.Array.Empty<string>();
+        public string[] StartingPotionIds = System.Array.Empty<string>();
+
         // 戰後金幣
         public int NormalGoldMin = 10;
         public int NormalGoldMax = 20;
@@ -26,14 +33,29 @@ namespace STS.Core.Content
         // 商店
         public int ShopRemoveBaseCost = 75;
         public int ShopRemoveCostIncrement = 25;
+        public int ShopCardCommonCost = 50;
+        public int ShopCardUncommonCost = 75;
+        public int ShopCardRareCost = 150;
+        public int ShopRelicCost = 150;
+        public int ShopPotionCost = 50;
 
         // 燈火
         public int RestHealPercent = 30;
 
-        // 地圖
+        // 地圖結構
         public int MapColumns = 7;
         public int MapRows = 15;
         public int MapPathCount = 6;
+
+        // 地圖節點型別權重(固定列以外)與限制
+        public int MapCombatWeight = 60;
+        public int MapEliteWeight = 16;
+        public int MapRestWeight = 12;
+        public int MapShopWeight = 7;
+        public int MapTreasureWeight = 5;
+        public int MapMinRowForElite = 5;
+        public int MapMinRowForRest = 5;
+        public int MapNoRestRow = 13;
 
         // 遭遇池
         public int WeakPoolFightCount = 3;

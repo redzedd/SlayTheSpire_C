@@ -7,6 +7,30 @@ namespace STS.Game.DataAssets
     [CreateAssetMenu(menuName = "STS/平衡參數", fileName = "Balance")]
     public sealed class BalanceAsset : ScriptableObject
     {
+        [Header("起始配置")]
+        [Tooltip("起始生命")] public int startHp = 80;
+        [Tooltip("起始金幣")] public int startGold = 99;
+        [Tooltip("起始卡組(卡 id 列表)")] public string[] startingDeckCardIds = System.Array.Empty<string>();
+        [Tooltip("起始遺物 id 列表")] public string[] startingRelicIds = System.Array.Empty<string>();
+        [Tooltip("起始藥水 id 列表")] public string[] startingPotionIds = System.Array.Empty<string>();
+
+        [Header("商店定價")]
+        [Tooltip("普通卡售價")] public int shopCardCommonCost = 50;
+        [Tooltip("罕見卡售價")] public int shopCardUncommonCost = 75;
+        [Tooltip("稀有卡售價")] public int shopCardRareCost = 150;
+        [Tooltip("遺物售價")] public int shopRelicCost = 150;
+        [Tooltip("藥水售價")] public int shopPotionCost = 50;
+
+        [Header("地圖節點型別權重與限制")]
+        [Tooltip("戰鬥權重")] public int mapCombatWeight = 60;
+        [Tooltip("精英權重")] public int mapEliteWeight = 16;
+        [Tooltip("燈火權重")] public int mapRestWeight = 12;
+        [Tooltip("商店權重")] public int mapShopWeight = 7;
+        [Tooltip("寶箱權重")] public int mapTreasureWeight = 5;
+        [Tooltip("精英最早出現列")] public int mapMinRowForElite = 5;
+        [Tooltip("燈火最早出現列")] public int mapMinRowForRest = 5;
+        [Tooltip("不放燈火的列(Boss 前一列)")] public int mapNoRestRow = 13;
+
         [Header("戰後金幣")]
         [Tooltip("普通戰金幣下限")] public int normalGoldMin = 10;
         [Tooltip("普通戰金幣上限")] public int normalGoldMax = 20;
@@ -43,6 +67,23 @@ namespace STS.Game.DataAssets
         {
             return new BalanceDef
             {
+                StartHp = startHp, StartGold = startGold,
+                StartingDeckCardIds = startingDeckCardIds,
+                StartingRelicIds = startingRelicIds,
+                StartingPotionIds = startingPotionIds,
+                ShopCardCommonCost = shopCardCommonCost,
+                ShopCardUncommonCost = shopCardUncommonCost,
+                ShopCardRareCost = shopCardRareCost,
+                ShopRelicCost = shopRelicCost,
+                ShopPotionCost = shopPotionCost,
+                MapCombatWeight = mapCombatWeight,
+                MapEliteWeight = mapEliteWeight,
+                MapRestWeight = mapRestWeight,
+                MapShopWeight = mapShopWeight,
+                MapTreasureWeight = mapTreasureWeight,
+                MapMinRowForElite = mapMinRowForElite,
+                MapMinRowForRest = mapMinRowForRest,
+                MapNoRestRow = mapNoRestRow,
                 NormalGoldMin = normalGoldMin, NormalGoldMax = normalGoldMax,
                 EliteGoldMin = eliteGoldMin, EliteGoldMax = eliteGoldMax,
                 BossGoldMin = bossGoldMin, BossGoldMax = bossGoldMax,

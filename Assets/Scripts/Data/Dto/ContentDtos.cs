@@ -104,6 +104,24 @@ namespace STS.Data.Dto
 
     public sealed class BalanceDto
     {
+        public int startHp = 80;
+        public int startGold = 99;
+        public List<string> startingDeckCardIds = new List<string>();
+        public List<string> startingRelicIds = new List<string>();
+        public List<string> startingPotionIds = new List<string>();
+        public int shopCardCommonCost = 50;
+        public int shopCardUncommonCost = 75;
+        public int shopCardRareCost = 150;
+        public int shopRelicCost = 150;
+        public int shopPotionCost = 50;
+        public int mapCombatWeight = 60;
+        public int mapEliteWeight = 16;
+        public int mapRestWeight = 12;
+        public int mapShopWeight = 7;
+        public int mapTreasureWeight = 5;
+        public int mapMinRowForElite = 5;
+        public int mapMinRowForRest = 5;
+        public int mapNoRestRow = 13;
         public int normalGoldMin = 10;
         public int normalGoldMax = 20;
         public int eliteGoldMin = 25;

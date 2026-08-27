@@ -203,6 +203,24 @@ namespace STS.Game.Editor
 
         private static void ApplyBalance(BalanceAsset asset, BalanceDto dto)
         {
+            asset.startHp = dto.startHp;
+            asset.startGold = dto.startGold;
+            asset.startingDeckCardIds = dto.startingDeckCardIds.ToArray();
+            asset.startingRelicIds = dto.startingRelicIds.ToArray();
+            asset.startingPotionIds = dto.startingPotionIds.ToArray();
+            asset.shopCardCommonCost = dto.shopCardCommonCost;
+            asset.shopCardUncommonCost = dto.shopCardUncommonCost;
+            asset.shopCardRareCost = dto.shopCardRareCost;
+            asset.shopRelicCost = dto.shopRelicCost;
+            asset.shopPotionCost = dto.shopPotionCost;
+            asset.mapCombatWeight = dto.mapCombatWeight;
+            asset.mapEliteWeight = dto.mapEliteWeight;
+            asset.mapRestWeight = dto.mapRestWeight;
+            asset.mapShopWeight = dto.mapShopWeight;
+            asset.mapTreasureWeight = dto.mapTreasureWeight;
+            asset.mapMinRowForElite = dto.mapMinRowForElite;
+            asset.mapMinRowForRest = dto.mapMinRowForRest;
+            asset.mapNoRestRow = dto.mapNoRestRow;
             asset.normalGoldMin = dto.normalGoldMin;
             asset.normalGoldMax = dto.normalGoldMax;
             asset.eliteGoldMin = dto.eliteGoldMin;
