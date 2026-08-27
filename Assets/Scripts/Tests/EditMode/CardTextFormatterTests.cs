@@ -62,6 +62,55 @@ namespace STS.Core.Tests
             Assert.AreEqual("造成 20 點傷害。", CardTextFormatter.FormatDescription(def, 玩家(strength: 2)));
         }
 
+        private static CombatantState 敵人(bool vulnerable = false)
+        {
+            var enemy = new CombatantState { Hp = 50, MaxHp = 50 };
+            if (vulnerable) enemy.ModifyStatus(StatusId.Vulnerable, 2);
+            return enemy;
+        }
+
+        [Test]
+        public void 目標易傷_描述顯示放大後傷害()
+        {
+            // 6 × 1.5 = 9;卡面數字必須與實際打出去的一致,否則玩家會以為易傷沒作用
+            Assert.AreEqual("造成 9 點傷害。",
+                CardTextFormatter.FormatDescription(打擊(), 玩家(), 敵人(vulnerable: true)));
+        }
+
+        [Test]
+        public void 目標無易傷或未指定目標_維持基礎值()
+        {
+            Assert.AreEqual("造成 6 點傷害。",
+                CardTextFormatter.FormatDescription(打擊(), 玩家(), 敵人()));
+            Assert.AreEqual("造成 6 點傷害。",
+                CardTextFormatter.FormatDescription(打擊(), 玩家(), null));
+        }
+
+        [Test]
+        public void 力量與目標易傷_先加後乘且只捨去一次()
+        {
+            // (6+3) × 1.5 = 13.5 → 13
+            Assert.AreEqual("造成 13 點傷害。",
+                CardTextFormatter.FormatDescription(打擊(), 玩家(strength: 3), 敵人(vulnerable: true)));
+        }
+
+        [Test]
+        public void 虛弱與目標易傷_連乘後才捨去()
+        {
+            // 6 × 0.75 = 4.5,× 1.5 = 6.75 → 6(與 CombatMath 同一條路徑)
+            Assert.AreEqual("造成 6 點傷害。",
+                CardTextFormatter.FormatDescription(打擊(), 玩家(weak: true), 敵人(vulnerable: true)));
+        }
+
+        [Test]
+        public void 格擋描述_不受目標易傷影響()
+        {
+            var def = 防禦();
+            def.DescriptionTemplate = "獲得 {blk} 點格擋。";
+            Assert.AreEqual("獲得 5 點格擋。",
+                CardTextFormatter.FormatDescription(def, 玩家(), 敵人(vulnerable: true)));
+        }
+
         [Test]
         public void 無佔位_原文照出()
         {

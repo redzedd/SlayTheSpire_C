@@ -39,6 +39,10 @@ namespace STS.Game.UI
         private CanvasGroup _hintGroup;
 
         private static readonly List<RaycastResult> RaycastBuffer = new List<RaycastResult>();
+        /// <summary>「尚未判定過」的哨兵值;-1 是合法的「沒指向任何敵人」。</summary>
+        private const int NoPreviewIndex = -2;
+        private CardView _draggingCard;
+        private int _lastPreviewEnemyIndex = NoPreviewIndex;
 
         public static CombatScreenController Build(Transform screenLayer, Transform overlayLayer,
             GameController game, CombatEngine engine)
@@ -116,17 +120,36 @@ namespace STS.Game.UI
 
         public void BeginTargeting(CardView card)
         {
+            _draggingCard = card;
+            _lastPreviewEnemyIndex = NoPreviewIndex;
             _arrow.Show(card.Rect.position);
         }
 
-        public void UpdateTargeting(Vector2 pointerScreenPos)
+        public void UpdateTargeting(PointerEventData eventData)
         {
-            _arrow.UpdateTo(pointerScreenPos);
+            _arrow.UpdateTo(eventData.position);
+            if (_draggingCard == null) return;
+
+            // 只在指向的敵人「換人」時重算描述——每幀重設 TMP 文字會白白觸發重排版
+            int enemyIndex = RaycastEnemyIndex(eventData);
+            if (enemyIndex == _lastPreviewEnemyIndex) return;
+            _lastPreviewEnemyIndex = enemyIndex;
+            var target = enemyIndex >= 0
+                ? _engine.State.Enemies[enemyIndex]
+                : HandView.DefaultPreviewTarget(_engine);
+            _draggingCard.RefreshDescription(_engine.State.Player, target);
         }
 
         public void EndTargeting()
         {
             _arrow.Hide();
+            if (_draggingCard != null)
+            {
+                // 出牌失敗/取消時卡會留在手上,描述要回到預設目標的值
+                _draggingCard.RefreshDescription(_engine.State.Player, HandView.DefaultPreviewTarget(_engine));
+                _draggingCard = null;
+            }
+            _lastPreviewEnemyIndex = NoPreviewIndex;
         }
 
         public void RequestPlay(CardView card, PointerEventData eventData)

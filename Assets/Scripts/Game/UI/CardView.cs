@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using STS.Core.Cards;
+using STS.Core.Combat;
 
 namespace STS.Game.UI
 {
@@ -71,6 +72,12 @@ namespace STS.Game.UI
             _nameText.text = def.Name;
             _descText.text = formattedDescription;
             name = $"卡牌_{def.Id}";
+        }
+
+        /// <summary>依指定目標重算描述數值(拖曳指向敵人時即時更新)。</summary>
+        public void RefreshDescription(CombatantState player, CombatantState target)
+        {
+            _descText.text = CardTextFormatter.FormatDescription(Def, player, target);
         }
 
         private static bool ComputeRequiresTarget(CardDef def)
@@ -142,7 +149,7 @@ namespace STS.Game.UI
         {
             if (!_dragging) return;
             _rect.position = eventData.position;
-            _controller.UpdateTargeting(eventData.position);
+            _controller.UpdateTargeting(eventData);
         }
 
         public void OnEndDrag(PointerEventData eventData)

@@ -32,6 +32,22 @@ namespace STS.Game.UI
             _group.blocksRaycasts = value;
         }
 
+        /// <summary>
+        /// 預設預覽目標:場上恰好一個活敵時就是牠(單敵戰鬥的傷害數字直接反映易傷);
+        /// 多敵時回 null——由拖曳指向哪隻決定,避免亂猜一個目標騙玩家。
+        /// </summary>
+        public static CombatantState DefaultPreviewTarget(CombatEngine engine)
+        {
+            CombatantState found = null;
+            foreach (var enemy in engine.State.Enemies)
+            {
+                if (!enemy.IsAlive) continue;
+                if (found != null) return null;
+                found = enemy;
+            }
+            return found;
+        }
+
         public void Rebuild(CombatEngine engine)
         {
             foreach (var card in _cards)
@@ -41,11 +57,12 @@ namespace STS.Game.UI
             _cards.Clear();
 
             var hand = engine.State.Hand;
+            var previewTarget = DefaultPreviewTarget(engine);
             for (int i = 0; i < hand.Count; i++)
             {
                 var def = engine.GetCardDef(hand[i]);
                 var view = CardView.Build(transform, _controller);
-                view.Bind(i, def, CardTextFormatter.FormatDescription(def, engine.State.Player));
+                view.Bind(i, def, CardTextFormatter.FormatDescription(def, engine.State.Player, previewTarget));
                 _cards.Add(view);
             }
             Relayout(true);
