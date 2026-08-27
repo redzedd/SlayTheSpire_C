@@ -48,8 +48,7 @@ namespace STS.Game.UI
             scroll.content = content;
             scroll.horizontal = false;
             scroll.vertical = true;
-            scroll.movementType = ScrollRect.MovementType.Elastic;
-            scroll.elasticity = 0.08f;
+            scroll.movementType = ScrollRect.MovementType.Clamped;   // 到底就停,不做回彈
             scroll.inertia = true;
             scroll.decelerationRate = 0.12f;
             scroll.scrollSensitivity = 55f;

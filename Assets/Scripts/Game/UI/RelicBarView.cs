@@ -17,7 +17,7 @@ namespace STS.Game.UI
             System.Collections.Generic.IReadOnlyList<RelicInstance> relics, TooltipView tooltip)
         {
             var root = UiKit.CreateRect("遺物列", parent);
-            UiKit.Place(root, new Vector2(40f, -50f), new Vector2(900f, 64f), new Vector2(0f, 1f), new Vector2(0f, 0.5f));
+            UiKit.Place(root, new Vector2(40f, -110f), new Vector2(900f, 64f), new Vector2(0f, 1f), new Vector2(0f, 0.5f));
             var view = root.gameObject.AddComponent<RelicBarView>();
 
             for (int i = 0; i < relics.Count; i++)

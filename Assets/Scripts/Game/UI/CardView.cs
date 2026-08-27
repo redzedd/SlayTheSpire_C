@@ -33,9 +33,13 @@ namespace STS.Game.UI
         private TextMeshProUGUI _nameText;
         private TextMeshProUGUI _descText;
         private Image _selectionFrame;
+        /// <summary>需目標卡拖曳時,卡片定位到手牌前方的位置(不跟著游標跑)。</summary>
+        private static readonly Vector2 瞄準位置 = new Vector2(0f, 250f);
+
         private Vector2 _slotPos;
         private Vector3 _slotEuler;
         private bool _dragging;
+        private bool _targeting;
         private bool _hovered;
         private bool _leaving;
 
@@ -187,25 +191,39 @@ namespace STS.Game.UI
             _dragging = true;
             _background.raycastTarget = false;   // 拖曳中讓射線穿過卡,才能點到敵人
             _rect.DOKill();
-            _rect.DOScale(0.9f, 0.1f).SetLink(gameObject);
-            _rect.DOLocalRotate(Vector3.zero, 0.1f).SetLink(gameObject);
+            _rect.DOLocalRotate(Vector3.zero, 0.12f).SetLink(gameObject);
             if (RequiresTarget)
             {
+                // 需指定目標的卡:定位到手牌前方,由箭頭指向敵人(卡片本身不跟著游標)
+                _targeting = true;
+                _rect.SetAsLastSibling();
+                _rect.DOAnchorPos(瞄準位置, 0.14f).SetEase(Ease.OutCubic).SetLink(gameObject);
+                _rect.DOScale(1.15f, 0.14f).SetEase(Ease.OutCubic).SetLink(gameObject);
                 _controller.BeginTargeting(this);
+            }
+            else
+            {
+                // 無目標卡:照舊跟著游標拖,拖過出牌線即施放
+                _rect.DOScale(0.9f, 0.1f).SetLink(gameObject);
             }
         }
 
         public void OnDrag(PointerEventData eventData)
         {
             if (!_dragging) return;
+            if (_targeting)
+            {
+                _controller.UpdateTargeting(eventData);   // 只有箭頭跟著游標
+                return;
+            }
             _rect.position = eventData.position;
-            _controller.UpdateTargeting(eventData);
         }
 
         public void OnEndDrag(PointerEventData eventData)
         {
             if (!_dragging) return;
             _dragging = false;
+            _targeting = false;
             _hovered = false;
             _background.raycastTarget = true;
             _controller.EndTargeting();

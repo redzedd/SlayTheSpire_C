@@ -1,53 +1,57 @@
 using DG.Tweening;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 using STS.Core.Combat;
 
 namespace STS.Game.UI
 {
-    /// <summary>玩家狀態面板:血條/格擋/能量球/狀態列。只讀快照。</summary>
+    /// <summary>
+    /// 玩家角色(戰場左側,與敵人左右對峙):色塊軀體+血條+格擋+狀態列。
+    /// 版面比照原作:血條在角色正下方,能量球獨立在左下角(EnergyOrbView)。
+    /// </summary>
     public sealed class PlayerHudView : MonoBehaviour
     {
         private TextMeshProUGUI _hpText;
         private TextMeshProUGUI _blockText;
-        private TextMeshProUGUI _energyText;
         private TextMeshProUGUI _statusText;
         private RectTransform _hpFill;
-        private RectTransform _energyOrb;
-        private int _lastEnergy = -1;
+        private Image _body;
 
         public static PlayerHudView Build(Transform parent)
         {
-            // 面板底板同時是 hover 感應區(透明 Image 仍會吃射線),讓玩家能指自己看狀態
-            var background = UiKit.CreatePanel("玩家面板", parent, new Color(0.1f, 0.1f, 0.14f, 0.55f));
-            var root = background.rectTransform;
-            UiKit.Place(root, new Vector2(230f, 260f), new Vector2(420f, 200f), new Vector2(0f, 0f));
-            var view = root.gameObject.AddComponent<PlayerHudView>();
+            var body = UiKit.CreatePanel("玩家", parent, new Color(0.3f, 0.45f, 0.65f));
+            UiKit.Place(body.rectTransform, new Vector2(-520f, 60f), new Vector2(220f, 300f));
+            var view = body.gameObject.AddComponent<PlayerHudView>();
+            view._body = body;
 
-            var energyOrb = UiKit.CreatePanel("能量球", root, new Color(0.9f, 0.65f, 0.15f));
-            UiKit.Place(energyOrb.rectTransform, new Vector2(-140f, 0f), new Vector2(110f, 110f));
-            view._energyOrb = energyOrb.rectTransform;
-            view._energyText = UiKit.CreateText("能量", energyOrb.transform, "3/3", 40f, Color.black);
-            UiKit.Stretch(view._energyText.rectTransform);
+            var nameText = UiKit.CreateText("名稱", body.transform, "無名者", 26f);
+            UiKit.Place(nameText.rectTransform, new Vector2(0f, 120f), new Vector2(200f, 34f));
 
-            view._hpFill = UiKit.CreateBar("血條", root, new Vector2(60f, 30f), new Vector2(260f, 24f),
+            view._hpFill = UiKit.CreateBar("血條", body.transform, new Vector2(0f, -172f), new Vector2(210f, 20f),
                 new Vector2(0.5f, 0.5f), new Color(0.2f, 0.05f, 0.05f), new Color(0.2f, 0.8f, 0.3f));
-            view._hpText = UiKit.CreateText("血量", root, "", 24f);
-            UiKit.Place(view._hpText.rectTransform, new Vector2(60f, 0f), new Vector2(260f, 30f));
+            view._hpText = UiKit.CreateText("血量", body.transform, "", 24f);
+            UiKit.Place(view._hpText.rectTransform, new Vector2(0f, -200f), new Vector2(220f, 30f));
 
-            view._blockText = UiKit.CreateText("格擋", root, "", 28f, new Color(0.55f, 0.8f, 1f));
-            UiKit.Place(view._blockText.rectTransform, new Vector2(-60f, 30f), new Vector2(100f, 34f));
+            view._blockText = UiKit.CreateText("格擋", body.transform, "", 28f, new Color(0.55f, 0.8f, 1f));
+            UiKit.Place(view._blockText.rectTransform, new Vector2(-120f, -172f), new Vector2(80f, 34f));
 
-            view._statusText = UiKit.CreateText("狀態列", root, "", 22f, new Color(0.9f, 0.9f, 0.6f));
-            UiKit.Place(view._statusText.rectTransform, new Vector2(60f, -34f), new Vector2(380f, 30f));
+            view._statusText = UiKit.CreateText("狀態列", body.transform, "", 22f, new Color(0.9f, 0.9f, 0.6f));
+            UiKit.Place(view._statusText.rectTransform, new Vector2(0f, -236f), new Vector2(280f, 30f));
             return view;
         }
 
-        /// <summary>玩家受擊:面板震動。</summary>
+        /// <summary>玩家受擊:角色震動。</summary>
         public void PlayHitShake()
         {
             transform.DOKill(true);
-            transform.DOShakePosition(0.3f, new Vector3(14f, 8f, 0f), 18).SetLink(gameObject);
+            transform.DOShakePosition(0.3f, new Vector3(16f, 9f, 0f), 18).SetLink(gameObject);
+            if (_body != null)
+            {
+                _body.DOKill();
+                _body.color = Color.white;
+                _body.DOColor(new Color(0.3f, 0.45f, 0.65f), 0.25f).SetEase(Ease.OutQuad).SetLink(gameObject);
+            }
         }
 
         public void RefreshFrom(CombatEngine engine)
@@ -57,14 +61,6 @@ namespace STS.Game.UI
             UiKit.TweenBarFill(_hpFill, player.MaxHp > 0 ? (float)player.Hp / player.MaxHp : 0f);
             _blockText.text = player.Block > 0 ? $"盾{player.Block}" : "";
             _statusText.text = StatusRowText.Build(player);
-
-            _energyText.text = $"{engine.State.Energy}/{engine.State.MaxEnergy}";
-            if (_lastEnergy >= 0 && engine.State.Energy != _lastEnergy && _energyOrb != null)
-            {
-                _energyOrb.DOKill(true);
-                _energyOrb.DOPunchScale(Vector3.one * 0.18f, 0.25f, 8).SetLink(gameObject);
-            }
-            _lastEnergy = engine.State.Energy;
         }
     }
 }

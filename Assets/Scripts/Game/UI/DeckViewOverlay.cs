@@ -61,8 +61,7 @@ namespace STS.Game.UI
             scroll.content = content;
             scroll.horizontal = false;
             scroll.vertical = true;
-            scroll.movementType = ScrollRect.MovementType.Elastic;
-            scroll.elasticity = 0.08f;
+            scroll.movementType = ScrollRect.MovementType.Clamped;   // 到底就停,不做回彈
             scroll.scrollSensitivity = 55f;
 
             for (int i = 0; i < deck.Count; i++)

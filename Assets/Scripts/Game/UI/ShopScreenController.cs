@@ -60,6 +60,7 @@ namespace STS.Game.UI
                 {
                     var button = face.gameObject.AddComponent<Button>();
                     button.onClick.AddListener(() => _game.ShopBuyCard(index));
+                    face.gameObject.AddComponent<CardHoverLift>().Setup(face);
                 }
                 else
                 {
@@ -82,6 +83,8 @@ namespace STS.Game.UI
                     () => _game.ShopBuyRelic(index));
                 button.interactable = affordable;
                 UiKit.Place((RectTransform)button.transform, new Vector2(relicX, -90f), new Vector2(240f, 72f));
+                // 買不起也要能看效果:提示掛在按鈕上,interactable=false 不影響 hover
+                TooltipTrigger.Attach(button.gameObject, _game.Tooltip, () => TooltipText.遺物(relic, 0));
                 relicX += 260f;
             }
             float potionX = 200f;
@@ -97,6 +100,7 @@ namespace STS.Game.UI
                     () => _game.ShopBuyPotion(index));
                 button.interactable = affordable;
                 UiKit.Place((RectTransform)button.transform, new Vector2(potionX, -90f), new Vector2(220f, 72f));
+                TooltipTrigger.Attach(button.gameObject, _game.Tooltip, () => TooltipText.藥水(potion));
                 potionX += 240f;
             }
 

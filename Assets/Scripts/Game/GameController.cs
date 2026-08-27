@@ -32,6 +32,8 @@ namespace STS.Game
         public ContentDb Db { get; private set; }
         public RunEngine Run { get; private set; }
         public CombatScreenController Combat { get; private set; }
+        /// <summary>全域提示框:所有畫面(戰鬥/商店/獎勵/地圖)共用同一個,才不會有的畫面能預覽有的不能。</summary>
+        public TooltipView Tooltip { get; private set; }
         /// <summary>整輪煙霧的即時狀態(RunCommand 輪詢用)。</summary>
         public string 煙霧狀態 { get; private set; } = "未啟動";
 
@@ -72,6 +74,7 @@ namespace STS.Game
         {
             _screenLayer = CreateCanvas("ScreenCanvas", 0);
             _overlayLayer = CreateCanvas("OverlayCanvas", 10);
+            Tooltip = TooltipView.Build(_overlayLayer);   // Show 時會 SetAsLastSibling,永遠壓在最上層
         }
 
         private Transform CreateCanvas(string canvasName, int sortingOrder)

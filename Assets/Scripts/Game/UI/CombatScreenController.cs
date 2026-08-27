@@ -39,7 +39,8 @@ namespace STS.Game.UI
         private TextMeshProUGUI _drawPileLabel;
         private TextMeshProUGUI _discardPileLabel;
         private TextMeshProUGUI _exhaustPileLabel;
-        private RectTransform _potionBar;
+        private EnergyOrbView _energyOrb;
+        private TopBarView _topBar;
         private TextMeshProUGUI _hintText;
         private CanvasGroup _hintGroup;
 
@@ -58,33 +59,31 @@ namespace STS.Game.UI
             controller._game = game;
             controller._engine = engine;
 
-            // 敵人橫排(依數量置中)
+            // 版面參考原作:玩家在左、敵人在右、資訊列在上、能量球與牌堆在下方兩角
+            controller._hud = PlayerHudView.Build(root);
+
             int enemyCount = engine.State.Enemies.Count;
             for (int i = 0; i < enemyCount; i++)
             {
-                float x = (i - (enemyCount - 1) / 2f) * 280f;
-                controller._enemyViews.Add(EnemyView.Build(root, i, new Vector2(x + 180f, 120f)));
+                controller._enemyViews.Add(EnemyView.Build(root, i, new Vector2(260f + i * 300f, 60f)));
             }
 
-            controller._hud = PlayerHudView.Build(root);
             controller._hand = HandView.Build(root, controller);
+            controller._energyOrb = EnergyOrbView.Build(root);
+            controller._topBar = TopBarView.Build(root, game, engine, controller.OnPotionClicked);
 
             controller._endTurnButton = UiKit.CreateButton("結束回合", root, "結束回合", 28f,
                 new Color(0.7f, 0.5f, 0.15f), controller.OnEndTurnClicked);
             UiKit.Place((RectTransform)controller._endTurnButton.transform,
-                new Vector2(-160f, 220f), new Vector2(220f, 64f), new Vector2(1f, 0f));
+                new Vector2(-200f, 250f), new Vector2(260f, 70f), new Vector2(1f, 0f));
 
-            // 牌堆按鈕(左下抽牌、右下棄牌/消耗)
-            controller._drawPileLabel = controller.BuildPileButton(root, "抽牌堆", new Vector2(140f, 70f),
+            // 牌堆:抽牌左下角、棄牌與消耗右下角
+            controller._drawPileLabel = controller.BuildPileButton(root, "抽牌堆", new Vector2(120f, 70f),
                 new Vector2(0f, 0f), () => controller.ShowPile("抽牌堆", engine.State.DrawPile, true));
-            controller._discardPileLabel = controller.BuildPileButton(root, "棄牌堆", new Vector2(-140f, 70f),
+            controller._discardPileLabel = controller.BuildPileButton(root, "棄牌堆", new Vector2(-120f, 70f),
                 new Vector2(1f, 0f), () => controller.ShowPile("棄牌堆", engine.State.DiscardPile, false));
-            controller._exhaustPileLabel = controller.BuildPileButton(root, "消耗堆", new Vector2(-140f, 140f),
+            controller._exhaustPileLabel = controller.BuildPileButton(root, "消耗堆", new Vector2(-120f, 145f),
                 new Vector2(1f, 0f), () => controller.ShowPile("消耗堆", engine.State.ExhaustPile, false));
-
-            // 藥水列(遺物列下方一排)
-            controller._potionBar = UiKit.CreateRect("藥水列", root);
-            UiKit.Place(controller._potionBar, new Vector2(240f, -130f), new Vector2(460f, 60f), new Vector2(0f, 1f));
 
             // 選卡模式的持續提示(消耗手牌時)
             controller._choiceHint = UiKit.CreateText("選卡提示", root, "", 34f, new Color(1f, 0.85f, 0.4f));
@@ -105,7 +104,7 @@ namespace STS.Game.UI
             controller._damagePool = DamageNumberPool.Build(controller._overlayRoot);
             controller._arrow = TargetArrowView.Build(controller._overlayRoot);
             controller._pileOverlay = PileListOverlay.Build(controller._overlayRoot);
-            controller._tooltip = TooltipView.Build(controller._overlayRoot);
+            controller._tooltip = game.Tooltip;   // 全域提示框(所有畫面共用)
 
             // 指到敵人/自己看狀態說明;遺物列與藥水鈕的提示各自在建構處掛上
             for (int i = 0; i < controller._enemyViews.Count; i++)
@@ -143,13 +142,15 @@ namespace STS.Game.UI
         {
             _draggingCard = card;
             _lastPreviewEnemyIndex = NoPreviewIndex;
-            _arrow.Show(card.Rect.position);
+            _arrow.Show();
         }
 
         public void UpdateTargeting(PointerEventData eventData)
         {
-            _arrow.UpdateTo(eventData.position);
             if (_draggingCard == null) return;
+            // 起點取卡片頂端:用 TransformPoint 換算,不能把畫布單位直接加到螢幕座標上(單位不同)
+            var origin = _draggingCard.Rect.TransformPoint(new Vector3(0f, _draggingCard.Rect.rect.height * 0.5f, 0f));
+            _arrow.UpdateCurve(origin, eventData.position);
 
             // 只在指向的敵人「換人」時重算描述——每幀重設 TMP 文字會白白觸發重排版
             int enemyIndex = RaycastEnemyIndex(eventData);
@@ -439,6 +440,7 @@ namespace STS.Game.UI
         private void RefreshUnits()
         {
             _hud.RefreshFrom(_engine);
+            _energyOrb.RefreshFrom(_engine);
             foreach (var enemyView in _enemyViews)
             {
                 enemyView.RefreshFrom(_engine);
@@ -452,27 +454,7 @@ namespace STS.Game.UI
             _drawPileLabel.text = $"抽牌 {_engine.State.DrawPile.Count}";
             _discardPileLabel.text = $"棄牌 {_engine.State.DiscardPile.Count}";
             _exhaustPileLabel.text = $"消耗 {_engine.State.ExhaustPile.Count}";
-            RebuildPotionBar();
-        }
-
-        private void RebuildPotionBar()
-        {
-            foreach (Transform child in _potionBar)
-            {
-                Destroy(child.gameObject);
-            }
-            for (int slot = 0; slot < _engine.State.PotionSlots.Count; slot++)
-            {
-                var potionId = _engine.State.PotionSlots[slot];
-                if (potionId == null) continue;
-                int captured = slot;
-                var def = _game.Db.GetPotion(potionId);
-                var button = UiKit.CreateButton($"藥水{slot}", _potionBar, def.Name, 20f,
-                    new Color(0.35f, 0.25f, 0.5f), () => OnPotionClicked(captured));
-                UiKit.Place((RectTransform)button.transform, new Vector2(slot * 150f + 75f, 0f), new Vector2(140f, 52f),
-                    new Vector2(0f, 0.5f));
-                TooltipTrigger.Attach(button.gameObject, _tooltip, () => TooltipText.藥水(def));
-            }
+            _topBar.Refresh();
         }
 
         /// <summary>回合開始橫幅:大字掃過畫面中央後淡出,給回合切換一個節拍。</summary>
