@@ -17,9 +17,12 @@ namespace STS.Game.UI
     public sealed class CombatScreenController : MonoBehaviour
     {
         public bool InputEnabled { get; private set; }
+        /// <summary>戰鬥結束(播放完畢後)通知 Run 層;參數 = 是否勝利。由 GameController 指定。</summary>
+        public System.Action<bool> OnCombatEnded;
 
         private GameController _game;
         private CombatEngine _engine;
+        private RectTransform _overlayRoot;
         private HandView _hand;
         private PlayerHudView _hud;
         private readonly List<EnemyView> _enemyViews = new List<EnemyView>();
@@ -81,11 +84,14 @@ namespace STS.Game.UI
             controller._hintGroup.alpha = 0f;
             controller._hintGroup.blocksRaycasts = false;
 
-            // Overlay 層(疊序高於主畫面)
-            controller._damagePool = DamageNumberPool.Build(overlayLayer);
-            controller._arrow = TargetArrowView.Build(overlayLayer);
-            controller._choicePanel = ChoicePanelView.Build(overlayLayer, controller);
-            controller._pileOverlay = PileListOverlay.Build(overlayLayer);
+            // Overlay 層(疊序高於主畫面):集中在自己的容器,畫面銷毀時一起清,不留孤兒
+            controller._overlayRoot = UiKit.CreateRect("戰鬥Overlay", overlayLayer);
+            UiKit.Stretch(controller._overlayRoot);
+            controller._overlayRoot.gameObject.AddComponent<CanvasGroup>().blocksRaycasts = true;
+            controller._damagePool = DamageNumberPool.Build(controller._overlayRoot);
+            controller._arrow = TargetArrowView.Build(controller._overlayRoot);
+            controller._choicePanel = ChoicePanelView.Build(controller._overlayRoot, controller);
+            controller._pileOverlay = PileListOverlay.Build(controller._overlayRoot);
 
             controller.RefreshAll();
             controller.StartPlayback();   // 消化開戰事件(洗牌/抽牌/意圖)
@@ -169,7 +175,7 @@ namespace STS.Game.UI
             return -1;
         }
 
-        private void OnEndTurnClicked()
+        public void OnEndTurnClicked()
         {
             if (!InputEnabled) return;
             _engine.EndPlayerTurn();
@@ -260,17 +266,25 @@ namespace STS.Game.UI
             RefreshAll();
             if (_engine.State.Phase == CombatPhase.Victory)
             {
-                ShowResult(true);
+                OnCombatEnded?.Invoke(true);
             }
             else if (_engine.State.Phase == CombatPhase.Defeat)
             {
-                ShowResult(false);
+                OnCombatEnded?.Invoke(false);
             }
             else
             {
                 InputEnabled = true;
                 _hand.SetInteractable(true);
                 _endTurnButton.interactable = true;
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (_overlayRoot != null)
+            {
+                Destroy(_overlayRoot.gameObject);
             }
         }
 
@@ -358,22 +372,5 @@ namespace STS.Game.UI
             _hintGroup.DOFade(0f, 1.2f).SetEase(Ease.InQuad).SetLink(_hintGroup.gameObject);
         }
 
-        private void ShowResult(bool victory)
-        {
-            var panel = UiKit.CreatePanel("結算面板", transform, UiKit.面板色);
-            UiKit.Place(panel.rectTransform, Vector2.zero, new Vector2(560f, 320f));
-            panel.transform.SetAsLastSibling();
-            UiKit.Place(UiKit.CreateText("結果", panel.transform,
-                victory ? "勝利!" : "敗北…", 56f,
-                victory ? new Color(1f, 0.85f, 0.3f) : new Color(0.8f, 0.35f, 0.3f)).rectTransform,
-                new Vector2(0f, 60f), new Vector2(500f, 80f));
-            var restart = UiKit.CreateButton("重新開始", panel.transform, "重新開始", 28f,
-                new Color(0.3f, 0.5f, 0.35f), () => _game.RestartCombat());
-            UiKit.Place((RectTransform)restart.transform, new Vector2(0f, -80f), new Vector2(240f, 64f));
-
-            var group = panel.gameObject.AddComponent<CanvasGroup>();
-            group.alpha = 0f;
-            group.DOFade(1f, 0.25f).SetEase(Ease.OutCubic).SetLink(panel.gameObject);
-        }
     }
 }

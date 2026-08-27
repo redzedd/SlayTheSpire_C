@@ -114,5 +114,26 @@ namespace STS.Game.UI
         {
             fill.anchorMax = new Vector2(Mathf.Clamp01(ratio), 1f);
         }
+
+        /// <summary>純顯示用卡面(無互動):獎勵/商店/牌組檢視共用。</summary>
+        public static RectTransform MakeCardFace(Transform parent, Core.Cards.CardDef def, string description, float scale = 1f)
+        {
+            var face = CreatePanel($"卡面_{def.Id}", parent, 卡牌顏色(def.Type));
+            Place(face.rectTransform, Vector2.zero, new Vector2(160f * scale, 220f * scale));
+
+            var costOrb = CreatePanel("費用底", face.transform, new Color(0.95f, 0.75f, 0.2f));
+            Place(costOrb.rectTransform, new Vector2(-70f * scale, 88f * scale), new Vector2(36f * scale, 36f * scale));
+            costOrb.raycastTarget = false;
+            var costText = CreateText("費用", costOrb.transform, def.CostIsX ? "X" : def.Cost.ToString(), 24f * scale, Color.black);
+            Stretch(costText.rectTransform);
+
+            var nameText = CreateText("卡名", face.transform, def.Name, 22f * scale);
+            Place(nameText.rectTransform, new Vector2(0f, 64f * scale), new Vector2(150f * scale, 30f * scale));
+
+            var descText = CreateText("描述", face.transform, description, 17f * scale);
+            Place(descText.rectTransform, new Vector2(0f, -28f * scale), new Vector2(140f * scale, 120f * scale));
+            descText.textWrappingMode = TMPro.TextWrappingModes.Normal;
+            return face.rectTransform;
+        }
     }
 }
