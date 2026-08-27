@@ -1,3 +1,4 @@
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using STS.Core.Combat;
@@ -35,6 +36,13 @@ namespace STS.Game.UI
             view._statusText = UiKit.CreateText("狀態列", root, "", 22f, new Color(0.9f, 0.9f, 0.6f));
             UiKit.Place(view._statusText.rectTransform, new Vector2(60f, -34f), new Vector2(380f, 30f));
             return view;
+        }
+
+        /// <summary>玩家受擊:面板震動。</summary>
+        public void PlayHitShake()
+        {
+            transform.DOKill(true);
+            transform.DOShakePosition(0.3f, new Vector3(14f, 8f, 0f), 18).SetLink(gameObject);
         }
 
         public void RefreshFrom(CombatEngine engine)

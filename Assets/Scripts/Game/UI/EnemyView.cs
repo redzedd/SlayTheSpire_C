@@ -1,4 +1,5 @@
 using System.Text;
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -48,6 +49,31 @@ namespace STS.Game.UI
             view._statusText = UiKit.CreateText("狀態列", body.transform, "", 20f, new Color(0.9f, 0.9f, 0.6f));
             UiKit.Place(view._statusText.rectTransform, new Vector2(0f, -192f), new Vector2(240f, 30f));
             return view;
+        }
+
+        /// <summary>受擊回饋:閃白+punch 縮放(dotween 紀律:先殺舊 tween、SetLink)。</summary>
+        public void PlayHitFeedback()
+        {
+            if (_body == null) return;
+            _body.DOKill();
+            _body.color = Color.white;
+            _body.DOColor(UiKit.敵人色, 0.25f).SetEase(Ease.OutQuad).SetLink(gameObject);
+            transform.DOKill(true);
+            transform.DOPunchScale(new Vector3(0.12f, 0.12f, 0f), 0.25f, 8).SetLink(gameObject);
+        }
+
+        /// <summary>出招前撲:往玩家方向(左下)快速一衝。</summary>
+        public void PlayAttackLunge()
+        {
+            transform.DOKill(true);
+            transform.DOPunchPosition(new Vector3(-40f, -25f, 0f), 0.3f, 1, 0.5f).SetLink(gameObject);
+        }
+
+        /// <summary>死亡:縮小(灰化由 RefreshFrom 處理)。</summary>
+        public void PlayDeath()
+        {
+            transform.DOKill(true);
+            transform.DOScale(0.85f, 0.3f).SetEase(Ease.OutQuad).SetLink(gameObject);
         }
 
         public void RefreshFrom(CombatEngine engine)

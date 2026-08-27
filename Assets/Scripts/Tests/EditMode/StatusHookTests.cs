@@ -55,6 +55,21 @@ namespace STS.Core.Tests
         }
 
         [Test]
+        public void 對手回合施加的狀態_疊層不重設衰減行為()
+        {
+            // M2 驗收標記的未覆蓋邊角:對既有狀態疊層,不得重新獲得「首次衰減跳過」待遇
+            var engine = 標準引擎(重複("bash", 10), enemyHp: 500);
+            engine.StartCombat();
+            engine.PlayCard(0, 0);                 // 易傷 2(對手回合外施加,不跳過)
+            engine.EndPlayerTurn();                // 敵回合末:2 → 1
+            Assert.AreEqual(1, engine.State.Enemies[0].GetStatus(StatusId.Vulnerable));
+            engine.PlayCard(0, 0);                 // 疊層:1 + 2 = 3(既有實體,旗標不得重設)
+            Assert.AreEqual(3, engine.State.Enemies[0].GetStatus(StatusId.Vulnerable));
+            engine.EndPlayerTurn();                // 疊層後同回合末照樣衰減:3 → 2
+            Assert.AreEqual(2, engine.State.Enemies[0].GetStatus(StatusId.Vulnerable));
+        }
+
+        [Test]
         public void 自己回合施加給自己_首次衰減跳過()
         {
             var 自弱 = new CardDef

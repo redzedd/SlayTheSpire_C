@@ -101,9 +101,12 @@ internal class CommandScript : IRunCommand
 M6 起的整輪煙霧(Run 層變更後跑,取代單場出牌):Play → RunCommand 呼叫 `game.煙霧_啟動自動一輪()` → 輪詢 `Temp/STS_RunSmoke.txt`(整輪要 1-3 分鐘,先清舊檔;可用 RunCommand 讀 `game.煙霧狀態` 查進度)→ 見 `STS_RUN_SMOKE: GameOver|RunClear` 即通過(無腦自動打敗北是正常結局,驗的是「不噴例外走到終局」)→ console 掃 Error → Stop。
 **失焦停幀陷阱(2026-08-28 付過代價):編輯器失焦時 play mode 停幀,協程/tween 全部假死——煙霧「啟動了但狀態永遠不前進、零例外」就是這個,不是程式壞掉。** GameController.Awake 已常駐 `Application.runInBackground = true`;若煙霧卡住先確認這行還在。
 
-## 管道 4:效能哨兵(之後有戰鬥場景才啟用)
+## 管道 4:效能哨兵(基準已於 2026-08-28 M7 建立)
 
-尚無基準。建立真實戰鬥場景後,用全域 `/unity-frame-spike` 流程與 unity-mcp Profiler 工具訂基準,再回填本節。
+**基準(editor play mode,整輪自動煙霧戰鬥中,約 44 秒/5078 幀採樣——窗口=哨兵掛上到回收指令送達,含工具往返):平均 8.58ms(約 117 FPS)、最差幀 38.47ms、GC 累積約 1.5MB/s。**
+- 已知來源:最差幀=畫面切換的整批 UI 重建;GC=手牌整批重建與事件 List 配置(佔位期設計,池化/增量重繪為未來改善項)。
+- 顯著劣化(平均 >12ms、最差 >80ms、GC >5MB/s)才視為回歸,走全域 `/unity-frame-spike` 調查。
+- 採樣方法:play 中用 RunCommand 掛「幀率哨兵」MonoBehaviour(動態組件可 AddComponent;**跨 RunCommand 取用要靠 GameObject.Find + SendMessage,型別跨動態組件不相等**),同時跑 `煙霧_啟動自動一輪`,25 秒後 SendMessage("WriteReport") → 讀 `Temp/STS_PerfBaseline.txt`。
 
 ## 回報格式
 

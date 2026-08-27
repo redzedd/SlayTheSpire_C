@@ -296,9 +296,18 @@ namespace STS.Game.UI
                 case EventKind.DamageDealt:
                     SpawnNumber(e.TargetIndex, e.HpLost > 0 ? $"-{e.HpLost}" : "格擋",
                         e.HpLost > 0 ? new Color(1f, 0.35f, 0.3f) : new Color(0.6f, 0.8f, 1f));
-                    return 0.18f;
+                    if (e.TargetIndex == CombatEngine.PlayerIndex)
+                    {
+                        if (e.HpLost > 0) _hud.PlayHitShake();
+                    }
+                    else
+                    {
+                        _enemyViews[e.TargetIndex].PlayHitFeedback();
+                    }
+                    return 0.22f;
                 case EventKind.HpLost:
                     SpawnNumber(e.TargetIndex, $"-{e.Amount}", new Color(0.8f, 0.4f, 0.9f));
+                    if (e.TargetIndex == CombatEngine.PlayerIndex) _hud.PlayHitShake();
                     return 0.15f;
                 case EventKind.HpHealed:
                     SpawnNumber(e.TargetIndex, $"+{e.Amount}", new Color(0.4f, 0.95f, 0.5f));
@@ -306,8 +315,12 @@ namespace STS.Game.UI
                 case EventKind.BlockGained:
                     SpawnNumber(e.SourceIndex, $"盾+{e.Amount}", new Color(0.6f, 0.8f, 1f));
                     return 0.06f;
-                case EventKind.EnemyMoveStarted: return 0.3f;
-                case EventKind.EnemyDied: return 0.25f;
+                case EventKind.EnemyMoveStarted:
+                    _enemyViews[e.SourceIndex].PlayAttackLunge();
+                    return 0.38f;
+                case EventKind.EnemyDied:
+                    _enemyViews[e.TargetIndex].PlayDeath();
+                    return 0.3f;
                 case EventKind.CardDrawn: return 0.04f;
                 case EventKind.CardPlayed: return 0.08f;
                 case EventKind.TurnStarted: return 0.1f;
