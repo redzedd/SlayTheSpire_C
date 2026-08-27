@@ -87,7 +87,7 @@ internal class CommandScript : IRunCommand
 }
 ```
 
-回收結果:輪詢 `Temp/STS_TestResult.txt`(bash,約 2 秒間隔,30 秒上限),必須看到 `Passed | pass=N fail=0`;失敗時讀 `Temp/STS_TestFails.txt` 或 console 掃 `STS_TEST_FAIL`。基線:2026-08-28 為 111 tests(引擎/地圖 83+內容/Run 28)/約 1.3s。七份 JSON(含 statuses.json)。改到 STS.Core 或 STS.Data 或 `Assets/Data/Source/*.json` 都必跑;改了 JSON 記得先跑匯入器選單 `STS/重新匯入資料(JSON→SO)`。兩個已付代價的回呼陷阱:(a) 編輯器重啟會丟掉進行中的測試回呼;(b) **同一個 RunCommand 裡 Refresh+啟動測試,domain reload 會把回呼吃掉**——正確做法:先 Refresh 等編譯完,再用「另一個」RunCommand 單獨啟動測試。結果檔 30 秒不出現就重新啟動測試,不要空等。
+回收結果:輪詢 `Temp/STS_TestResult.txt`(bash,約 2 秒間隔,30 秒上限),必須看到 `Passed | pass=N fail=0`;失敗時讀 `Temp/STS_TestFails.txt` 或 console 掃 `STS_TEST_FAIL`。基線:2026-08-28 為 114 tests(引擎/地圖 86+內容/Run 28)/約 1.3s。七份 JSON(含 statuses.json)。改到 STS.Core 或 STS.Data 或 `Assets/Data/Source/*.json` 都必跑;改了 JSON 記得先跑匯入器選單 `STS/重新匯入資料(JSON→SO)`。三個已付代價的陷阱:(a) 編輯器重啟會丟掉進行中的測試回呼;(b) **同一個 RunCommand 裡 Refresh+啟動測試,domain reload 會把回呼吃掉**——正確做法:先 Refresh 等編譯完,再用「另一個」RunCommand 單獨啟動測試;(c) **在 play mode 中 EditMode 測試根本跑不起來**(console 噴 `This cannot be used during play mode`,結果檔永遠不出現)——**啟動測試前先斷言 `EditorApplication.isPlaying == false`**,腳本裡就擋掉,別靠記得手動退出。結果檔 30 秒不出現先查這三項,不要盲目重試。
 
 ## 管道 3:play 煙霧(行為/場景變更後跑;M4 起有具體流程)
 

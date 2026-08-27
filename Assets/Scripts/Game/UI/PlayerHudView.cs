@@ -13,6 +13,8 @@ namespace STS.Game.UI
         private TextMeshProUGUI _energyText;
         private TextMeshProUGUI _statusText;
         private RectTransform _hpFill;
+        private RectTransform _energyOrb;
+        private int _lastEnergy = -1;
 
         public static PlayerHudView Build(Transform parent)
         {
@@ -24,6 +26,7 @@ namespace STS.Game.UI
 
             var energyOrb = UiKit.CreatePanel("能量球", root, new Color(0.9f, 0.65f, 0.15f));
             UiKit.Place(energyOrb.rectTransform, new Vector2(-140f, 0f), new Vector2(110f, 110f));
+            view._energyOrb = energyOrb.rectTransform;
             view._energyText = UiKit.CreateText("能量", energyOrb.transform, "3/3", 40f, Color.black);
             UiKit.Stretch(view._energyText.rectTransform);
 
@@ -51,10 +54,17 @@ namespace STS.Game.UI
         {
             var player = engine.State.Player;
             _hpText.text = $"{player.Hp}/{player.MaxHp}";
-            UiKit.SetBarFill(_hpFill, player.MaxHp > 0 ? (float)player.Hp / player.MaxHp : 0f);
+            UiKit.TweenBarFill(_hpFill, player.MaxHp > 0 ? (float)player.Hp / player.MaxHp : 0f);
             _blockText.text = player.Block > 0 ? $"盾{player.Block}" : "";
-            _energyText.text = $"{engine.State.Energy}/{engine.State.MaxEnergy}";
             _statusText.text = StatusRowText.Build(player);
+
+            _energyText.text = $"{engine.State.Energy}/{engine.State.MaxEnergy}";
+            if (_lastEnergy >= 0 && engine.State.Energy != _lastEnergy && _energyOrb != null)
+            {
+                _energyOrb.DOKill(true);
+                _energyOrb.DOPunchScale(Vector3.one * 0.18f, 0.25f, 8).SetLink(gameObject);
+            }
+            _lastEnergy = engine.State.Energy;
         }
     }
 }

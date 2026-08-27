@@ -28,9 +28,13 @@ namespace STS.Game.UI
         private readonly List<EnemyView> _enemyViews = new List<EnemyView>();
         private DamageNumberPool _damagePool;
         private TargetArrowView _arrow;
-        private ChoicePanelView _choicePanel;
         private PileListOverlay _pileOverlay;
         private TooltipView _tooltip;
+        /// <summary>選卡模式(消耗手牌):直接點手上的牌,湊滿張數自動送出。</summary>
+        public bool IsChoiceMode { get; private set; }
+        private readonly List<int> _choiceSelected = new List<int>();
+        private int _choiceRequired;
+        private TextMeshProUGUI _choiceHint;
         private Button _endTurnButton;
         private TextMeshProUGUI _drawPileLabel;
         private TextMeshProUGUI _discardPileLabel;
@@ -82,6 +86,11 @@ namespace STS.Game.UI
             controller._potionBar = UiKit.CreateRect("藥水列", root);
             UiKit.Place(controller._potionBar, new Vector2(240f, -130f), new Vector2(460f, 60f), new Vector2(0f, 1f));
 
+            // 選卡模式的持續提示(消耗手牌時)
+            controller._choiceHint = UiKit.CreateText("選卡提示", root, "", 34f, new Color(1f, 0.85f, 0.4f));
+            UiKit.Place(controller._choiceHint.rectTransform, new Vector2(0f, 430f), new Vector2(900f, 48f));
+            controller._choiceHint.gameObject.SetActive(false);
+
             // 提示文字(出牌失敗原因)
             controller._hintText = UiKit.CreateText("提示", root, "", 30f, new Color(1f, 0.55f, 0.45f));
             UiKit.Place(controller._hintText.rectTransform, new Vector2(0f, -140f), new Vector2(800f, 44f), new Vector2(0.5f, 1f));
@@ -95,7 +104,6 @@ namespace STS.Game.UI
             controller._overlayRoot.gameObject.AddComponent<CanvasGroup>().blocksRaycasts = true;
             controller._damagePool = DamageNumberPool.Build(controller._overlayRoot);
             controller._arrow = TargetArrowView.Build(controller._overlayRoot);
-            controller._choicePanel = ChoicePanelView.Build(controller._overlayRoot, controller);
             controller._pileOverlay = PileListOverlay.Build(controller._overlayRoot);
             controller._tooltip = TooltipView.Build(controller._overlayRoot);
 
@@ -218,8 +226,58 @@ namespace STS.Game.UI
             StartPlayback();
         }
 
+        // ---- 選卡模式:直接點手上的牌 ----
+
+        public bool IsChosen(int handIndex)
+        {
+            return _choiceSelected.Contains(handIndex);
+        }
+
+        private void EnterChoiceMode()
+        {
+            IsChoiceMode = true;
+            _choiceRequired = _engine.State.PendingChoiceCount;
+            _choiceSelected.Clear();
+            _choiceHint.gameObject.SetActive(true);
+            RefreshChoiceHint();
+            _hand.ClearSelections();
+            _hand.SetInteractable(true);   // 手牌要能點,但拖曳出牌由 CardView 擋掉
+        }
+
+        public void ToggleChoiceSelection(int handIndex)
+        {
+            if (!IsChoiceMode) return;
+            if (_choiceSelected.Remove(handIndex))
+            {
+                _hand.SetSelected(handIndex, false);
+                RefreshChoiceHint();
+                return;
+            }
+            if (_choiceSelected.Count >= _choiceRequired) return;
+            _choiceSelected.Add(handIndex);
+            _hand.SetSelected(handIndex, true);
+            RefreshChoiceHint();
+            if (_choiceSelected.Count == _choiceRequired)
+            {
+                SubmitChoice(_choiceSelected.ToArray());
+            }
+        }
+
+        private void RefreshChoiceHint()
+        {
+            _choiceHint.text = $"點選 {_choiceRequired} 張要消耗的手牌({_choiceSelected.Count}/{_choiceRequired})";
+        }
+
+        private void ExitChoiceMode()
+        {
+            IsChoiceMode = false;
+            _choiceSelected.Clear();
+            _choiceHint.gameObject.SetActive(false);
+        }
+
         public void SubmitChoice(int[] handIndices)
         {
+            ExitChoiceMode();
             _engine.ResolveChoice(handIndices);
             StartPlayback();
         }
@@ -295,7 +353,8 @@ namespace STS.Game.UI
 
             if (_engine.State.Phase == CombatPhase.AwaitingChoice)
             {
-                _choicePanel.Show(_engine);   // 面板確認後經 SubmitChoice 續播
+                RefreshAll();          // 手牌要是最新的,玩家才點得到正確的牌
+                EnterChoiceMode();     // 點選湊滿張數後經 SubmitChoice 續播
                 yield break;
             }
 
@@ -359,7 +418,9 @@ namespace STS.Game.UI
                     return 0.3f;
                 case EventKind.CardDrawn: return 0.04f;
                 case EventKind.CardPlayed: return 0.08f;
-                case EventKind.TurnStarted: return 0.1f;
+                case EventKind.TurnStarted:
+                    ShowTurnBanner($"第 {e.Amount} 回合");
+                    return 0.35f;
                 case EventKind.PileShuffled: return 0.1f;
                 case EventKind.StatusChanged: return 0.05f;
                 case EventKind.CombatEnded: return 0.2f;
@@ -412,6 +473,24 @@ namespace STS.Game.UI
                     new Vector2(0f, 0.5f));
                 TooltipTrigger.Attach(button.gameObject, _tooltip, () => TooltipText.藥水(def));
             }
+        }
+
+        /// <summary>回合開始橫幅:大字掃過畫面中央後淡出,給回合切換一個節拍。</summary>
+        private void ShowTurnBanner(string message)
+        {
+            var banner = UiKit.CreateText("回合橫幅", _overlayRoot, message, 72f, new Color(1f, 0.9f, 0.55f));
+            UiKit.Place(banner.rectTransform, new Vector2(-220f, 60f), new Vector2(900f, 100f));
+            var group = banner.gameObject.AddComponent<CanvasGroup>();
+            group.blocksRaycasts = false;
+            group.alpha = 0f;
+            DOTween.Sequence()
+                .Append(banner.rectTransform.DOAnchorPosX(0f, 0.28f).SetEase(Ease.OutCubic))
+                .Join(group.DOFade(1f, 0.2f))
+                .AppendInterval(0.35f)
+                .Append(banner.rectTransform.DOAnchorPosX(220f, 0.3f).SetEase(Ease.InCubic))
+                .Join(group.DOFade(0f, 0.3f))
+                .OnComplete(() => Destroy(banner.gameObject))
+                .SetLink(banner.gameObject);
         }
 
         private void Flash(string message)

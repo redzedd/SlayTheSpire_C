@@ -247,6 +247,101 @@ namespace STS.Core.Tests
         }
 
         [Test]
+        public void 藥水傷害_不吃力量虛弱與目標易傷()
+        {
+            var db = 基礎DB();
+            db.Enemies["dummy"] = 木樁(hp: 100);
+            db.Potions["fire"] = new PotionDef
+            {
+                Id = "fire", Name = "火焰藥水", NeedsTarget = true,
+                Steps = new[] { new EffectStep(EffectOp.Damage, EffectTarget.TargetEnemy, 20) }
+            };
+            var setup = 基礎Setup(重複("strike", 10), potionIds: new[] { "fire" });
+            setup.EnemyIds.Add("dummy");
+            // 三顆金剛杵(力量3)+ 玩家虛弱 + 敵人易傷:三種修正同時在場
+            setup.Relics.Add(new Core.Relics.RelicInstance("vajra"));
+            setup.Relics.Add(new Core.Relics.RelicInstance("vajra"));
+            setup.Relics.Add(new Core.Relics.RelicInstance("vajra"));
+            var engine = 引擎(db, setup);
+            engine.StartCombat();
+            engine.State.Player.ModifyStatus(StatusId.Weak, 3);
+            engine.State.Enemies[0].ModifyStatus(StatusId.Vulnerable, 3);
+
+            int hpBefore = engine.State.Enemies[0].Hp;
+            engine.UsePotion(0, 0);
+            // 若吃修正會變成 (20+3)×0.75×1.5 = 25;藥水必須維持原值 20
+            Assert.AreEqual(20, hpBefore - engine.State.Enemies[0].Hp);
+        }
+
+        [Test]
+        public void 藥水格擋_不吃敏捷與脆弱()
+        {
+            var db = 基礎DB();
+            db.Enemies["dummy"] = 木樁(hp: 50);
+            db.Potions["shield"] = new PotionDef
+            {
+                Id = "shield", Name = "鐵壁藥水",
+                Steps = new[] { new EffectStep(EffectOp.Block, EffectTarget.Self, 12) }
+            };
+            var setup = 基礎Setup(重複("strike", 10), potionIds: new[] { "shield" });
+            setup.EnemyIds.Add("dummy");
+            var engine = 引擎(db, setup);
+            engine.StartCombat();
+            engine.State.Player.ModifyStatus(StatusId.Dexterity, 5);
+
+            engine.UsePotion(0, -1);
+            // 若吃敏捷會變成 12+5=17;藥水必須維持原值 12
+            Assert.AreEqual(12, engine.State.Player.Block);
+
+            // 脆弱同理:另起一場單獨驗,避免與敏捷相消而看不出差別
+            var db2 = 基礎DB();
+            db2.Enemies["dummy"] = 木樁(hp: 50);
+            db2.Potions["shield"] = db.Potions["shield"];
+            var setup2 = 基礎Setup(重複("strike", 10), potionIds: new[] { "shield" });
+            setup2.EnemyIds.Add("dummy");
+            var engine2 = 引擎(db2, setup2);
+            engine2.StartCombat();
+            engine2.State.Player.ModifyStatus(StatusId.Frail, 3);
+            engine2.UsePotion(0, -1);
+            // 若吃脆弱會變成 12×0.75=9
+            Assert.AreEqual(12, engine2.State.Player.Block);
+        }
+
+        [Test]
+        public void 藥水傷害_仍會被格擋吸收()
+        {
+            var db = 基礎DB();
+            var 硬殼 = 木樁(hp: 100);
+            硬殼.Moves = new[]
+            {
+                new Core.Combat.Enemies.MoveDef
+                {
+                    Id = "guard", Name = "架盾", Intent = Core.Combat.Enemies.IntentType.Defend,
+                    Steps = new[] { new EffectStep(EffectOp.Block, EffectTarget.Self, 8) }
+                }
+            };
+            硬殼.LoopScript = new[] { "guard" };
+            db.Enemies["dummy"] = 硬殼;
+            db.Potions["fire"] = new PotionDef
+            {
+                Id = "fire", Name = "火焰藥水", NeedsTarget = true,
+                Steps = new[] { new EffectStep(EffectOp.Damage, EffectTarget.TargetEnemy, 20) }
+            };
+            var setup = 基礎Setup(重複("strike", 10), potionIds: new[] { "fire" });
+            setup.EnemyIds.Add("dummy");
+            var engine = 引擎(db, setup);
+            engine.StartCombat();
+            engine.EndPlayerTurn();   // 敵人架盾 8
+
+            Assert.AreEqual(8, engine.State.Enemies[0].Block);
+            int hpBefore = engine.State.Enemies[0].Hp;
+            engine.UsePotion(0, 0);
+            // 不吃增減益,但格擋照算:20 - 8 = 12 進血量
+            Assert.AreEqual(12, hpBefore - engine.State.Enemies[0].Hp);
+            Assert.AreEqual(0, engine.State.Enemies[0].Block);
+        }
+
+        [Test]
         public void 隨機目標_三段共十二點_全落在活敵身上()
         {
             var 亂射 = new CardDef

@@ -6,12 +6,19 @@ using STS.Core.Combat;
 namespace STS.Game.UI
 {
     /// <summary>
-    /// 手牌扇形佈局。RefreshAll 時整批重建(佔位期做法,M7 手感期再改增量+物件池);
-    /// 佈局只在變更時計算與 tween,絕不每幀重排。
+    /// 手牌扇形佈局。以 InstanceId 做增量更新:新抽的牌從抽牌堆飛入、打掉的牌飛出後自毀,
+    /// 留在手上的牌只補間到新槽位——整批重建看不出「哪張是新來的」,手感差很多。
+    /// 佈局只在手牌變動時計算,絕不每幀重排。
     /// </summary>
     public sealed class HandView : MonoBehaviour
     {
-        private readonly List<CardView> _cards = new List<CardView>();
+        /// <summary>抽牌堆在手牌座標系的大致位置(左下),新卡從這裡飛出來。</summary>
+        private static readonly Vector2 抽牌堆方向 = new Vector2(-760f, -140f);
+
+        private readonly Dictionary<int, CardView> _cards = new Dictionary<int, CardView>();
+        private readonly List<CardView> _ordered = new List<CardView>();
+        private readonly HashSet<int> _aliveIds = new HashSet<int>();
+        private readonly List<int> _removeBuffer = new List<int>();
         private CombatScreenController _controller;
         private CanvasGroup _group;
 
@@ -50,27 +57,63 @@ namespace STS.Game.UI
 
         public void Rebuild(CombatEngine engine)
         {
-            foreach (var card in _cards)
-            {
-                if (card != null) Destroy(card.gameObject);
-            }
-            _cards.Clear();
-
             var hand = engine.State.Hand;
             var previewTarget = DefaultPreviewTarget(engine);
+
+            _aliveIds.Clear();
+            for (int i = 0; i < hand.Count; i++) _aliveIds.Add(hand[i].InstanceId);
+
+            // 已不在手上的:飛出後自毀
+            _removeBuffer.Clear();
+            foreach (var pair in _cards)
+            {
+                if (!_aliveIds.Contains(pair.Key)) _removeBuffer.Add(pair.Key);
+            }
+            foreach (int id in _removeBuffer)
+            {
+                var leaving = _cards[id];
+                _cards.Remove(id);
+                if (leaving != null) leaving.AnimateOutAndDestroy();
+            }
+
+            // 新卡建立(從抽牌堆方向飛入),舊卡只更新綁定
+            _ordered.Clear();
             for (int i = 0; i < hand.Count; i++)
             {
-                var def = engine.GetCardDef(hand[i]);
-                var view = CardView.Build(transform, _controller);
-                view.Bind(i, def, CardTextFormatter.FormatDescription(def, engine.State.Player, previewTarget));
-                _cards.Add(view);
+                var instance = hand[i];
+                var def = engine.GetCardDef(instance);
+                if (!_cards.TryGetValue(instance.InstanceId, out var view) || view == null)
+                {
+                    view = CardView.Build(transform, _controller);
+                    view.SetSlot(抽牌堆方向, 0f, true);
+                    view.PlayDrawIn();
+                    _cards[instance.InstanceId] = view;
+                }
+                view.Bind(i, instance.InstanceId, def,
+                    CardTextFormatter.FormatDescription(def, engine.State.Player, previewTarget));
+                _ordered.Add(view);
             }
-            Relayout(true);
+            Relayout();
         }
 
-        private void Relayout(bool immediate)
+        /// <summary>選卡模式:切換某張卡的選取外觀。</summary>
+        public void SetSelected(int handIndex, bool selected)
         {
-            int count = _cards.Count;
+            if (handIndex < 0 || handIndex >= _ordered.Count) return;
+            _ordered[handIndex].SetChoiceSelected(selected);
+        }
+
+        public void ClearSelections()
+        {
+            foreach (var card in _ordered)
+            {
+                if (card != null) card.SetChoiceSelected(false);
+            }
+        }
+
+        private void Relayout()
+        {
+            int count = _ordered.Count;
             if (count == 0) return;
             float spacing = Mathf.Min(140f, 1000f / count);
             float mid = (count - 1) / 2f;
@@ -79,7 +122,8 @@ namespace STS.Game.UI
                 float offset = i - mid;
                 var pos = new Vector2(offset * spacing, -Mathf.Abs(offset) * 14f);
                 float rot = -offset * 4f;
-                _cards[i].SetSlot(pos, rot, immediate);
+                _ordered[i].SetSlot(pos, rot, false);
+                _ordered[i].transform.SetSiblingIndex(i);
             }
         }
     }

@@ -1,3 +1,4 @@
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -113,6 +114,22 @@ namespace STS.Game.UI
         public static void SetBarFill(RectTransform fill, float ratio)
         {
             fill.anchorMax = new Vector2(Mathf.Clamp01(ratio), 1f);
+        }
+
+        /// <summary>血條平滑補間到目標比例——數字瞬變、長條慢慢掉,傷害才有重量感。</summary>
+        public static void TweenBarFill(RectTransform fill, float ratio)
+        {
+            float target = Mathf.Clamp01(ratio);
+            fill.DOKill();
+            float from = fill.anchorMax.x;
+            if (Mathf.Approximately(from, target))
+            {
+                SetBarFill(fill, target);
+                return;
+            }
+            DOTween.To(() => fill.anchorMax.x, x => fill.anchorMax = new Vector2(x, 1f), target, 0.28f)
+                .SetEase(Ease.OutCubic)
+                .SetLink(fill.gameObject);
         }
 
         /// <summary>純顯示用卡面(無互動):獎勵/商店/牌組檢視共用。</summary>

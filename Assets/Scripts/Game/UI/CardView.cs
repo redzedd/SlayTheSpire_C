@@ -10,26 +10,34 @@ namespace STS.Game.UI
 {
     /// <summary>
     /// 手牌上的一張卡:色塊+費用+名稱+描述(數值即時代入)。
-    /// 互動:hover 抬升、拖曳出牌(放開時交給 CombatScreenController 裁決)。
-    /// 佈局目標(槽位)由 HandView 指定;所有位移 tween 先 DOKill 再開新的,不疊加。
+    /// 兩種互動模式——平時 hover 抬升、拖曳出牌;選卡模式(消耗手牌)改成點擊選取。
+    /// 所有位移一律先 DOKill 再開新 tween,不疊加;tween 全掛 SetLink 隨物件銷毀。
     /// </summary>
     public sealed class CardView : MonoBehaviour,
-        IPointerEnterHandler, IPointerExitHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
+        IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler,
+        IBeginDragHandler, IDragHandler, IEndDragHandler
     {
         public const float 寬 = 160f;
         public const float 高 = 220f;
 
         public int HandIndex;
+        public int InstanceId { get; private set; }
         public CardDef Def { get; private set; }
         public bool RequiresTarget { get; private set; }
 
         private CombatScreenController _controller;
         private RectTransform _rect;
         private Image _background;
+        private CanvasGroup _group;
+        private TextMeshProUGUI _costText;
+        private TextMeshProUGUI _nameText;
+        private TextMeshProUGUI _descText;
+        private Image _selectionFrame;
         private Vector2 _slotPos;
         private Vector3 _slotEuler;
         private bool _dragging;
         private bool _hovered;
+        private bool _leaving;
 
         public RectTransform Rect => _rect;
 
@@ -41,6 +49,14 @@ namespace STS.Game.UI
             view._controller = controller;
             view._rect = background.rectTransform;
             view._background = background;
+            view._group = background.gameObject.AddComponent<CanvasGroup>();
+
+            // 選取外框(選卡模式用):平時隱藏
+            var frame = UiKit.CreatePanel("選取框", background.transform, new Color(1f, 0.85f, 0.3f, 0.35f));
+            UiKit.Stretch(frame.rectTransform, -8f);
+            frame.raycastTarget = false;
+            frame.gameObject.SetActive(false);
+            view._selectionFrame = frame;
 
             var costOrb = UiKit.CreatePanel("費用底", background.transform, new Color(0.95f, 0.75f, 0.2f));
             UiKit.Place(costOrb.rectTransform, new Vector2(-寬 / 2f + 22f, 高 / 2f - 22f), new Vector2(40f, 40f));
@@ -58,13 +74,10 @@ namespace STS.Game.UI
             return view;
         }
 
-        private TextMeshProUGUI _costText;
-        private TextMeshProUGUI _nameText;
-        private TextMeshProUGUI _descText;
-
-        public void Bind(int handIndex, CardDef def, string formattedDescription)
+        public void Bind(int handIndex, int instanceId, CardDef def, string formattedDescription)
         {
             HandIndex = handIndex;
+            InstanceId = instanceId;
             Def = def;
             RequiresTarget = ComputeRequiresTarget(def);
             _background.color = UiKit.卡牌顏色(def.Type);
@@ -80,13 +93,37 @@ namespace STS.Game.UI
             _descText.text = CardTextFormatter.FormatDescription(Def, player, target);
         }
 
-        private static bool ComputeRequiresTarget(CardDef def)
+        /// <summary>剛抽到:縮小半透明地從抽牌堆方向飛入。</summary>
+        public void PlayDrawIn()
         {
-            foreach (var step in def.Steps)
-            {
-                if (step.Target == EffectTarget.TargetEnemy) return true;
-            }
-            return false;
+            _rect.localScale = Vector3.one * 0.55f;
+            _group.alpha = 0f;
+            _group.DOFade(1f, 0.22f).SetEase(Ease.OutCubic).SetLink(gameObject);
+        }
+
+        /// <summary>離開手牌(打出/棄掉/消耗):放大淡出後自毀。</summary>
+        public void AnimateOutAndDestroy()
+        {
+            if (_leaving) return;
+            _leaving = true;
+            _group.blocksRaycasts = false;
+            _rect.DOKill();
+            DOTween.Sequence()
+                .Append(_rect.DOScale(1.25f, 0.18f).SetEase(Ease.OutCubic))
+                .Join(_rect.DOAnchorPosY(_rect.anchoredPosition.y + 90f, 0.18f))
+                .Join(_group.DOFade(0f, 0.18f))
+                .OnComplete(() => Destroy(gameObject))
+                .SetLink(gameObject);
+        }
+
+        public void SetChoiceSelected(bool selected)
+        {
+            if (_selectionFrame == null) return;
+            _selectionFrame.gameObject.SetActive(selected);
+            _rect.DOKill();
+            _rect.DOAnchorPos(selected ? _slotPos + new Vector2(0f, 50f) : _slotPos, 0.14f)
+                .SetEase(Ease.OutCubic).SetLink(gameObject);
+            _rect.DOScale(selected ? 1.1f : 1f, 0.14f).SetLink(gameObject);
         }
 
         /// <summary>HandView 指定槽位;immediate 用在初始擺放。</summary>
@@ -99,7 +136,7 @@ namespace STS.Game.UI
                 _rect.anchoredPosition = anchoredPos;
                 _rect.localEulerAngles = _slotEuler;
             }
-            else if (!_dragging && !_hovered)
+            else if (!_dragging && !_hovered && !_leaving)
             {
                 TweenToSlot();
             }
@@ -110,12 +147,13 @@ namespace STS.Game.UI
             _rect.DOKill();
             _rect.DOAnchorPos(_slotPos, 0.22f).SetEase(Ease.OutCubic).SetLink(gameObject);
             _rect.DOLocalRotate(_slotEuler, 0.22f).SetEase(Ease.OutCubic).SetLink(gameObject);
-            _rect.DOScale(1f, 0.15f).SetLink(gameObject);
+            _rect.DOScale(1f, 0.18f).SetEase(Ease.OutBack).SetLink(gameObject);
         }
 
         public void OnPointerEnter(PointerEventData eventData)
         {
-            if (_dragging || !_controller.InputEnabled) return;
+            if (_dragging || _leaving || !_controller.InputEnabled) return;
+            if (_controller.IsChoiceMode && _controller.IsChosen(HandIndex)) return;   // 已選取的卡維持選取姿態
             _hovered = true;
             _rect.SetAsLastSibling();   // uGUI 疊序 = 階層順序,浮起的卡要壓過鄰卡
             _rect.DOKill();
@@ -126,14 +164,26 @@ namespace STS.Game.UI
 
         public void OnPointerExit(PointerEventData eventData)
         {
-            if (_dragging) return;
+            if (_dragging || _leaving) return;
             _hovered = false;
+            if (_controller.IsChoiceMode && _controller.IsChosen(HandIndex))
+            {
+                SetChoiceSelected(true);
+                return;
+            }
             TweenToSlot();
+        }
+
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            if (_leaving || !_controller.IsChoiceMode) return;
+            _hovered = false;
+            _controller.ToggleChoiceSelection(HandIndex);
         }
 
         public void OnBeginDrag(PointerEventData eventData)
         {
-            if (!_controller.InputEnabled) return;
+            if (_leaving || !_controller.InputEnabled || _controller.IsChoiceMode) return;   // 選卡模式只接受點擊
             _dragging = true;
             _background.raycastTarget = false;   // 拖曳中讓射線穿過卡,才能點到敵人
             _rect.DOKill();
@@ -166,6 +216,15 @@ namespace STS.Game.UI
         public void SnapBack()
         {
             TweenToSlot();
+        }
+
+        private static bool ComputeRequiresTarget(CardDef def)
+        {
+            foreach (var step in def.Steps)
+            {
+                if (step.Target == EffectTarget.TargetEnemy) return true;
+            }
+            return false;
         }
     }
 }

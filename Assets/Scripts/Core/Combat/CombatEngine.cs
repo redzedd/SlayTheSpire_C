@@ -39,6 +39,7 @@ namespace STS.Core.Combat
         private int _pendingTargetIndex;
         private CardInstance _pendingPlayedCard;
         private CardDef _pendingPlayedDef;
+        private bool _pendingIgnoreModifiers;
 
         public CombatEngine(IContentDb db, RunRng rng, CombatSetup setup)
         {
@@ -208,7 +209,7 @@ namespace STS.Core.Combat
             int target = _pendingTargetIndex;
             _pendingSteps = null;
 
-            EffectResolver.ResolveFrom(this, steps, resumeIndex, source, target);
+            EffectResolver.ResolveFrom(this, steps, resumeIndex, source, target, _pendingIgnoreModifiers);
             if (State.Phase == CombatPhase.AwaitingChoice) return;   // 防衛:再次中斷(切片不會發生)
 
             FinishCardPlay();
@@ -234,7 +235,8 @@ namespace STS.Core.Combat
                 }
             }
             State.PotionSlots[slot] = null;
-            EffectResolver.Resolve(this, def.Steps, PlayerIndex, targetEnemyIndex);
+            // 藥水不吃力量/虛弱/易傷/敏捷/脆弱:瓶裝效果是固定的
+            EffectResolver.Resolve(this, def.Steps, PlayerIndex, targetEnemyIndex, ignoreModifiers: true);
             if (State.Phase == CombatPhase.AwaitingChoice)
             {
                 throw new NotSupportedException("切片藥水不支援中斷選擇型效果");
@@ -576,6 +578,15 @@ namespace STS.Core.Combat
             Emit(new CombatEvent(EventKind.BlockGained, sourceIndex: index, amount: gain, remainingBlock: combatant.Block));
         }
 
+        /// <summary>不吃敏捷/脆弱的原始格擋(藥水用)。</summary>
+        internal void GainBlockRaw(int index, int amount)
+        {
+            var combatant = GetCombatant(index);
+            if (!combatant.IsAlive || amount <= 0) return;
+            combatant.Block += amount;
+            Emit(new CombatEvent(EventKind.BlockGained, sourceIndex: index, amount: amount, remainingBlock: combatant.Block));
+        }
+
         internal void ApplyStatusTo(int index, StatusId status, int amount)
         {
             var combatant = GetCombatant(index);
@@ -679,12 +690,14 @@ namespace STS.Core.Combat
             }
         }
 
-        internal void RequestChoice(EffectStep[] steps, int resumeIndex, int sourceIndex, int targetIndex, int count)
+        internal void RequestChoice(EffectStep[] steps, int resumeIndex, int sourceIndex, int targetIndex, int count,
+            bool ignoreModifiers = false)
         {
             _pendingSteps = steps;
             _pendingResumeIndex = resumeIndex;
             _pendingSourceIndex = sourceIndex;
             _pendingTargetIndex = targetIndex;
+            _pendingIgnoreModifiers = ignoreModifiers;
             State.PendingChoiceCount = count;
             State.Phase = CombatPhase.AwaitingChoice;
             Emit(new CombatEvent(EventKind.ChoiceRequired, amount: count));

@@ -11,12 +11,18 @@ namespace STS.Core.Combat
     /// </summary>
     internal static class EffectResolver
     {
-        internal static void Resolve(CombatEngine engine, EffectStep[] steps, int sourceIndex, int chosenTargetIndex)
+        /// <param name="ignoreModifiers">
+        /// true = 數值不吃任何增益/減益(力量、虛弱、易傷、敏捷、脆弱)。藥水走這條:
+        /// 藥水是瓶裝的固定效果,不該被角色狀態放大或削弱。
+        /// </param>
+        internal static void Resolve(CombatEngine engine, EffectStep[] steps, int sourceIndex, int chosenTargetIndex,
+            bool ignoreModifiers = false)
         {
-            ResolveFrom(engine, steps, 0, sourceIndex, chosenTargetIndex);
+            ResolveFrom(engine, steps, 0, sourceIndex, chosenTargetIndex, ignoreModifiers);
         }
 
-        internal static void ResolveFrom(CombatEngine engine, EffectStep[] steps, int startIndex, int sourceIndex, int chosenTargetIndex)
+        internal static void ResolveFrom(CombatEngine engine, EffectStep[] steps, int startIndex, int sourceIndex,
+            int chosenTargetIndex, bool ignoreModifiers = false)
         {
             if (steps == null) return;
             for (int s = startIndex; s < steps.Length; s++)
@@ -29,7 +35,7 @@ namespace STS.Core.Combat
                 switch (step.Op)
                 {
                     case EffectOp.Damage:
-                        ResolveDamage(engine, step, sourceIndex, chosenTargetIndex, repeat);
+                        ResolveDamage(engine, step, sourceIndex, chosenTargetIndex, repeat, ignoreModifiers);
                         break;
 
                     case EffectOp.Block:
@@ -38,7 +44,15 @@ namespace STS.Core.Combat
                             var targets = CollectTargets(engine, sourceIndex, step.Target, chosenTargetIndex);
                             for (int t = 0; t < targets.Count; t++)
                             {
-                                engine.GainBlock(targets[t], ResolveAmount(engine, step, sourceIndex));
+                                int amount = ResolveAmount(engine, step, sourceIndex);
+                                if (ignoreModifiers)
+                                {
+                                    engine.GainBlockRaw(targets[t], amount);
+                                }
+                                else
+                                {
+                                    engine.GainBlock(targets[t], amount);
+                                }
                             }
                         }
                         break;
@@ -106,7 +120,7 @@ namespace STS.Core.Combat
                         if (engine.State.Hand.Count == 0) break;   // 沒得選就跳過本步,繼續後續步驟
                         int count = step.Amount <= 0 ? 1 : step.Amount;
                         if (count > engine.State.Hand.Count) count = engine.State.Hand.Count;
-                        engine.RequestChoice(steps, s + 1, sourceIndex, chosenTargetIndex, count);
+                        engine.RequestChoice(steps, s + 1, sourceIndex, chosenTargetIndex, count, ignoreModifiers);
                         return;   // 中斷:剩餘步驟由 ResolveChoice 續跑
                     }
 
@@ -117,7 +131,8 @@ namespace STS.Core.Combat
         }
 
         /// <summary>多段攻擊:每段重新取目標(隨機目標每段重擲);沒有活目標時剩餘段全跳。</summary>
-        private static void ResolveDamage(CombatEngine engine, EffectStep step, int sourceIndex, int chosenTargetIndex, int repeat)
+        private static void ResolveDamage(CombatEngine engine, EffectStep step, int sourceIndex, int chosenTargetIndex,
+            int repeat, bool ignoreModifiers)
         {
             for (int r = 0; r < repeat; r++)
             {
@@ -126,7 +141,15 @@ namespace STS.Core.Combat
                 int baseAmount = ResolveDamageBase(engine, step, sourceIndex);
                 for (int t = 0; t < targets.Count; t++)
                 {
-                    engine.DealAttackDamage(sourceIndex, targets[t], baseAmount);
+                    if (ignoreModifiers)
+                    {
+                        // 固定傷害:吃格擋,但不吃力量/虛弱/易傷,也不觸發攻擊 hook
+                        engine.DealNonAttackDamage(sourceIndex, targets[t], baseAmount);
+                    }
+                    else
+                    {
+                        engine.DealAttackDamage(sourceIndex, targets[t], baseAmount);
+                    }
                 }
             }
         }

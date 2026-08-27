@@ -81,7 +81,7 @@ namespace STS.Game.UI
             var enemy = engine.State.Enemies[EnemyIndex];
             _nameText.text = enemy.Name;
             _hpText.text = $"{enemy.Hp}/{enemy.MaxHp}";
-            UiKit.SetBarFill(_hpFill, enemy.MaxHp > 0 ? (float)enemy.Hp / enemy.MaxHp : 0f);
+            UiKit.TweenBarFill(_hpFill, enemy.MaxHp > 0 ? (float)enemy.Hp / enemy.MaxHp : 0f);
             _blockText.text = enemy.Block > 0 ? $"盾{enemy.Block}" : "";
             _statusText.text = StatusRowText.Build(enemy);
 
@@ -92,8 +92,17 @@ namespace STS.Game.UI
                 _statusText.text = "";
                 return;
             }
-            _intentText.text = IntentText(engine.GetIntentPreview(EnemyIndex));
+            string intent = IntentText(engine.GetIntentPreview(EnemyIndex));
+            if (intent != _lastIntentText)
+            {
+                _lastIntentText = intent;
+                _intentText.text = intent;
+                _intentText.rectTransform.DOKill(true);
+                _intentText.rectTransform.DOPunchScale(Vector3.one * 0.22f, 0.3f, 6).SetLink(gameObject);
+            }
         }
+
+        private string _lastIntentText;
 
         private static string IntentText(IntentInfo intent)
         {

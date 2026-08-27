@@ -29,8 +29,10 @@ namespace STS.Game.UI
             var run = game.Run.State;
             var map = run.Map;
 
-            // 捲動視口與內容
-            var viewport = UiKit.CreateRect("視口", root);
+            // 捲動視口與內容。視口必須有一張(近乎透明的)Image 當射線目標——
+            // 沒有它,滾輪與拖曳只在剛好指到節點時有反應,指在空白處會完全捲不動。
+            var viewportImage = UiKit.CreatePanel("視口", root, new Color(0f, 0f, 0f, 0.004f));
+            var viewport = viewportImage.rectTransform;
             UiKit.Stretch(viewport, 0f);
             viewport.gameObject.AddComponent<RectMask2D>();
             var content = UiKit.CreateRect("內容", viewport);
@@ -46,8 +48,11 @@ namespace STS.Game.UI
             scroll.content = content;
             scroll.horizontal = false;
             scroll.vertical = true;
-            scroll.movementType = ScrollRect.MovementType.Clamped;
-            scroll.scrollSensitivity = 30f;
+            scroll.movementType = ScrollRect.MovementType.Elastic;
+            scroll.elasticity = 0.08f;
+            scroll.inertia = true;
+            scroll.decelerationRate = 0.12f;
+            scroll.scrollSensitivity = 55f;
 
             Vector2 節點座標(MapNode node)
             {
