@@ -27,22 +27,39 @@ namespace STS.Core.Run
         }
     }
 
-    /// <summary>戰後獎勵(金幣已入帳;卡三選一待 Take/Skip;藥水已自動入空欄;精英遺物已入包)。</summary>
+    /// <summary>
+    /// 戰後獎勵清單。每一項都要玩家自己點才入帳(對應「搜刮!」畫面的逐項領取),
+    /// 領完或離開才回地圖。已領取的項目留在清單裡但標記為已領,UI 據此劃掉。
+    /// </summary>
     public sealed class CombatRewards
     {
         public int Gold;
+        public bool GoldClaimed;
         public readonly List<string> CardChoices = new List<string>();
+        public bool CardResolved;
         public string PotionId;
+        public bool PotionClaimed;
         public string RelicId;
+        public bool RelicClaimed;
+
+        public bool HasGold => Gold > 0 && !GoldClaimed;
+        public bool HasPotion => PotionId != null && !PotionClaimed;
+        public bool HasRelic => RelicId != null && !RelicClaimed;
+        public bool HasCard => CardChoices.Count > 0 && !CardResolved;
+        public bool AllClaimed => !HasGold && !HasPotion && !HasRelic && !HasCard;
     }
 
-    /// <summary>商店庫存與定價。</summary>
+    /// <summary>
+    /// 商店庫存與定價。CardIds 前 ClassCardCount 張是職業牌、其後是無色牌——
+    /// 兩區共用同一份索引,買牌的介面才不用分兩套。
+    /// </summary>
     public sealed class ShopInventory
     {
         public readonly List<string> CardIds = new List<string>();
         public readonly List<int> CardCosts = new List<int>();
         public readonly List<string> RelicIds = new List<string>();
         public readonly List<string> PotionIds = new List<string>();
+        public int ClassCardCount;
         public int RelicCost;
         public int PotionCost;
         public int RemoveCost;
@@ -218,31 +235,64 @@ namespace STS.Core.Run
             State.Phase = RunPhase.ChoosingReward;
         }
 
+        /// <summary>領取金幣。已領過或沒有金幣時回 false(UI 不必自己防呆)。</summary>
+        public bool ClaimRewardGold()
+        {
+            RequirePhase(RunPhase.ChoosingReward, "獎勵");
+            if (!PendingRewards.HasGold) return false;
+            State.Gold += PendingRewards.Gold;
+            PendingRewards.GoldClaimed = true;
+            return true;
+        }
+
+        /// <summary>領取藥水。藥水欄滿了就拿不走,回 false 讓 UI 提示。</summary>
+        public bool ClaimRewardPotion()
+        {
+            RequirePhase(RunPhase.ChoosingReward, "獎勵");
+            if (!PendingRewards.HasPotion) return false;
+            int slot = FreePotionSlot();
+            if (slot < 0) return false;
+            State.PotionSlots[slot] = PendingRewards.PotionId;
+            PendingRewards.PotionClaimed = true;
+            return true;
+        }
+
+        public bool ClaimRewardRelic()
+        {
+            RequirePhase(RunPhase.ChoosingReward, "獎勵");
+            if (!PendingRewards.HasRelic) return false;
+            State.Relics.Add(new RelicInstance(PendingRewards.RelicId));
+            PendingRewards.RelicClaimed = true;
+            return true;
+        }
+
+        /// <summary>選走一張卡牌獎勵;卡牌那一項就此結案(不會再出現)。</summary>
         public void TakeCardReward(int choiceIndex)
         {
-            if (State.Phase != RunPhase.ChoosingReward)
+            RequirePhase(RunPhase.ChoosingReward, "獎勵");
+            if (!PendingRewards.HasCard)
             {
-                throw new InvalidOperationException("現在不是選獎勵的階段");
+                throw new InvalidOperationException("卡牌獎勵已處理過");
             }
             if (choiceIndex < 0 || choiceIndex >= PendingRewards.CardChoices.Count)
             {
                 throw new InvalidOperationException("卡牌獎勵索引無效");
             }
             State.Deck.Add(new CardInstance(State.NextCardInstanceId++, PendingRewards.CardChoices[choiceIndex]));
-            FinishRewards();
+            PendingRewards.CardResolved = true;
         }
 
+        /// <summary>不選卡:卡牌那一項結案,其餘獎勵仍可領。</summary>
         public void SkipCardReward()
         {
-            if (State.Phase != RunPhase.ChoosingReward)
-            {
-                throw new InvalidOperationException("現在不是選獎勵的階段");
-            }
-            FinishRewards();
+            RequirePhase(RunPhase.ChoosingReward, "獎勵");
+            PendingRewards.CardResolved = true;
         }
 
-        private void FinishRewards()
+        /// <summary>離開獎勵畫面回地圖——沒領的就是不要了。</summary>
+        public void LeaveRewards()
         {
+            RequirePhase(RunPhase.ChoosingReward, "獎勵");
             PendingRewards = null;
             State.Phase = RunPhase.ChoosingNode;
         }
@@ -376,11 +426,10 @@ namespace STS.Core.Run
             var balance = _catalog.Balance;
             var rewards = new CombatRewards();
 
-            // 金幣入帳
+            // 金幣:只擲出數量,實際入帳等玩家在「搜刮!」清單上點下去
             rewards.Gold = nodeType == MapNodeType.Elite
                 ? State.Rng.CombatMisc.Range(balance.EliteGoldMin, balance.EliteGoldMax)
                 : State.Rng.CombatMisc.Range(balance.NormalGoldMin, balance.NormalGoldMax);
-            State.Gold += rewards.Gold;
 
             // 卡牌三選一(不重複)
             for (int i = 0; i < 3; i++)
@@ -389,17 +438,12 @@ namespace STS.Core.Run
                 if (pick != null) rewards.CardChoices.Add(pick);
             }
 
-            // 藥水掉落(未掉+、掉了-;有空欄才實際入包)
+            // 藥水掉落(未掉+、掉了-);掉出來只是上架,入包要玩家自己領
             int chance = balance.PotionDropBasePercent + State.PotionChanceOffset;
             if (State.Rng.PotionReward.NextInt(100) < chance)
             {
                 State.PotionChanceOffset -= balance.PotionDropDeltaPercent;
                 rewards.PotionId = PickRandomPotion();
-                int slot = FreePotionSlot();
-                if (rewards.PotionId != null && slot >= 0)
-                {
-                    State.PotionSlots[slot] = rewards.PotionId;
-                }
             }
             else
             {
@@ -410,10 +454,6 @@ namespace STS.Core.Run
             if (nodeType == MapNodeType.Elite)
             {
                 rewards.RelicId = PickUnownedRelic(State.Rng.RelicReward);
-                if (rewards.RelicId != null)
-                {
-                    State.Relics.Add(new RelicInstance(rewards.RelicId));
-                }
             }
             return rewards;
         }
@@ -432,6 +472,7 @@ namespace STS.Core.Run
             foreach (var card in _catalog.AllCardDefs)
             {
                 if (card.Rarity != rarity) continue;
+                if (card.Colorless) continue;   // 無色牌只在商店無色區出現
                 if (card.Type == CardType.Status || card.Type == CardType.Curse) continue;
                 if (card.Id.EndsWith("+")) continue;
                 if (exclude.Contains(card.Id)) continue;
@@ -441,11 +482,28 @@ namespace STS.Core.Run
             return pool[State.Rng.CardReward.NextInt(pool.Count)];
         }
 
-        private string PickUnownedRelic(RngStream rng)
+        /// <summary>無色牌池:不分稀有度,商店無色區專用。</summary>
+        private string PickColorlessCard(List<string> exclude)
+        {
+            var pool = new List<string>();
+            foreach (var card in _catalog.AllCardDefs)
+            {
+                if (!card.Colorless) continue;
+                if (card.Id.EndsWith("+")) continue;
+                if (exclude.Contains(card.Id)) continue;
+                pool.Add(card.Id);
+            }
+            if (pool.Count == 0) return null;
+            return pool[State.Rng.CardReward.NextInt(pool.Count)];
+        }
+
+        /// <param name="exclude">額外排除的 id(例如同一次商店已上架的),null = 不排除。</param>
+        private string PickUnownedRelic(RngStream rng, List<string> exclude = null)
         {
             var pool = new List<string>();
             foreach (var relic in _catalog.AllRelicDefs)
             {
+                if (exclude != null && exclude.Contains(relic.Id)) continue;
                 bool owned = false;
                 foreach (var mine in State.Relics)
                 {
@@ -461,11 +519,13 @@ namespace STS.Core.Run
             return pool[rng.NextInt(pool.Count)];
         }
 
-        private string PickRandomPotion()
+        /// <param name="exclude">額外排除的 id(同一次商店已上架的),null = 不排除。</param>
+        private string PickRandomPotion(List<string> exclude = null)
         {
             var pool = new List<string>();
             foreach (var potion in _catalog.AllPotionDefs)
             {
+                if (exclude != null && exclude.Contains(potion.Id)) continue;
                 pool.Add(potion.Id);
             }
             if (pool.Count == 0) return null;
@@ -482,35 +542,49 @@ namespace STS.Core.Run
                 RemoveCost = balance.ShopRemoveBaseCost
                     + balance.ShopRemoveCostIncrement * State.ShopRemovesPurchased
             };
-            // 卡 5 張(不重複),定價按稀有度
+            // 上排職業牌(不重複),定價按稀有度
             var exclude = new List<string>();
-            for (int i = 0; i < 5; i++)
+            for (int i = 0; i < balance.ShopClassCardCount; i++)
             {
                 string cardId = PickRewardCard(exclude);
                 if (cardId == null) break;
                 exclude.Add(cardId);
-                shop.CardIds.Add(cardId);
-                var def = _catalog.GetCard(cardId);
-                int cost = def.Rarity == CardRarity.Rare
-                    ? balance.ShopCardRareCost
-                    : (def.Rarity == CardRarity.Uncommon ? balance.ShopCardUncommonCost : balance.ShopCardCommonCost);
-                shop.CardCosts.Add(cost);
+                AddShopCard(shop, cardId, balance);
             }
-            // 遺物 2、藥水 2
-            for (int i = 0; i < 2; i++)
+            shop.ClassCardCount = shop.CardIds.Count;
+            // 下排無色牌(另一個池,不重複)
+            for (int i = 0; i < balance.ShopColorlessCardCount; i++)
             {
-                string relicId = PickUnownedRelic(State.Rng.RelicReward);
-                if (relicId != null && !shop.RelicIds.Contains(relicId))
-                {
-                    shop.RelicIds.Add(relicId);
-                }
+                string cardId = PickColorlessCard(exclude);
+                if (cardId == null) break;
+                exclude.Add(cardId);
+                AddShopCard(shop, cardId, balance);
             }
-            for (int i = 0; i < 2; i++)
+
+            // 抽到已上架的就換一個再抽:去重不能靠丟掉這一格,否則貨架會少格
+            for (int i = 0; i < balance.ShopRelicCount; i++)
             {
-                string potionId = PickRandomPotion();
-                if (potionId != null) shop.PotionIds.Add(potionId);
+                string relicId = PickUnownedRelic(State.Rng.RelicReward, shop.RelicIds);
+                if (relicId == null) break;   // 池抽乾了才收手
+                shop.RelicIds.Add(relicId);
+            }
+            for (int i = 0; i < balance.ShopPotionCount; i++)
+            {
+                string potionId = PickRandomPotion(shop.PotionIds);
+                if (potionId == null) break;   // 藥水種類不夠就少擺幾格,不重複上架
+                shop.PotionIds.Add(potionId);
             }
             return shop;
+        }
+
+        private void AddShopCard(ShopInventory shop, string cardId, BalanceDef balance)
+        {
+            shop.CardIds.Add(cardId);
+            var def = _catalog.GetCard(cardId);
+            int cost = def.Rarity == CardRarity.Rare
+                ? balance.ShopCardRareCost
+                : (def.Rarity == CardRarity.Uncommon ? balance.ShopCardUncommonCost : balance.ShopCardCommonCost);
+            shop.CardCosts.Add(cost);
         }
 
         private int FreePotionSlot()

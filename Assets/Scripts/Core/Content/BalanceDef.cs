@@ -38,6 +38,11 @@ namespace STS.Core.Content
         public int ShopCardRareCost = 150;
         public int ShopRelicCost = 150;
         public int ShopPotionCost = 50;
+        // 商店貨架數量(版面直接照這幾個數字排:上排職業牌、下左無色牌、中下遺物/藥水)
+        public int ShopClassCardCount = 5;
+        public int ShopColorlessCardCount = 2;
+        public int ShopRelicCount = 3;
+        public int ShopPotionCount = 3;
 
         // 燈火
         public int RestHealPercent = 30;

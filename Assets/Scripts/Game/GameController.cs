@@ -150,7 +150,8 @@ namespace STS.Game
                     StartCombat(entry.EncounterId);
                     break;
                 case RunPhase.InShop:
-                    ShopScreenController.Build(NewScreenRoot("商店畫面根"), this);
+                    // 先進商人房間,點商人才看貨架
+                    ShopRoomScreenController.Build(NewScreenRoot("商人房間根"), this);
                     break;
                 case RunPhase.AtRest:
                     RestScreenController.Build(NewScreenRoot("燈火畫面根"), this);
@@ -226,16 +227,74 @@ namespace STS.Game
 
         // ---- 獎勵/商店/燈火動作(畫面按鈕與煙霧共用) ----
 
+        public void RewardClaimGold()
+        {
+            if (Run.ClaimRewardGold()) RerenderReward();
+        }
+
+        public void RewardClaimPotion()
+        {
+            if (Run.ClaimRewardPotion()) RerenderReward();
+            else ShowToast("藥水欄滿了,先用掉一瓶。");
+        }
+
+        public void RewardClaimRelic()
+        {
+            if (Run.ClaimRewardRelic()) RerenderReward();
+        }
+
+        public void RewardOpenCardPick()
+        {
+            var screen = FindRewardScreen();
+            if (screen != null) screen.OpenCardPick();
+        }
+
         public void RewardTakeCard(int choiceIndex)
         {
             Run.TakeCardReward(choiceIndex);
+            BackToRewardList();
+        }
+
+        public void RewardSkipCard()
+        {
+            Run.SkipCardReward();
+            BackToRewardList();
+        }
+
+        /// <summary>離開獎勵畫面回地圖——沒領的就是不要了。</summary>
+        public void RewardLeave()
+        {
+            Run.LeaveRewards();
             ShowMap(null);
         }
 
-        public void RewardSkip()
+        private void BackToRewardList()
         {
-            Run.SkipCardReward();
-            ShowMap(null);
+            var screen = FindRewardScreen();
+            if (screen != null) screen.BackToList();
+        }
+
+        private void RerenderReward()
+        {
+            var screen = FindRewardScreen();
+            if (screen != null) screen.Render();
+        }
+
+        private RewardScreenController FindRewardScreen()
+        {
+            return _currentScreen != null ? _currentScreen.GetComponentInChildren<RewardScreenController>() : null;
+        }
+
+        /// <summary>從商人房間進貨架。</summary>
+        public void ShopOpenCounter()
+        {
+            ShopScreenController.Build(NewScreenRoot("商店畫面根"), this);
+        }
+
+        /// <summary>從貨架退回商人房間(離開整個商店要按房間裡的「前進」)。</summary>
+        public void ShopBackToRoom()
+        {
+            ShopRoomScreenController.Build(NewScreenRoot("商人房間根"), this);
         }
 
         public void ShopBuyCard(int index)
@@ -341,9 +400,18 @@ namespace STS.Game
                         break;
                     }
                     case RunPhase.ChoosingReward:
-                        RewardTakeCard(0);
-                        yield return new WaitForSeconds(0.25f);
+                    {
+                        // 逐項領完再離開,走的是玩家按鈕的同一批方法
+                        var pending = Run.PendingRewards;
+                        if (pending.HasGold) RewardClaimGold();
+                        else if (pending.HasRelic) RewardClaimRelic();
+                        // 藥水欄滿了就拿不走,直接離開(玩家會看到提示,自動化沒必要卡在這)
+                        else if (pending.HasPotion) { if (!Run.ClaimRewardPotion()) RewardLeave(); else RerenderReward(); }
+                        else if (pending.HasCard) RewardTakeCard(0);
+                        else RewardLeave();
+                        yield return new WaitForSeconds(0.12f);
                         break;
+                    }
                     case RunPhase.InShop:
                         ShopLeave();
                         yield return new WaitForSeconds(0.25f);

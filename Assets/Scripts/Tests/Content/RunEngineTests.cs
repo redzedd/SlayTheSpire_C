@@ -89,7 +89,7 @@ namespace STS.Content.Tests
         }
 
         [Test]
-        public void 戰勝_金幣入帳_卡三選一_藥水浮動生效()
+        public void 戰勝_金幣要自己領_卡三選一_藥水浮動生效()
         {
             var engine = 手作引擎(9UL, MapNodeType.Combat);
             engine.EnterNode(0);
@@ -101,7 +101,11 @@ namespace STS.Content.Tests
             var rewards = engine.PendingRewards;
             Assert.IsNotNull(rewards);
             Assert.That(rewards.Gold, Is.InRange(_db.Balance.NormalGoldMin, _db.Balance.NormalGoldMax));
+            // 金幣不自動入帳:要玩家在「搜刮!」清單上點下去
+            Assert.AreEqual(goldBefore, engine.State.Gold);
+            Assert.IsTrue(engine.ClaimRewardGold());
             Assert.AreEqual(goldBefore + rewards.Gold, engine.State.Gold);
+            Assert.IsFalse(engine.ClaimRewardGold(), "同一筆金幣不得領兩次");
             Assert.AreEqual(3, rewards.CardChoices.Count);
             foreach (var cardId in rewards.CardChoices)
             {
@@ -114,7 +118,7 @@ namespace STS.Content.Tests
         }
 
         [Test]
-        public void 拿卡入組_跳過不入_都回到選節點()
+        public void 拿卡入組_卡項結案_離開才回選節點()
         {
             var engine = 手作引擎(11UL, MapNodeType.Combat, MapNodeType.Combat);
             engine.EnterNode(0);
@@ -124,8 +128,30 @@ namespace STS.Content.Tests
             engine.TakeCardReward(1);
             Assert.AreEqual(deckBefore + 1, engine.State.Deck.Count);
             Assert.AreEqual(chosen, engine.State.Deck[engine.State.Deck.Count - 1].CardId);
+            // 選完卡只是卡那一項結案,金幣還在清單上等著領
+            Assert.IsFalse(engine.PendingRewards.HasCard);
+            Assert.AreEqual(RunPhase.ChoosingReward, engine.State.Phase);
+            Assert.Throws<System.InvalidOperationException>(() => engine.TakeCardReward(0));
+
+            engine.LeaveRewards();
             Assert.AreEqual(RunPhase.ChoosingNode, engine.State.Phase);
             Assert.IsNull(engine.PendingRewards);
+        }
+
+        [Test]
+        public void 跳過選卡_其餘獎勵仍可領()
+        {
+            var engine = 手作引擎(23UL, MapNodeType.Combat, MapNodeType.Combat);
+            engine.EnterNode(0);
+            engine.ApplyCombatResult(true, 70);
+            int deckBefore = engine.State.Deck.Count;
+            int goldBefore = engine.State.Gold;
+            engine.SkipCardReward();
+            Assert.AreEqual(deckBefore, engine.State.Deck.Count);
+            Assert.IsTrue(engine.ClaimRewardGold());
+            Assert.Greater(engine.State.Gold, goldBefore);
+            engine.LeaveRewards();
+            Assert.AreEqual(RunPhase.ChoosingNode, engine.State.Phase);
         }
 
         [Test]
@@ -138,6 +164,7 @@ namespace STS.Content.Tests
             string relic = engine.PendingRewards.RelicId;
             Assert.IsNotNull(relic);
             Assert.AreNotEqual("burning_blood", relic);
+            Assert.IsTrue(engine.ClaimRewardRelic(), "遺物也要自己領");
             int count = 0;
             foreach (var owned in engine.State.Relics)
             {
@@ -173,6 +200,63 @@ namespace STS.Content.Tests
 
             engine.LeaveShop();
             Assert.AreEqual(RunPhase.ChoosingNode, engine.State.Phase);
+        }
+
+        [Test]
+        public void 商店貨架_職業牌與無色牌分區_遺物藥水各三格()
+        {
+            var balance = _db.Balance;
+            // 多個種子:單一種子會讓「抽到重複遺物就少一格」這種缺陷矇混過關
+            foreach (ulong seed in new ulong[] { 29UL, 37UL, 41UL, 53UL })
+            {
+                var engine = 手作引擎(seed, MapNodeType.Shop);
+                engine.EnterNode(0);
+                var shop = engine.Shop;
+
+                Assert.AreEqual(balance.ShopClassCardCount, shop.ClassCardCount, $"種子 {seed}:上排職業牌張數要照 BalanceDef");
+                Assert.AreEqual(balance.ShopClassCardCount + balance.ShopColorlessCardCount, shop.CardIds.Count, $"種子 {seed}");
+                Assert.AreEqual(balance.ShopRelicCount, shop.RelicIds.Count, $"種子 {seed}:遺物必須湊滿格");
+                Assert.AreEqual(balance.ShopPotionCount, shop.PotionIds.Count, $"種子 {seed}");
+                CollectionAssert.AllItemsAreUnique(shop.CardIds);
+                CollectionAssert.AllItemsAreUnique(shop.RelicIds);
+                CollectionAssert.AllItemsAreUnique(shop.PotionIds);
+
+                for (int i = 0; i < shop.ClassCardCount; i++)
+                {
+                    Assert.IsFalse(_db.GetCard(shop.CardIds[i]).Colorless, $"種子 {seed}:上排第 {i} 張不該是無色牌");
+                }
+                for (int i = shop.ClassCardCount; i < shop.CardIds.Count; i++)
+                {
+                    Assert.IsTrue(_db.GetCard(shop.CardIds[i]).Colorless, $"種子 {seed}:下排第 {i} 張必須是無色牌");
+                }
+            }
+        }
+
+        [Test]
+        public void 無色牌_不會出現在戰後卡牌獎勵()
+        {
+            // 跑多場戰鬥累積樣本:無色牌只在商店賣,獎勵池絕不能撈到
+            var engine = RunEngine.NewRun(_db, 31UL);
+            for (int round = 0; round < 40; round++)
+            {
+                var reachable = engine.GetReachableNodeIds();
+                if (reachable.Count == 0) break;
+                bool entered = false;
+                foreach (int nodeId in reachable)
+                {
+                    if (engine.State.Map.NodeById(nodeId).Type != MapNodeType.Combat) continue;
+                    engine.EnterNode(nodeId);
+                    entered = true;
+                    break;
+                }
+                if (!entered) break;
+                engine.ApplyCombatResult(true, engine.State.Hp);
+                foreach (var cardId in engine.PendingRewards.CardChoices)
+                {
+                    Assert.IsFalse(_db.GetCard(cardId).Colorless, $"無色牌 {cardId} 不該出現在戰後獎勵");
+                }
+                engine.LeaveRewards();
+            }
         }
 
         [Test]
@@ -213,6 +297,7 @@ namespace STS.Content.Tests
             engine.EnterNode(0);
             engine.ApplyCombatResult(true, 60);
             engine.SkipCardReward();
+            engine.LeaveRewards();
             var bossEntry = engine.EnterNode(engine.State.Map.BossNodeId);
             Assert.AreEqual(EncounterPool.Boss, _db.GetEncounter(bossEntry.EncounterId).Pool);
             engine.ApplyCombatResult(true, 30);
@@ -255,7 +340,12 @@ namespace STS.Content.Tests
                         break;
                     }
                     case RunPhase.ChoosingReward:
-                        engine.TakeCardReward(0);
+                        // 逐項領取:金幣 → 遺物 → 藥水(欄滿就算了)→ 選卡 → 離開
+                        engine.ClaimRewardGold();
+                        engine.ClaimRewardRelic();
+                        engine.ClaimRewardPotion();
+                        if (engine.PendingRewards.HasCard) engine.TakeCardReward(0);
+                        engine.LeaveRewards();
                         break;
                     case RunPhase.InShop:
                         engine.LeaveShop();

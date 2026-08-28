@@ -49,6 +49,46 @@ namespace STS.Game.UI
             return image;
         }
 
+        /// <summary>圓形色塊。佔位期沒有素材,圓形 sprite 現場畫一張(全域共用一張,不是每次都畫)。</summary>
+        public static Image CreateCircle(string name, Transform parent, Color color)
+        {
+            var image = CreatePanel(name, parent, color);
+            image.sprite = 圓形Sprite;
+            image.type = Image.Type.Simple;
+            return image;
+        }
+
+        private static Sprite _circleSprite;
+
+        private static Sprite 圓形Sprite
+        {
+            get
+            {
+                if (_circleSprite != null) return _circleSprite;
+                const int size = 128;
+                var texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
+                texture.hideFlags = HideFlags.HideAndDontSave;
+                float radius = size * 0.5f;
+                var pixels = new Color32[size * size];
+                for (int y = 0; y < size; y++)
+                {
+                    for (int x = 0; x < size; x++)
+                    {
+                        float dx = x + 0.5f - radius;
+                        float dy = y + 0.5f - radius;
+                        // 邊緣 1px 做線性淡出,不然圓周會有鋸齒
+                        float alpha = Mathf.Clamp01(radius - Mathf.Sqrt(dx * dx + dy * dy));
+                        pixels[y * size + x] = new Color(1f, 1f, 1f, alpha);
+                    }
+                }
+                texture.SetPixels32(pixels);
+                texture.Apply();
+                _circleSprite = Sprite.Create(texture, new Rect(0f, 0f, size, size), new Vector2(0.5f, 0.5f));
+                _circleSprite.hideFlags = HideFlags.HideAndDontSave;
+                return _circleSprite;
+            }
+        }
+
         public static TextMeshProUGUI CreateText(string name, Transform parent, string text, float fontSize,
             Color? color = null, TextAlignmentOptions alignment = TextAlignmentOptions.Center)
         {

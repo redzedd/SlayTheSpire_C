@@ -10,45 +10,45 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 864927395ecc3534e9fd9f61f33a2072, type: 3}
-  m_Name: inflame
+  m_Name: bandage_up
   m_EditorClassIdentifier: STS.Game::STS.Game.DataAssets.CardDataAsset
-  id: inflame
-  type: 2
-  rarity: 2
+  id: bandage_up
+  type: 1
+  rarity: 1
   costIsX: 0
   unplayable: 0
-  exhausts: 0
+  exhausts: 1
   ethereal: 0
-  colorless: 0
-  baseName: "\u71C3\u5FC3"
-  baseCost: 1
-  baseDescription: "\u7372\u5F97 2 \u9EDE\u529B\u91CF\u3002"
+  colorless: 1
+  baseName: "\u5305\u7D2E"
+  baseCost: 0
+  baseDescription: "\u56DE\u5FA9 4 \u9EDE\u751F\u547D\u3002\u6D88\u8017\u3002"
   baseSteps:
-  - op: 2
+  - op: 6
     target: 0
-    amount: 2
+    amount: 4
     amountKind: 0
     secondaryAmount: 0
     repeat: 0
     repeatIsX: 0
-    status: 1
+    status: 0
     cardId: 
     pile: 2
     customId: 
   baseTurnEndSteps: []
   hasUpgrade: 1
-  upgradeName: "\u71C3\u5FC3+"
-  upgradeCost: 1
-  upgradeDescription: "\u7372\u5F97 3 \u9EDE\u529B\u91CF\u3002"
+  upgradeName: "\u5305\u7D2E+"
+  upgradeCost: 0
+  upgradeDescription: "\u56DE\u5FA9 6 \u9EDE\u751F\u547D\u3002\u6D88\u8017\u3002"
   upgradeSteps:
-  - op: 2
+  - op: 6
     target: 0
-    amount: 3
+    amount: 6
     amountKind: 0
     secondaryAmount: 0
     repeat: 0
     repeatIsX: 0
-    status: 1
+    status: 0
     cardId: 
     pile: 2
     customId: 

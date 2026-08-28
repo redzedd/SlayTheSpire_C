@@ -10,45 +10,67 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 864927395ecc3534e9fd9f61f33a2072, type: 3}
-  m_Name: inflame
+  m_Name: finesse
   m_EditorClassIdentifier: STS.Game::STS.Game.DataAssets.CardDataAsset
-  id: inflame
-  type: 2
-  rarity: 2
+  id: finesse
+  type: 1
+  rarity: 1
   costIsX: 0
   unplayable: 0
   exhausts: 0
   ethereal: 0
-  colorless: 0
-  baseName: "\u71C3\u5FC3"
-  baseCost: 1
-  baseDescription: "\u7372\u5F97 2 \u9EDE\u529B\u91CF\u3002"
+  colorless: 1
+  baseName: "\u5DE7\u52C1"
+  baseCost: 0
+  baseDescription: "\u7372\u5F97 {blk} \u9EDE\u683C\u64CB\u3002\u62BD 1 \u5F35\u724C\u3002"
   baseSteps:
-  - op: 2
+  - op: 1
     target: 0
     amount: 2
     amountKind: 0
     secondaryAmount: 0
     repeat: 0
     repeatIsX: 0
-    status: 1
+    status: 0
+    cardId: 
+    pile: 2
+    customId: 
+  - op: 3
+    target: 0
+    amount: 1
+    amountKind: 0
+    secondaryAmount: 0
+    repeat: 0
+    repeatIsX: 0
+    status: 0
     cardId: 
     pile: 2
     customId: 
   baseTurnEndSteps: []
   hasUpgrade: 1
-  upgradeName: "\u71C3\u5FC3+"
-  upgradeCost: 1
-  upgradeDescription: "\u7372\u5F97 3 \u9EDE\u529B\u91CF\u3002"
+  upgradeName: "\u5DE7\u52C1+"
+  upgradeCost: 0
+  upgradeDescription: "\u7372\u5F97 {blk} \u9EDE\u683C\u64CB\u3002\u62BD 1 \u5F35\u724C\u3002"
   upgradeSteps:
-  - op: 2
+  - op: 1
     target: 0
-    amount: 3
+    amount: 4
     amountKind: 0
     secondaryAmount: 0
     repeat: 0
     repeatIsX: 0
-    status: 1
+    status: 0
+    cardId: 
+    pile: 2
+    customId: 
+  - op: 3
+    target: 0
+    amount: 1
+    amountKind: 0
+    secondaryAmount: 0
+    repeat: 0
+    repeatIsX: 0
+    status: 0
     cardId: 
     pile: 2
     customId: 

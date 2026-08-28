@@ -19,6 +19,7 @@ MonoBehaviour:
   unplayable: 0
   exhausts: 0
   ethereal: 0
+  colorless: 0
   baseName: "\u9F13\u8DB3\u883B\u529B"
   baseCost: 0
   baseDescription: "\u7372\u5F97 2 \u9EDE\u529B\u91CF,\u56DE\u5408\u7D50\u675F\u6642\u5931\u53BB

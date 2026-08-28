@@ -252,6 +252,10 @@ namespace STS.Data
                 ShopCardRareCost = b.shopCardRareCost,
                 ShopRelicCost = b.shopRelicCost,
                 ShopPotionCost = b.shopPotionCost,
+                ShopClassCardCount = b.shopClassCardCount,
+                ShopColorlessCardCount = b.shopColorlessCardCount,
+                ShopRelicCount = b.shopRelicCount,
+                ShopPotionCount = b.shopPotionCount,
                 MapCombatWeight = b.mapCombatWeight,
                 MapEliteWeight = b.mapEliteWeight,
                 MapRestWeight = b.mapRestWeight,
@@ -292,6 +296,7 @@ namespace STS.Data
                 Unplayable = dto.unplayable,
                 Exhausts = dto.exhausts,
                 Ethereal = dto.ethereal,
+                Colorless = dto.colorless,
                 Steps = BuildSteps(variant.steps, $"cards.json:{defId}"),
                 TurnEndInHandSteps = BuildSteps(variant.turnEndInHandSteps, $"cards.json:{defId}(turnEnd)")
             };

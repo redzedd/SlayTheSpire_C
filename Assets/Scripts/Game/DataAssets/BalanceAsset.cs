@@ -21,6 +21,12 @@ namespace STS.Game.DataAssets
         [Tooltip("遺物售價")] public int shopRelicCost = 150;
         [Tooltip("藥水售價")] public int shopPotionCost = 50;
 
+        [Header("商店貨架數量(直接決定版面)")]
+        [Tooltip("上排職業牌張數")] public int shopClassCardCount = 5;
+        [Tooltip("下左無色牌張數")] public int shopColorlessCardCount = 2;
+        [Tooltip("遺物格數")] public int shopRelicCount = 3;
+        [Tooltip("藥水格數")] public int shopPotionCount = 3;
+
         [Header("地圖節點型別權重與限制")]
         [Tooltip("戰鬥權重")] public int mapCombatWeight = 60;
         [Tooltip("精英權重")] public int mapEliteWeight = 16;
@@ -76,6 +82,10 @@ namespace STS.Game.DataAssets
                 ShopCardRareCost = shopCardRareCost,
                 ShopRelicCost = shopRelicCost,
                 ShopPotionCost = shopPotionCost,
+                ShopClassCardCount = shopClassCardCount,
+                ShopColorlessCardCount = shopColorlessCardCount,
+                ShopRelicCount = shopRelicCount,
+                ShopPotionCount = shopPotionCount,
                 MapCombatWeight = mapCombatWeight,
                 MapEliteWeight = mapEliteWeight,
                 MapRestWeight = mapRestWeight,

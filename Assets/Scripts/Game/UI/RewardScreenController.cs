@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using STS.Core.Cards;
@@ -5,52 +6,161 @@ using STS.Core.Combat;
 
 namespace STS.Game.UI
 {
-    /// <summary>戰後獎勵畫面:金幣(已入帳)、藥水(如有)、卡三選一或跳過。按鈕走 GameController 動作(煙霧同路徑)。</summary>
+    /// <summary>
+    /// 戰後獎勵(版面參考附圖)。兩種模式共用同一個畫面根:
+    /// 清單模式 =「搜刮!」布條 + 逐項可領的清單 + 右側「跳過」箭頭;
+    /// 選卡模式 =「選擇一張牌」布條 + 三張整卡 + 「跳過」。
+    /// 每一項都要玩家自己點才入帳(RunEngine 不再自動入帳),領完清單自動只剩沒領的。
+    /// </summary>
     public sealed class RewardScreenController : MonoBehaviour
     {
+        private GameController _game;
+        private RectTransform _root;
+        private bool _cardPickMode;
+
         public static RewardScreenController Build(Transform parent, GameController game)
         {
             var root = UiKit.CreateRect("獎勵畫面", parent);
             UiKit.Stretch(root);
             var controller = root.gameObject.AddComponent<RewardScreenController>();
+            controller._game = game;
+            controller._root = root;
+            controller.Render();
+            return controller;
+        }
 
-            var rewards = game.Run.PendingRewards;
-            var panel = UiKit.CreatePanel("面板", root, UiKit.面板色);
-            UiKit.Place(panel.rectTransform, Vector2.zero, new Vector2(760f, 560f));
+        /// <summary>切到選卡模式(清單上的「將一張牌加入你的牌組」)。</summary>
+        public void OpenCardPick()
+        {
+            _cardPickMode = true;
+            Render();
+        }
 
-            UiKit.Place(UiKit.CreateText("標題", panel.transform, "戰鬥勝利!", 40f, new Color(1f, 0.85f, 0.3f)).rectTransform,
-                new Vector2(0f, 240f), new Vector2(700f, 54f));
+        public void BackToList()
+        {
+            _cardPickMode = false;
+            Render();
+        }
 
-            string summary = $"獲得金幣 {rewards.Gold}";
-            if (rewards.PotionId != null)
+        public void Render()
+        {
+            foreach (Transform child in _root)
             {
-                summary += $"   藥水:{game.Db.GetPotion(rewards.PotionId).Name}";
+                Destroy(child.gameObject);
             }
-            if (rewards.RelicId != null)
+            if (_cardPickMode) RenderCardPick();
+            else RenderList();
+        }
+
+        // ---- 清單模式 ----
+
+        private void RenderList()
+        {
+            var rewards = _game.Run.PendingRewards;
+            BuildBanner("搜刮!", new Vector2(0f, 320f));
+
+            var rows = new List<RewardRow>();
+            if (rewards.HasGold)
             {
-                summary += $"   遺物:{game.Db.GetRelicDef(rewards.RelicId).Name}";
+                rows.Add(new RewardRow($"{rewards.Gold} 金幣", new Color(0.95f, 0.78f, 0.25f),
+                    () => _game.RewardClaimGold()));
             }
-            UiKit.Place(UiKit.CreateText("摘要", panel.transform, summary, 24f).rectTransform,
-                new Vector2(0f, 185f), new Vector2(700f, 36f));
+            if (rewards.HasPotion)
+            {
+                var potion = _game.Db.GetPotion(rewards.PotionId);
+                rows.Add(new RewardRow(potion.Name, new Color(0.55f, 0.4f, 0.8f),
+                    () => _game.RewardClaimPotion()));
+            }
+            if (rewards.HasRelic)
+            {
+                var relic = _game.Db.GetRelicDef(rewards.RelicId);
+                rows.Add(new RewardRow(relic.Name, new Color(0.7f, 0.5f, 0.25f),
+                    () => _game.RewardClaimRelic()));
+            }
+            if (rewards.HasCard)
+            {
+                rows.Add(new RewardRow("將一張牌加入你的牌組。", new Color(0.6f, 0.62f, 0.68f),
+                    () => _game.RewardOpenCardPick()));
+            }
 
-            UiKit.Place(UiKit.CreateText("選卡", panel.transform, "選擇一張卡加入牌組:", 26f).rectTransform,
-                new Vector2(0f, 130f), new Vector2(700f, 36f));
+            // 每列 76 高 + 20 間距,上下各留 24 邊距——面板高度跟著列數走,不留一截空白
+            float panelHeight = Mathf.Max(140f, rows.Count * 96f + 28f);
+            var panel = UiKit.CreatePanel("清單", _root, new Color(0.13f, 0.18f, 0.23f, 0.96f));
+            UiKit.Place(panel.rectTransform, new Vector2(0f, 40f), new Vector2(560f, panelHeight));
 
-            var player = new CombatantState { Hp = game.Run.State.Hp, MaxHp = game.Run.State.MaxHp };
+            if (rows.Count == 0)
+            {
+                UiKit.Place(UiKit.CreateText("空", panel.transform, "都搜刮完了。", 26f).rectTransform,
+                    Vector2.zero, new Vector2(500f, 40f));
+            }
+            float top = panelHeight * 0.5f - 62f;
+            for (int i = 0; i < rows.Count; i++)
+            {
+                var row = rows[i];
+                var button = UiKit.CreateButton($"獎勵{i}", panel.transform, row.Label, 26f,
+                    new Color(0.24f, 0.55f, 0.6f), row.OnClick);
+                UiKit.Place((RectTransform)button.transform, new Vector2(0f, top - i * 96f), new Vector2(480f, 76f));
+                // 左側色塊當圖示佔位,讓每一列一眼分得出是什麼
+                var icon = UiKit.CreatePanel("圖示", button.transform, row.IconColor);
+                UiKit.Place(icon.rectTransform, new Vector2(-200f, 0f), new Vector2(48f, 48f));
+                icon.raycastTarget = false;
+            }
+
+            ShopRoomScreenController.BuildForwardArrow(_root, new Vector2(640f, -280f), "跳過",
+                () => _game.RewardLeave());
+        }
+
+        // ---- 選卡模式 ----
+
+        private void RenderCardPick()
+        {
+            var rewards = _game.Run.PendingRewards;
+            BuildBanner("選擇一張牌", new Vector2(0f, 320f));
+
+            var player = new CombatantState { Hp = _game.Run.State.Hp, MaxHp = _game.Run.State.MaxHp };
             for (int i = 0; i < rewards.CardChoices.Count; i++)
             {
                 int index = i;
-                var def = game.Db.GetCard(rewards.CardChoices[i]);
-                var face = UiKit.MakeCardFace(panel.transform, def, CardTextFormatter.FormatDescription(def, player), 1.1f);
-                UiKit.Place(face, new Vector2((i - (rewards.CardChoices.Count - 1) / 2f) * 210f, -60f), face.sizeDelta);
+                var def = _game.Db.GetCard(rewards.CardChoices[i]);
+                var face = UiKit.MakeCardFace(_root, def, CardTextFormatter.FormatDescription(def, player), 1.45f);
+                UiKit.Place(face, new Vector2((i - (rewards.CardChoices.Count - 1) / 2f) * 300f, 10f), face.sizeDelta);
                 var button = face.gameObject.AddComponent<Button>();
-                button.onClick.AddListener(() => game.RewardTakeCard(index));
+                button.onClick.AddListener(() => _game.RewardTakeCard(index));
+                face.gameObject.AddComponent<CardHoverLift>().Setup(face);
             }
 
-            UiKit.Place((RectTransform)UiKit.CreateButton("跳過", panel.transform, "跳過獎勵", 26f,
-                new Color(0.4f, 0.4f, 0.45f), () => game.RewardSkip()).transform,
-                new Vector2(0f, -240f), new Vector2(220f, 56f));
-            return controller;
+            UiKit.Place((RectTransform)UiKit.CreateButton("跳過", _root, "跳過", 30f,
+                new Color(0.24f, 0.5f, 0.58f), () => _game.RewardSkipCard()).transform,
+                new Vector2(0f, -330f), new Vector2(320f, 76f));
+        }
+
+        // ---- 共用 ----
+
+        /// <summary>米色布條標題:一塊長條 + 兩端下垂的小方塊,佔位期夠用。</summary>
+        private void BuildBanner(string title, Vector2 pos)
+        {
+            var banner = UiKit.CreatePanel("布條", _root, new Color(0.85f, 0.76f, 0.56f));
+            UiKit.Place(banner.rectTransform, pos, new Vector2(640f, 92f));
+            var left = UiKit.CreatePanel("左緣", banner.transform, new Color(0.72f, 0.63f, 0.45f));
+            UiKit.Place(left.rectTransform, new Vector2(-330f, -14f), new Vector2(40f, 64f));
+            var right = UiKit.CreatePanel("右緣", banner.transform, new Color(0.72f, 0.63f, 0.45f));
+            UiKit.Place(right.rectTransform, new Vector2(330f, -14f), new Vector2(40f, 64f));
+            UiKit.Place(UiKit.CreateText("標題", banner.transform, title, 40f, new Color(0.16f, 0.12f, 0.08f)).rectTransform,
+                Vector2.zero, new Vector2(600f, 60f));
+        }
+
+        private readonly struct RewardRow
+        {
+            internal readonly string Label;
+            internal readonly Color IconColor;
+            internal readonly System.Action OnClick;
+
+            internal RewardRow(string label, Color iconColor, System.Action onClick)
+            {
+                Label = label;
+                IconColor = iconColor;
+                OnClick = onClick;
+            }
         }
     }
 }

@@ -33,6 +33,8 @@ namespace STS.Core.Cards
         public bool Unplayable;
         public bool Exhausts;
         public bool Ethereal;
+        /// <summary>無色牌:不屬於任何職業,只在商店的無色區與特殊事件出現,不進戰後卡牌獎勵池。</summary>
+        public bool Colorless;
         public EffectStep[] Steps = System.Array.Empty<EffectStep>();
         /// <summary>回合結束時仍在手牌才觸發的步驟(燒傷型狀態卡用)。</summary>
         public EffectStep[] TurnEndInHandSteps = System.Array.Empty<EffectStep>();

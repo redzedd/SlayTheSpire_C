@@ -38,6 +38,7 @@ namespace STS.Data.Dto
         public bool unplayable;
         public bool exhausts;
         public bool ethereal;
+        public bool colorless;
         public CardVariantDto @base;
         /// <summary>null = 此卡無升級版(狀態卡)。</summary>
         public CardVariantDto upgrade;
@@ -124,6 +125,10 @@ namespace STS.Data.Dto
         public int shopCardRareCost = 150;
         public int shopRelicCost = 150;
         public int shopPotionCost = 50;
+        public int shopClassCardCount = 5;
+        public int shopColorlessCardCount = 2;
+        public int shopRelicCount = 3;
+        public int shopPotionCount = 3;
         public int mapCombatWeight = 60;
         public int mapEliteWeight = 16;
         public int mapRestWeight = 12;

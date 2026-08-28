@@ -264,6 +264,35 @@
           { "op": "AddCardToPile", "target": "Self", "cardId": "burn", "pile": "Discard" } ] }
     },
     {
+      "id": "flash_of_steel", "type": "Attack", "rarity": "Common", "colorless": true,
+      "base": { "name": "鋼鐵閃光", "cost": 0, "description": "造成 {dmg} 點傷害。抽 1 張牌。",
+        "steps": [
+          { "op": "Damage", "target": "TargetEnemy", "amount": 3 },
+          { "op": "Draw", "target": "Self", "amount": 1 } ] },
+      "upgrade": { "name": "鋼鐵閃光+", "cost": 0, "description": "造成 {dmg} 點傷害。抽 1 張牌。",
+        "steps": [
+          { "op": "Damage", "target": "TargetEnemy", "amount": 6 },
+          { "op": "Draw", "target": "Self", "amount": 1 } ] }
+    },
+    {
+      "id": "finesse", "type": "Skill", "rarity": "Common", "colorless": true,
+      "base": { "name": "巧勁", "cost": 0, "description": "獲得 {blk} 點格擋。抽 1 張牌。",
+        "steps": [
+          { "op": "Block", "target": "Self", "amount": 2 },
+          { "op": "Draw", "target": "Self", "amount": 1 } ] },
+      "upgrade": { "name": "巧勁+", "cost": 0, "description": "獲得 {blk} 點格擋。抽 1 張牌。",
+        "steps": [
+          { "op": "Block", "target": "Self", "amount": 4 },
+          { "op": "Draw", "target": "Self", "amount": 1 } ] }
+    },
+    {
+      "id": "bandage_up", "type": "Skill", "rarity": "Common", "colorless": true, "exhausts": true,
+      "base": { "name": "包紮", "cost": 0, "description": "回復 4 點生命。消耗。",
+        "steps": [ { "op": "Heal", "target": "Self", "amount": 4 } ] },
+      "upgrade": { "name": "包紮+", "cost": 0, "description": "回復 6 點生命。消耗。",
+        "steps": [ { "op": "Heal", "target": "Self", "amount": 6 } ] }
+    },
+    {
       "id": "burn", "type": "Status", "rarity": "Common", "unplayable": true,
       "base": { "name": "燒傷", "cost": 0, "description": "不可打出。回合結束時若在手牌,失去 2 點生命。",
         "turnEndInHandSteps": [ { "op": "LoseHp", "target": "Self", "amount": 2 } ] }

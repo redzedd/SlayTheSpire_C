@@ -18,6 +18,7 @@ namespace STS.Game.DataAssets
         [Tooltip("不可打出(狀態/詛咒卡)")] public bool unplayable;
         [Tooltip("打出後消耗")] public bool exhausts;
         [Tooltip("虛無(回合結束在手即消耗)")] public bool ethereal;
+        [Tooltip("無色牌:不進戰後卡牌獎勵池,只在商店的無色區出現")] public bool colorless;
 
         [Header("基礎版")]
         [Tooltip("顯示名稱")] public string baseName;
@@ -58,6 +59,7 @@ namespace STS.Game.DataAssets
                 Unplayable = unplayable,
                 Exhausts = exhausts,
                 Ethereal = ethereal,
+                Colorless = colorless,
                 Steps = EffectStepData.ToSteps(steps),
                 TurnEndInHandSteps = EffectStepData.ToSteps(turnEndSteps)
             };

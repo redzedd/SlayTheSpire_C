@@ -154,6 +154,7 @@ namespace STS.Game.Editor
             asset.unplayable = dto.unplayable;
             asset.exhausts = dto.exhausts;
             asset.ethereal = dto.ethereal;
+            asset.colorless = dto.colorless;
             asset.baseName = dto.@base.name;
             asset.baseCost = dto.@base.cost;
             asset.baseDescription = dto.@base.description;
@@ -226,6 +227,10 @@ namespace STS.Game.Editor
             asset.shopCardRareCost = dto.shopCardRareCost;
             asset.shopRelicCost = dto.shopRelicCost;
             asset.shopPotionCost = dto.shopPotionCost;
+            asset.shopClassCardCount = dto.shopClassCardCount;
+            asset.shopColorlessCardCount = dto.shopColorlessCardCount;
+            asset.shopRelicCount = dto.shopRelicCount;
+            asset.shopPotionCount = dto.shopPotionCount;
             asset.mapCombatWeight = dto.mapCombatWeight;
             asset.mapEliteWeight = dto.mapEliteWeight;
             asset.mapRestWeight = dto.mapRestWeight;
