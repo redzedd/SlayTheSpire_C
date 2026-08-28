@@ -45,6 +45,8 @@
     { "id": "Rage", "name": "狂怒",
       "description": "本回合每打出一張攻擊牌,獲得 {n} 點格擋。" },
     { "id": "DrumOfBattle", "name": "戰鼓",
-      "description": "回合開始時消耗抽牌堆頂部 {n} 張牌。" }
+      "description": "回合開始時消耗抽牌堆頂部 {n} 張牌。" },
+    { "id": "HowlFromBeyond", "name": "彼岸咆哮",
+      "description": "回合開始時對所有敵人造成 {n} 點傷害。" }
   ]
 }

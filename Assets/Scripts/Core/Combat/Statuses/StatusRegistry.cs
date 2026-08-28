@@ -174,6 +174,14 @@ namespace STS.Core.Combat.Statuses
                     }
                     break;
 
+                case StatusId.HowlFromBeyond:
+                    // 走真正的攻擊傷害:力量/易傷要照算,尖刺皮也該反彈——這就是「再打一次」
+                    if (IsOwnersTurnStart(ctx, ownerIndex) && ownerIndex == CombatEngine.PlayerIndex)
+                    {
+                        engine.DamageAllEnemiesAttack(ownerIndex, status.Stacks);
+                    }
+                    break;
+
                 case StatusId.CrimsonMantle:
                     if (IsOwnersTurnStart(ctx, ownerIndex))
                     {

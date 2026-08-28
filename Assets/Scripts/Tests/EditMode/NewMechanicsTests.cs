@@ -425,6 +425,102 @@ namespace STS.Core.Tests
             Assert.AreEqual(exhaustBefore + 1, engine.State.ExhaustPile.Count, "回合開始要消耗抽牌堆頂 1 張");
         }
 
+        private static CardDef 破滅牌(string id = "havoc", int cost = 0, PileType after = PileType.Exhaust)
+        {
+            return new CardDef
+            {
+                Id = id, Name = "破滅", Type = CardType.Skill, Rarity = CardRarity.Common, Cost = cost,
+                DescriptionTemplate = "打出抽牌堆頂部的牌。",
+                Steps = new[] { new EffectStep(EffectOp.PlayTopOfDraw, EffectTarget.Self, 1, pile: after) }
+            };
+        }
+
+        [Test]
+        public void 破滅_打出抽牌堆頂那張並消耗它()
+        {
+            var deck = new[] { "havoc", "havoc", "havoc", "havoc", "havoc",
+                               "strike", "strike", "strike", "strike", "strike" };
+            var engine = 標準引擎(deck, enemyHp: 200, extraDefs: new[] { 破滅牌() });
+            engine.StartCombat();
+
+            int drawBefore = engine.State.DrawPile.Count;
+            int exhaustBefore = engine.State.ExhaustPile.Count;
+            出牌(engine, "havoc");
+
+            // 不管翻到哪張:抽牌堆少一張、消耗堆多一張
+            Assert.AreEqual(drawBefore - 1, engine.State.DrawPile.Count);
+            Assert.AreEqual(exhaustBefore + 1, engine.State.ExhaustPile.Count, "自動打出的牌要進消耗堆");
+        }
+
+        [Test]
+        public void 破滅翻到破滅_不會無限遞迴()
+        {
+            // 整副都是破滅:每張打出來又翻下一張,沒有重入保護就會鑽到底
+            var engine = 標準引擎(重複("havoc", 12), enemyHp: 200, extraDefs: new[] { 破滅牌() });
+            engine.StartCombat();
+
+            int drawBefore = engine.State.DrawPile.Count;
+            Assert.DoesNotThrow(() => 出牌(engine, "havoc"));
+            int consumed = drawBefore - engine.State.DrawPile.Count;
+            Assert.Greater(consumed, 0, "至少要打出一張");
+            Assert.LessOrEqual(consumed, 4, "巢狀層數要被上限收住,不能一路啃光抽牌堆");
+            Assert.AreEqual(CombatPhase.PlayerTurn, engine.State.Phase);
+        }
+
+        [Test]
+        public void 傾瀉_X費打出抽牌堆頂部X張()
+        {
+            var 傾瀉 = new CardDef
+            {
+                Id = "cascade", Name = "傾瀉", Type = CardType.Skill, Rarity = CardRarity.Rare,
+                Cost = 0, CostIsX = true,
+                DescriptionTemplate = "打出抽牌堆頂部的 X 張牌。",
+                Steps = new[] { new EffectStep(EffectOp.PlayTopOfDraw, EffectTarget.Self, 0, repeatIsX: true, pile: PileType.Discard) }
+            };
+            // 全牌組只有一張傾瀉,其餘全是防禦:自動打出的牌不可能再是傾瀉,巢狀不會污染計數
+            var deck = new[] { "cascade", "defend", "defend", "defend", "defend",
+                               "defend", "defend", "defend", "defend", "defend" };
+            CombatEngine engine = null;
+            foreach (ulong seed in new ulong[] { 1234UL, 1UL, 2UL, 3UL, 4UL, 5UL })
+            {
+                var candidate = 標準引擎(deck, enemyHp: 200, seed: seed, extraDefs: new[] { 傾瀉 });
+                candidate.StartCombat();
+                if (手牌位置(candidate, "cascade") >= 0) { engine = candidate; break; }
+            }
+            Assert.IsNotNull(engine, "試過的種子都沒把傾瀉抽進手裡");
+
+            int drawBefore = engine.State.DrawPile.Count;
+            出牌(engine, "cascade");   // 3 點能量全下 → 打出 3 張
+
+            Assert.AreEqual(0, engine.State.Energy, "X 費要把能量吃光");
+            Assert.AreEqual(drawBefore - 3, engine.State.DrawPile.Count, "X=3 就該打出 3 張");
+        }
+
+        [Test]
+        public void 彼岸咆哮_每個回合開始再打一次()
+        {
+            var 咆哮 = new CardDef
+            {
+                Id = "howl", Name = "彼岸咆哮", Type = CardType.Attack, Rarity = CardRarity.Uncommon, Cost = 3,
+                DescriptionTemplate = "對所有敵人造成 {dmg} 點傷害。", Exhausts = true,
+                Steps = new[]
+                {
+                    new EffectStep(EffectOp.Damage, EffectTarget.AllEnemies, 16),
+                    new EffectStep(EffectOp.ApplyStatus, EffectTarget.Self, 16, status: StatusId.HowlFromBeyond)
+                }
+            };
+            var engine = 標準引擎(new[] { "howl", "defend", "defend", "defend", "defend" },
+                enemyHp: 200, enemyAttack: 0, extraDefs: new[] { 咆哮 });
+            engine.StartCombat();
+
+            出牌(engine, "howl");
+            Assert.AreEqual(184, engine.State.Enemies[0].Hp);
+            Assert.AreEqual(16, engine.State.Player.GetStatus(StatusId.HowlFromBeyond));
+
+            engine.EndPlayerTurn();   // 敵人待機 → 回到玩家回合開始,咆哮再打一次
+            Assert.AreEqual(168, engine.State.Enemies[0].Hp, "回合開始要再造成一次 16 點");
+        }
+
         [Test]
         public void 餘燼_消耗抽牌堆最上面一張()
         {

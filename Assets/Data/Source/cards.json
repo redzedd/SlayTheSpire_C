@@ -456,6 +456,31 @@
     },
 
     {
+      "id": "havoc", "type": "Skill", "rarity": "Common",
+      "base": { "name": "破滅", "cost": 1, "description": "打出抽牌堆頂部的牌,然後消耗它。",
+        "steps": [ { "op": "PlayTopOfDraw", "target": "Self", "amount": 1, "pile": "Exhaust" } ] },
+      "upgrade": { "name": "破滅+", "cost": 0, "description": "打出抽牌堆頂部的牌,然後消耗它。",
+        "steps": [ { "op": "PlayTopOfDraw", "target": "Self", "amount": 1, "pile": "Exhaust" } ] }
+    },
+    {
+      "id": "cascade", "type": "Skill", "rarity": "Rare", "costIsX": true,
+      "base": { "name": "傾瀉", "cost": 0, "description": "消耗全部能量,打出抽牌堆頂部的 X 張牌。",
+        "steps": [ { "op": "PlayTopOfDraw", "target": "Self", "amount": 0, "repeatIsX": true, "pile": "Discard" } ] },
+      "upgrade": { "name": "傾瀉+", "cost": 0, "description": "消耗全部能量,打出抽牌堆頂部的 X+1 張牌。",
+        "steps": [ { "op": "PlayTopOfDraw", "target": "Self", "amount": 1, "repeatIsX": true, "pile": "Discard" } ] }
+    },
+    {
+      "id": "howl_from_beyond", "type": "Attack", "rarity": "Uncommon", "exhausts": true,
+      "base": { "name": "彼岸咆哮", "cost": 3, "description": "對所有敵人造成 {dmg} 點傷害。之後每個回合開始時再造成一次。消耗。",
+        "steps": [
+          { "op": "Damage", "target": "AllEnemies", "amount": 16 },
+          { "op": "ApplyStatus", "target": "Self", "amount": 16, "status": "HowlFromBeyond" } ] },
+      "upgrade": { "name": "彼岸咆哮+", "cost": 3, "description": "對所有敵人造成 {dmg} 點傷害。之後每個回合開始時再造成一次。消耗。",
+        "steps": [
+          { "op": "Damage", "target": "AllEnemies", "amount": 21 },
+          { "op": "ApplyStatus", "target": "Self", "amount": 21, "status": "HowlFromBeyond" } ] }
+    },
+    {
       "id": "pillage", "type": "Attack", "rarity": "Uncommon",
       "base": { "name": "劫掠", "cost": 1, "description": "造成 {dmg} 點傷害。持續抽牌直到抽出一張非攻擊牌。",
         "steps": [

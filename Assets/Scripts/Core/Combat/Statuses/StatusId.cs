@@ -38,6 +38,8 @@ namespace STS.Core.Combat.Statuses
         /// <summary>狂怒:本回合每打出一張攻擊牌就獲得等同層數的格擋(回合結束移除)。</summary>
         Rage,
         /// <summary>戰鼓:回合開始時消耗抽牌堆頂部等同層數的牌。</summary>
-        DrumOfBattle
+        DrumOfBattle,
+        /// <summary>彼岸咆哮:回合開始時對所有敵人造成等同層數的攻擊傷害(等同於從消耗堆再打一次)。</summary>
+        HowlFromBeyond
     }
 }

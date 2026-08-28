@@ -25,6 +25,11 @@ namespace STS.Core.Cards
         DiscardHandDrawSame,
         /// <summary>持續抽牌直到抽到一張非攻擊牌(劫掠型)。</summary>
         DrawUntilNonAttack,
+        /// <summary>
+        /// 自動打出抽牌堆頂部 Amount 張牌(破滅/傾瀉型),不花能量。
+        /// Pile 決定打完後去哪:Exhaust = 打完消耗,其餘 = 進棄牌堆。
+        /// </summary>
+        PlayTopOfDraw,
         /// <summary>把目標身上某個狀態的層數翻倍(熔融之拳型)。</summary>
         DoubleStatus,
         Custom

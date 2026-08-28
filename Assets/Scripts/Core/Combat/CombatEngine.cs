@@ -39,6 +39,9 @@ namespace STS.Core.Combat
         private int _pendingTargetIndex;
         private CardInstance _pendingPlayedCard;
         private CardDef _pendingPlayedDef;
+        /// <summary>自動打出的巢狀層數;破滅翻到破滅時靠它收斂。</summary>
+        private int _autoPlayDepth;
+        private const int 自動打出上限 = 4;
         private bool _pendingIgnoreModifiers;
 
         /// <summary>延後到「整個效果來源結算完」才生效的格擋(捲曲用)。</summary>
@@ -868,6 +871,72 @@ namespace STS.Core.Combat
             }
             State.LastExhaustedCount = taken.Count;
             return taken.Count;
+        }
+
+        /// <summary>
+        /// 自動打出抽牌堆頂部 count 張牌(破滅/傾瀉),不花能量、不經過手牌。
+        /// 目標一律隨機挑活著的敵人——自動打出的牌沒有玩家指定目標可用。
+        /// afterPile = Exhaust 時打完消耗,否則進棄牌堆;能力牌一律進 PowersPlayed。
+        /// </summary>
+        internal void PlayTopOfDraw(int count, PileType afterPile)
+        {
+            // 自動打出的牌可能又是「自動打出」型(破滅翻到破滅),沒有這道閘就會無限往下鑽
+            if (_autoPlayDepth >= 自動打出上限) return;
+            _autoPlayDepth++;
+            try
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    if (State.DrawPile.Count == 0) return;
+                    if (!State.Player.IsAlive) return;
+
+                    int top = State.DrawPile.Count - 1;
+                    var card = State.DrawPile[top];
+                    State.DrawPile.RemoveAt(top);
+                    var def = _db.GetCard(card.ResolvedCardId);
+
+                    Emit(new CombatEvent(EventKind.CardPlayed, sourceIndex: PlayerIndex,
+                        cardId: card.CardId, cardInstanceId: card.InstanceId));
+
+                    if (!def.Unplayable)
+                    {
+                        if (def.Type == CardType.Attack) State.AttacksPlayedThisTurn++;
+                        FireHook(new HookContext(HookPoint.CardPlayed, sourceIndex: PlayerIndex, cardType: def.Type));
+                        EffectResolver.Resolve(this, def.Steps, PlayerIndex, PickRandomLivingEnemy(),
+                            autoPlay: true);
+                    }
+
+                    if (def.Type == CardType.Power)
+                    {
+                        State.PowersPlayed.Add(card);
+                    }
+                    else if (afterPile == PileType.Exhaust || def.Exhausts)
+                    {
+                        ExhaustCard(card);
+                    }
+                    else
+                    {
+                        State.DiscardPile.Add(card);
+                    }
+                }
+            }
+            finally
+            {
+                _autoPlayDepth--;
+            }
+            CheckOutcome();
+        }
+
+        /// <summary>對所有活著的敵人造成一次真正的攻擊傷害(彼岸咆哮的回合起始重擊)。</summary>
+        internal void DamageAllEnemiesAttack(int sourceIndex, int amount)
+        {
+            if (amount <= 0) return;
+            var living = new List<int>(4);
+            CollectLivingEnemies(living);
+            for (int i = 0; i < living.Count; i++)
+            {
+                DealAttackDamage(sourceIndex, living[i], amount);
+            }
         }
 
         /// <summary>棄掉整手牌,再抽等量的牌(添柴)。</summary>

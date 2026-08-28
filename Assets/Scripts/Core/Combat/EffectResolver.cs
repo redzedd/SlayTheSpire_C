@@ -15,14 +15,19 @@ namespace STS.Core.Combat
         /// true = 數值不吃任何增益/減益(力量、虛弱、易傷、敏捷、脆弱)。藥水走這條:
         /// 藥水是瓶裝的固定效果,不該被角色狀態放大或削弱。
         /// </param>
+        /// <param name="autoPlay">
+        /// true = 這張牌是被自動打出的(破滅/傾瀉),沒有玩家可以做選擇:
+        /// 選卡型步驟改成隨機消耗,不能把流程停在 AwaitingChoice——自動打出的迴圈還在跑,
+        /// 停下來會讓剩下的牌永遠打不完。
+        /// </param>
         internal static void Resolve(CombatEngine engine, EffectStep[] steps, int sourceIndex, int chosenTargetIndex,
-            bool ignoreModifiers = false)
+            bool ignoreModifiers = false, bool autoPlay = false)
         {
-            ResolveFrom(engine, steps, 0, sourceIndex, chosenTargetIndex, ignoreModifiers);
+            ResolveFrom(engine, steps, 0, sourceIndex, chosenTargetIndex, ignoreModifiers, autoPlay);
         }
 
         internal static void ResolveFrom(CombatEngine engine, EffectStep[] steps, int startIndex, int sourceIndex,
-            int chosenTargetIndex, bool ignoreModifiers = false)
+            int chosenTargetIndex, bool ignoreModifiers = false, bool autoPlay = false)
         {
             if (steps == null) return;
             for (int s = startIndex; s < steps.Length; s++)
@@ -90,6 +95,16 @@ namespace STS.Core.Combat
                         engine.DrawUntilNonAttack();
                         break;
 
+                    case EffectOp.PlayTopOfDraw:
+                    {
+                        // X 型時 amount 當成額外加成(傾瀉+ 是 X+1 張),固定型時 amount 就是張數
+                        int count = step.RepeatIsX
+                            ? engine.XEnergySpent + step.Amount
+                            : (step.Amount <= 0 ? 1 : step.Amount);
+                        engine.PlayTopOfDraw(count, step.Pile);
+                        break;
+                    }
+
                     case EffectOp.DoubleStatus:
                         for (int r = 0; r < repeat; r++)
                         {
@@ -154,6 +169,11 @@ namespace STS.Core.Combat
                         if (engine.State.Hand.Count == 0) break;   // 沒得選就跳過本步,繼續後續步驟
                         int count = step.Amount <= 0 ? 1 : step.Amount;
                         if (count > engine.State.Hand.Count) count = engine.State.Hand.Count;
+                        if (autoPlay)
+                        {
+                            engine.ExhaustRandomFromHand(count);
+                            break;
+                        }
                         engine.RequestChoice(steps, s + 1, sourceIndex, chosenTargetIndex, count, ignoreModifiers);
                         return;   // 中斷:剩餘步驟由 ResolveChoice 續跑
                     }
