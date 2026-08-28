@@ -14,13 +14,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: STS.Game::STS.Game.DataAssets.CardDataAsset
   id: bludgeon
   type: 0
-  rarity: 3
+  rarity: 2
   costIsX: 0
   unplayable: 0
   exhausts: 0
   ethereal: 0
   colorless: 0
-  baseName: "\u5DE8\u9318\u7C89\u788E"
+  baseName: "\u91CD\u9318"
   baseCost: 3
   baseDescription: "\u9020\u6210 {dmg} \u9EDE\u50B7\u5BB3\u3002"
   baseSteps:
@@ -37,7 +37,7 @@ MonoBehaviour:
     customId: 
   baseTurnEndSteps: []
   hasUpgrade: 1
-  upgradeName: "\u5DE8\u9318\u7C89\u788E+"
+  upgradeName: "\u91CD\u9318+"
   upgradeCost: 3
   upgradeDescription: "\u9020\u6210 {dmg} \u9EDE\u50B7\u5BB3\u3002"
   upgradeSteps:

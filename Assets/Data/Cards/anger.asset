@@ -22,7 +22,7 @@ MonoBehaviour:
   colorless: 0
   baseName: "\u61A4\u6012"
   baseCost: 0
-  baseDescription: "\u9020\u6210 {dmg} \u9EDE\u50B7\u5BB3,\u8907\u88FD\u4E00\u5F35\u61A4\u6012\u5230\u68C4\u724C\u5806\u3002"
+  baseDescription: "\u9020\u6210 {dmg} \u9EDE\u50B7\u5BB3,\u4E26\u628A\u4E00\u5F35\u61A4\u6012\u653E\u9032\u68C4\u724C\u5806\u3002"
   baseSteps:
   - op: 0
     target: 1
@@ -50,7 +50,7 @@ MonoBehaviour:
   hasUpgrade: 1
   upgradeName: "\u61A4\u6012+"
   upgradeCost: 0
-  upgradeDescription: "\u9020\u6210 {dmg} \u9EDE\u50B7\u5BB3,\u8907\u88FD\u4E00\u5F35\u61A4\u6012\u5230\u68C4\u724C\u5806\u3002"
+  upgradeDescription: "\u9020\u6210 {dmg} \u9EDE\u50B7\u5BB3,\u4E26\u628A\u4E00\u5F35\u61A4\u6012\u653E\u9032\u68C4\u724C\u5806\u3002"
   upgradeSteps:
   - op: 0
     target: 1

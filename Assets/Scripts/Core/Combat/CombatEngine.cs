@@ -171,6 +171,8 @@ namespace STS.Core.Combat
             Emit(new CombatEvent(EventKind.CardPlayed, sourceIndex: PlayerIndex, targetIndex: targetEnemyIndex,
                 cardId: card.CardId, cardInstanceId: card.InstanceId));
 
+            if (def.Type == CardType.Attack) State.AttacksPlayedThisTurn++;
+
             // 出牌 hook(激怒/尖刺皮/雙節棍)在效果結算前觸發([近似] StS 時序,測試鎖定)
             FireHook(new HookContext(HookPoint.CardPlayed, sourceIndex: PlayerIndex, cardType: def.Type));
             if (!State.Player.IsAlive)
@@ -212,8 +214,7 @@ namespace STS.Core.Combat
             {
                 var card = State.Hand[sorted[i]];
                 State.Hand.RemoveAt(sorted[i]);
-                State.ExhaustPile.Add(card);
-                Emit(new CombatEvent(EventKind.CardExhausted, cardId: card.CardId, cardInstanceId: card.InstanceId));
+                ExhaustCard(card);
             }
 
             State.PendingChoiceCount = 0;
@@ -293,8 +294,7 @@ namespace STS.Core.Combat
                 State.Hand.RemoveAt(i);
                 if (def.Ethereal)
                 {
-                    State.ExhaustPile.Add(card);
-                    Emit(new CombatEvent(EventKind.CardExhausted, cardId: card.CardId, cardInstanceId: card.InstanceId));
+                    ExhaustCard(card);
                 }
                 else
                 {
@@ -348,8 +348,10 @@ namespace STS.Core.Combat
         {
             State.TurnNumber++;
             State.Phase = CombatPhase.PlayerTurn;
+            State.AttacksPlayedThisTurn = 0;
             // 格擋在「自己回合開始」清除,不是回合結束——回合末獲得的格擋要活過敵方回合(R5)
-            if (State.Player.Block != 0)
+            // 壁壘:整條清除規則失效,格擋累積不掉
+            if (State.Player.Block != 0 && State.Player.GetStatus(StatusId.Barricade) <= 0)
             {
                 State.Player.Block = 0;
                 Emit(new CombatEvent(EventKind.BlockCleared, sourceIndex: PlayerIndex));
@@ -375,7 +377,7 @@ namespace STS.Core.Combat
                 if (!enemy.IsAlive) continue;
 
                 // 敵人格擋在牠自己行動開始時清除,與玩家同一條規則
-                if (enemy.Block != 0)
+                if (enemy.Block != 0 && enemy.GetStatus(StatusId.Barricade) <= 0)
                 {
                     enemy.Block = 0;
                     Emit(new CombatEvent(EventKind.BlockCleared, sourceIndex: i));
@@ -478,8 +480,7 @@ namespace STS.Core.Combat
             }
             else if (def.Exhausts)
             {
-                State.ExhaustPile.Add(card);
-                Emit(new CombatEvent(EventKind.CardExhausted, cardId: card.CardId, cardInstanceId: card.InstanceId));
+                ExhaustCard(card);
             }
             else
             {
@@ -573,6 +574,8 @@ namespace STS.Core.Combat
         private void AfterHpLoss(int index, int hpLost)
         {
             if (hpLost <= 0) return;
+            // 掉血 hook 對玩家與敵人都要觸發(撕裂/獄火靠它);敵人專屬的死亡與換模式邏輯在下面
+            FireHook(new HookContext(HookPoint.HpLost, targetIndex: index, amount: hpLost));
             if (index == PlayerIndex) return;
             var target = GetCombatant(index);
             if (!target.IsAlive)
@@ -597,6 +600,68 @@ namespace STS.Core.Combat
                 combatant.GetStatus(StatusId.Frail) > 0);
             combatant.Block += gain;
             Emit(new CombatEvent(EventKind.BlockGained, sourceIndex: index, amount: gain, remainingBlock: combatant.Block));
+            // 勢不可當靠這個 hook;它打的是非攻擊傷害,所以不會和尖刺皮互相觸發成迴圈
+            FireHook(new HookContext(HookPoint.BlockGained, sourceIndex: index, amount: gain));
+        }
+
+        /// <summary>是否輪到該單位的回合(狀態行為判定用)。</summary>
+        internal bool IsOwnersTurn(int index)
+        {
+            return IsOwnTurnNow(index);
+        }
+
+        /// <summary>
+        /// 數本場戰鬥中名字含指定字串的牌(完美打擊型)。
+        /// 四個牌堆加已打出的能力卡都算——牌會在牌堆間流動,只數手牌會讓數字忽高忽低。
+        /// </summary>
+        internal int CountCardsNamedContaining(string fragment)
+        {
+            if (string.IsNullOrEmpty(fragment)) return 0;
+            int count = 0;
+            count += CountIn(State.DrawPile, fragment);
+            count += CountIn(State.Hand, fragment);
+            count += CountIn(State.DiscardPile, fragment);
+            count += CountIn(State.ExhaustPile, fragment);
+            count += CountIn(State.PowersPlayed, fragment);
+            // 正在結算的這張牌已離開手牌、還沒進棄牌堆,不補上就會少數自己一張
+            if (_pendingPlayedDef != null && _pendingPlayedDef.Name != null
+                && _pendingPlayedDef.Name.Contains(fragment))
+            {
+                count++;
+            }
+            return count;
+        }
+
+        private int CountIn(List<CardInstance> pile, string fragment)
+        {
+            int count = 0;
+            for (int i = 0; i < pile.Count; i++)
+            {
+                var def = _db.GetCard(pile[i].ResolvedCardId);
+                if (def.Name != null && def.Name.Contains(fragment)) count++;
+            }
+            return count;
+        }
+
+        /// <summary>隨機挑一個活著的敵人;全滅回 -1。</summary>
+        internal int PickRandomLivingEnemy()
+        {
+            var living = new List<int>(4);
+            CollectLivingEnemies(living);
+            if (living.Count == 0) return -1;
+            return living[_rng.CombatMisc.NextInt(living.Count)];
+        }
+
+        /// <summary>對所有活著的敵人造成非攻擊傷害(獄火用)。</summary>
+        internal void DamageAllEnemiesNonAttack(int sourceIndex, int amount)
+        {
+            if (amount <= 0) return;
+            var living = new List<int>(4);
+            CollectLivingEnemies(living);
+            for (int i = 0; i < living.Count; i++)
+            {
+                DealNonAttackDamage(sourceIndex, living[i], amount);
+            }
         }
 
         /// <summary>
@@ -731,8 +796,31 @@ namespace STS.Core.Combat
                 int index = _rng.CombatMisc.NextInt(State.Hand.Count);
                 var card = State.Hand[index];
                 State.Hand.RemoveAt(index);
-                State.ExhaustPile.Add(card);
-                Emit(new CombatEvent(EventKind.CardExhausted, cardId: card.CardId, cardInstanceId: card.InstanceId));
+                ExhaustCard(card);
+            }
+        }
+
+        /// <summary>
+        /// 把一張已從原牌堆取出的卡放進消耗堆。所有消耗都要走這裡——
+        /// 無懼疼痛/黑暗之擁靠 CardExhausted hook,少一條路徑就會少觸發。
+        /// </summary>
+        internal void ExhaustCard(CardInstance card)
+        {
+            State.ExhaustPile.Add(card);
+            Emit(new CombatEvent(EventKind.CardExhausted, cardId: card.CardId, cardInstanceId: card.InstanceId));
+            FireHook(new HookContext(HookPoint.CardExhausted, sourceIndex: PlayerIndex));
+        }
+
+        /// <summary>消耗抽牌堆最上面 N 張(餘燼/戰鼓);抽牌堆空了就停,不重洗。</summary>
+        internal void ExhaustTopOfDraw(int count)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                if (State.DrawPile.Count == 0) return;
+                int top = State.DrawPile.Count - 1;
+                var card = State.DrawPile[top];
+                State.DrawPile.RemoveAt(top);
+                ExhaustCard(card);
             }
         }
 

@@ -339,9 +339,17 @@ namespace STS.Data
                 {
                     Require(cardIsX, $"{context}:X 型欄位只能出現在 costIsX 的卡上");
                 }
-                if (step.Op == EffectOp.ApplyStatus)
+                if (step.Op == EffectOp.ApplyStatus || step.Op == EffectOp.DoubleStatus)
                 {
-                    Require(step.Status != StatusId.None, $"{context}:ApplyStatus 缺 status");
+                    Require(step.Status != StatusId.None, $"{context}:{step.Op} 缺 status");
+                }
+                if (step.AmountKind == AmountKind.PerExhaustedCard
+                    || step.AmountKind == AmountKind.PerTargetVulnerable
+                    || step.AmountKind == AmountKind.PerAttackPlayedThisTurn
+                    || step.AmountKind == AmountKind.PerStrikeCard)
+                {
+                    // 成長型公式是 amount + secondaryAmount × 數量;沒有 secondaryAmount 就永遠不成長,是資料寫錯
+                    Require(step.SecondaryAmount != 0, $"{context}:{step.AmountKind} 需要 secondaryAmount(每單位加成)");
                 }
                 if (step.Op == EffectOp.AddCardToPile)
                 {

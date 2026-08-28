@@ -1,0 +1,57 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 864927395ecc3534e9fd9f61f33a2072, type: 3}
+  m_Name: crimson_mantle
+  m_EditorClassIdentifier: STS.Game::STS.Game.DataAssets.CardDataAsset
+  id: crimson_mantle
+  type: 2
+  rarity: 3
+  costIsX: 0
+  unplayable: 0
+  exhausts: 0
+  ethereal: 0
+  colorless: 0
+  baseName: "\u7DCB\u7D05\u62AB\u98A8"
+  baseCost: 1
+  baseDescription: "\u56DE\u5408\u958B\u59CB\u6642\u5931\u53BB 1 \u9EDE\u751F\u547D\u4E26\u7372\u5F97
+    8 \u9EDE\u683C\u64CB\u3002"
+  baseSteps:
+  - op: 2
+    target: 0
+    amount: 8
+    amountKind: 0
+    secondaryAmount: 0
+    repeat: 0
+    repeatIsX: 0
+    status: 21
+    cardId: 
+    pile: 2
+    customId: 
+  baseTurnEndSteps: []
+  hasUpgrade: 1
+  upgradeName: "\u7DCB\u7D05\u62AB\u98A8+"
+  upgradeCost: 1
+  upgradeDescription: "\u56DE\u5408\u958B\u59CB\u6642\u5931\u53BB 1 \u9EDE\u751F\u547D\u4E26\u7372\u5F97
+    10 \u9EDE\u683C\u64CB\u3002"
+  upgradeSteps:
+  - op: 2
+    target: 0
+    amount: 10
+    amountKind: 0
+    secondaryAmount: 0
+    repeat: 0
+    repeatIsX: 0
+    status: 21
+    cardId: 
+    pile: 2
+    customId: 
+  upgradeTurnEndSteps: []

@@ -1,0 +1,79 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 864927395ecc3534e9fd9f61f33a2072, type: 3}
+  m_Name: dominate
+  m_EditorClassIdentifier: STS.Game::STS.Game.DataAssets.CardDataAsset
+  id: dominate
+  type: 1
+  rarity: 2
+  costIsX: 0
+  unplayable: 0
+  exhausts: 1
+  ethereal: 0
+  colorless: 0
+  baseName: "\u4E3B\u5BB0"
+  baseCost: 1
+  baseDescription: "\u65BD\u52A0 1 \u5C64\u6613\u50B7\u3002\u76EE\u6A19\u6BCF\u6709\u4E00\u5C64\u6613\u50B7\u5C31\u7372\u5F97
+    1 \u9EDE\u529B\u91CF\u3002\u6D88\u8017\u3002"
+  baseSteps:
+  - op: 2
+    target: 1
+    amount: 1
+    amountKind: 0
+    secondaryAmount: 0
+    repeat: 0
+    repeatIsX: 0
+    status: 4
+    cardId: 
+    pile: 2
+    customId: 
+  - op: 2
+    target: 0
+    amount: 0
+    amountKind: 5
+    secondaryAmount: 1
+    repeat: 0
+    repeatIsX: 0
+    status: 1
+    cardId: 
+    pile: 2
+    customId: 
+  baseTurnEndSteps: []
+  hasUpgrade: 1
+  upgradeName: "\u4E3B\u5BB0+"
+  upgradeCost: 1
+  upgradeDescription: "\u65BD\u52A0 2 \u5C64\u6613\u50B7\u3002\u76EE\u6A19\u6BCF\u6709\u4E00\u5C64\u6613\u50B7\u5C31\u7372\u5F97
+    1 \u9EDE\u529B\u91CF\u3002\u6D88\u8017\u3002"
+  upgradeSteps:
+  - op: 2
+    target: 1
+    amount: 2
+    amountKind: 0
+    secondaryAmount: 0
+    repeat: 0
+    repeatIsX: 0
+    status: 4
+    cardId: 
+    pile: 2
+    customId: 
+  - op: 2
+    target: 0
+    amount: 0
+    amountKind: 5
+    secondaryAmount: 1
+    repeat: 0
+    repeatIsX: 0
+    status: 1
+    cardId: 
+    pile: 2
+    customId: 
+  upgradeTurnEndSteps: []

@@ -25,6 +25,7 @@ namespace STS.Core.Combat.Statuses
                 case StatusId.Frail:
                     return DecayRule.DecrementAtOwnerTurnEnd;
                 case StatusId.NoDraw:
+                case StatusId.Rage:
                     return DecayRule.RemoveAtOwnerTurnEnd;
                 default:
                     return DecayRule.None;
@@ -104,7 +105,88 @@ namespace STS.Core.Combat.Statuses
                     }
                     break;
 
-                // Strength/Dexterity/Weak/Vulnerable/Frail/NoDraw:被動修正或流程旗標,結算住在 CombatMath/BlockMath/抽牌流程
+                case StatusId.FeelNoPain:
+                    // 無懼疼痛:每有一張牌被消耗就補盾
+                    if (ctx.Point == HookPoint.CardExhausted && ownerIndex == CombatEngine.PlayerIndex)
+                    {
+                        engine.GainBlock(ownerIndex, status.Stacks);
+                    }
+                    break;
+
+                case StatusId.DarkEmbrace:
+                    // 黑暗之擁:每有一張牌被消耗就抽牌
+                    if (ctx.Point == HookPoint.CardExhausted && ownerIndex == CombatEngine.PlayerIndex)
+                    {
+                        engine.DrawCards(status.Stacks);
+                    }
+                    break;
+
+                case StatusId.Juggernaut:
+                    // 勢不可當:自己獲得格擋就砸隨機敵人。走非攻擊傷害——否則會與尖刺皮互相觸發成迴圈
+                    if (ctx.Point == HookPoint.BlockGained
+                        && ctx.SourceIndex == ownerIndex
+                        && ownerIndex == CombatEngine.PlayerIndex)
+                    {
+                        int enemyIndex = engine.PickRandomLivingEnemy();
+                        if (enemyIndex >= 0)
+                        {
+                            engine.DealNonAttackDamage(ownerIndex, enemyIndex, status.Stacks);
+                        }
+                    }
+                    break;
+
+                case StatusId.Rupture:
+                    // 撕裂:只在自己的回合失血才算(敵人打你不算)
+                    if (ctx.Point == HookPoint.HpLost
+                        && ctx.TargetIndex == ownerIndex
+                        && engine.IsOwnersTurn(ownerIndex)
+                        && ctx.Amount > 0)
+                    {
+                        engine.ApplyStatusTo(ownerIndex, StatusId.Strength, status.Stacks);
+                    }
+                    break;
+
+                case StatusId.Inferno:
+                    if (IsOwnersTurnStart(ctx, ownerIndex))
+                    {
+                        engine.LoseHpDirect(ownerIndex, 1);
+                    }
+                    else if (ctx.Point == HookPoint.HpLost
+                        && ctx.TargetIndex == ownerIndex
+                        && engine.IsOwnersTurn(ownerIndex)
+                        && ctx.Amount > 0)
+                    {
+                        engine.DamageAllEnemiesNonAttack(ownerIndex, status.Stacks);
+                    }
+                    break;
+
+                case StatusId.Pyre:
+                    if (IsOwnersTurnStart(ctx, ownerIndex))
+                    {
+                        engine.GainEnergy(status.Stacks);
+                    }
+                    break;
+
+                case StatusId.CrimsonMantle:
+                    if (IsOwnersTurnStart(ctx, ownerIndex))
+                    {
+                        engine.LoseHpDirect(ownerIndex, 1);
+                        engine.GainBlock(ownerIndex, status.Stacks);
+                    }
+                    break;
+
+                case StatusId.Rage:
+                    // 狂怒:本回合每打出一張攻擊牌就補盾
+                    if (ctx.Point == HookPoint.CardPlayed
+                        && ctx.SourceIndex == ownerIndex
+                        && ctx.CardType == Cards.CardType.Attack)
+                    {
+                        engine.GainBlock(ownerIndex, status.Stacks);
+                    }
+                    break;
+
+                // Strength/Dexterity/Weak/Vulnerable/Frail/NoDraw/Barricade:
+                // 被動修正或流程旗標,結算住在 CombatMath/BlockMath/抽牌流程/清格擋處
                 default:
                     break;
             }

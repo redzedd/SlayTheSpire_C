@@ -25,6 +25,24 @@
     { "id": "SharpHide", "name": "尖刺皮",
       "description": "每當玩家打出一張攻擊牌,對其造成 {n} 點傷害。" },
     { "id": "LoseStrengthAtTurnEnd", "name": "力量流失",
-      "description": "本回合結束時失去 {n} 點力量。" }
+      "description": "本回合結束時失去 {n} 點力量。" },
+    { "id": "Barricade", "name": "壁壘",
+      "description": "格擋不再於回合開始時清除。" },
+    { "id": "FeelNoPain", "name": "無懼疼痛",
+      "description": "每當一張牌被消耗,獲得 {n} 點格擋。" },
+    { "id": "DarkEmbrace", "name": "黑暗之擁",
+      "description": "每當一張牌被消耗,抽 {n} 張牌。" },
+    { "id": "Juggernaut", "name": "勢不可當",
+      "description": "每當獲得格擋,對一名隨機敵人造成 {n} 點傷害。" },
+    { "id": "Rupture", "name": "撕裂",
+      "description": "在自己回合內失去生命時,獲得 {n} 點力量。" },
+    { "id": "Inferno", "name": "獄火",
+      "description": "回合開始時失去 1 點生命;在自己回合內失去生命時,對所有敵人造成 {n} 點傷害。" },
+    { "id": "Pyre", "name": "薪火之源",
+      "description": "回合開始時獲得 {n} 點能量。" },
+    { "id": "CrimsonMantle", "name": "緋紅披風",
+      "description": "回合開始時失去 1 點生命並獲得 {n} 點格擋。" },
+    { "id": "Rage", "name": "狂怒",
+      "description": "本回合每打出一張攻擊牌,獲得 {n} 點格擋。" }
   ]
 }

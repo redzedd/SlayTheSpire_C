@@ -20,9 +20,9 @@ MonoBehaviour:
   exhausts: 0
   ethereal: 0
   colorless: 0
-  baseName: "\u60E1\u9B54\u5316\u8EAB"
+  baseName: "\u60E1\u9B54\u5F62\u614B"
   baseCost: 3
-  baseDescription: "\u6BCF\u56DE\u5408\u958B\u59CB\u6642\u7372\u5F97 2 \u9EDE\u529B\u91CF\u3002"
+  baseDescription: "\u56DE\u5408\u958B\u59CB\u6642\u7372\u5F97 2 \u9EDE\u529B\u91CF\u3002"
   baseSteps:
   - op: 2
     target: 0
@@ -37,9 +37,9 @@ MonoBehaviour:
     customId: 
   baseTurnEndSteps: []
   hasUpgrade: 1
-  upgradeName: "\u60E1\u9B54\u5316\u8EAB+"
+  upgradeName: "\u60E1\u9B54\u5F62\u614B+"
   upgradeCost: 3
-  upgradeDescription: "\u6BCF\u56DE\u5408\u958B\u59CB\u6642\u7372\u5F97 3 \u9EDE\u529B\u91CF\u3002"
+  upgradeDescription: "\u56DE\u5408\u958B\u59CB\u6642\u7372\u5F97 3 \u9EDE\u529B\u91CF\u3002"
   upgradeSteps:
   - op: 2
     target: 0

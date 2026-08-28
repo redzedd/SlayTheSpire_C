@@ -15,6 +15,10 @@ namespace STS.Core.Cards
         AddCardToPile,
         ExhaustRandomFromHand,
         ChooseExhaustFromHand,
+        /// <summary>消耗抽牌堆最上面 Amount 張(餘燼型)。</summary>
+        ExhaustTopOfDraw,
+        /// <summary>把目標身上某個狀態的層數翻倍(熔融之拳型)。</summary>
+        DoubleStatus,
         Custom
     }
 
@@ -27,13 +31,25 @@ namespace STS.Core.Cards
         RandomEnemy
     }
 
-    /// <summary>Amount 欄位的解讀方式。</summary>
+    /// <summary>
+    /// Amount 欄位的解讀方式。
+    /// 帶「PerXxx」的四種一律是 <c>Amount + SecondaryAmount × 數量</c>——
+    /// 基礎值放 amount、每單位加成放 secondaryAmount,四張成長型卡共用同一條公式。
+    /// </summary>
     public enum AmountKind
     {
         Fixed,
         XEnergy,
         CurrentBlock,
-        StrengthTimes
+        StrengthTimes,
+        /// <summary>每有一張牌在消耗堆(灰燼打擊)。</summary>
+        PerExhaustedCard,
+        /// <summary>目標身上每一層易傷(欺凌/主宰)。</summary>
+        PerTargetVulnerable,
+        /// <summary>本回合每打出過一張攻擊牌(焚燒)。</summary>
+        PerAttackPlayedThisTurn,
+        /// <summary>牌組中每有一張名字含「打擊」的牌(完美打擊)。</summary>
+        PerStrikeCard
     }
 
     public enum PileType

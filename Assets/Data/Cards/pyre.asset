@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 864927395ecc3534e9fd9f61f33a2072, type: 3}
+  m_Name: pyre
+  m_EditorClassIdentifier: STS.Game::STS.Game.DataAssets.CardDataAsset
+  id: pyre
+  type: 2
+  rarity: 3
+  costIsX: 0
+  unplayable: 0
+  exhausts: 0
+  ethereal: 0
+  colorless: 0
+  baseName: "\u85AA\u706B\u4E4B\u6E90"
+  baseCost: 2
+  baseDescription: "\u56DE\u5408\u958B\u59CB\u6642\u7372\u5F97 1 \u9EDE\u80FD\u91CF\u3002"
+  baseSteps:
+  - op: 2
+    target: 0
+    amount: 1
+    amountKind: 0
+    secondaryAmount: 0
+    repeat: 0
+    repeatIsX: 0
+    status: 20
+    cardId: 
+    pile: 2
+    customId: 
+  baseTurnEndSteps: []
+  hasUpgrade: 1
+  upgradeName: "\u85AA\u706B\u4E4B\u6E90+"
+  upgradeCost: 2
+  upgradeDescription: "\u56DE\u5408\u958B\u59CB\u6642\u7372\u5F97 2 \u9EDE\u80FD\u91CF\u3002"
+  upgradeSteps:
+  - op: 2
+    target: 0
+    amount: 2
+    amountKind: 0
+    secondaryAmount: 0
+    repeat: 0
+    repeatIsX: 0
+    status: 20
+    cardId: 
+    pile: 2
+    customId: 
+  upgradeTurnEndSteps: []

@@ -22,7 +22,8 @@ MonoBehaviour:
   colorless: 0
   baseName: "\u71C3\u71D2\u5951\u7D04"
   baseCost: 1
-  baseDescription: "\u6D88\u8017 1 \u5F35\u624B\u724C,\u62BD 2 \u5F35\u724C\u3002"
+  baseDescription: "\u9078\u64C7\u624B\u724C\u4E2D 1 \u5F35\u724C\u6D88\u8017,\u62BD
+    2 \u5F35\u724C\u3002"
   baseSteps:
   - op: 9
     target: 0
@@ -50,7 +51,8 @@ MonoBehaviour:
   hasUpgrade: 1
   upgradeName: "\u71C3\u71D2\u5951\u7D04+"
   upgradeCost: 1
-  upgradeDescription: "\u6D88\u8017 1 \u5F35\u624B\u724C,\u62BD 3 \u5F35\u724C\u3002"
+  upgradeDescription: "\u9078\u64C7\u624B\u724C\u4E2D 1 \u5F35\u724C\u6D88\u8017,\u62BD
+    3 \u5F35\u724C\u3002"
   upgradeSteps:
   - op: 9
     target: 0

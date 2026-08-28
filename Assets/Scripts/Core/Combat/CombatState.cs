@@ -36,5 +36,7 @@ namespace STS.Core.Combat
         public readonly List<string> PotionSlots = new List<string>();
         /// <summary>AwaitingChoice 時要選幾張(UI 顯示用)。</summary>
         public int PendingChoiceCount;
+        /// <summary>本回合玩家已打出的攻擊牌數(焚燒型「每打出一張攻擊就加傷」用);回合開始歸零。</summary>
+        public int AttacksPlayedThisTurn;
     }
 }

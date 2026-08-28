@@ -14,6 +14,10 @@ namespace STS.Core.Combat
         AttackDealt,
         AttackReceived,
         HpLost,
+        /// <summary>一張牌被移入消耗堆(無懼疼痛/黑暗之擁)。</summary>
+        CardExhausted,
+        /// <summary>有人獲得格擋(勢不可當);Amount = 實際獲得量。</summary>
+        BlockGained,
         Shuffled,
         CombatVictory,
         EnemyDied

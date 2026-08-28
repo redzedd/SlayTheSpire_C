@@ -20,10 +20,10 @@ MonoBehaviour:
   exhausts: 1
   ethereal: 0
   colorless: 0
-  baseName: "\u701D\u8840\u737B\u796D"
+  baseName: "\u796D\u54C1"
   baseCost: 0
-  baseDescription: "\u6D88\u8017\u3002\u5931\u53BB 6 \u9EDE\u751F\u547D,\u7372\u5F97
-    2 \u9EDE\u80FD\u91CF,\u62BD 3 \u5F35\u724C\u3002"
+  baseDescription: "\u5931\u53BB 6 \u9EDE\u751F\u547D,\u7372\u5F97 2 \u9EDE\u80FD\u91CF,\u62BD
+    3 \u5F35\u724C\u3002\u6D88\u8017\u3002"
   baseSteps:
   - op: 5
     target: 0
@@ -60,10 +60,10 @@ MonoBehaviour:
     customId: 
   baseTurnEndSteps: []
   hasUpgrade: 1
-  upgradeName: "\u701D\u8840\u737B\u796D+"
+  upgradeName: "\u796D\u54C1+"
   upgradeCost: 0
-  upgradeDescription: "\u6D88\u8017\u3002\u5931\u53BB 6 \u9EDE\u751F\u547D,\u7372\u5F97
-    2 \u9EDE\u80FD\u91CF,\u62BD 5 \u5F35\u724C\u3002"
+  upgradeDescription: "\u5931\u53BB 6 \u9EDE\u751F\u547D,\u7372\u5F97 2 \u9EDE\u80FD\u91CF,\u62BD
+    5 \u5F35\u724C\u3002\u6D88\u8017\u3002"
   upgradeSteps:
   - op: 5
     target: 0

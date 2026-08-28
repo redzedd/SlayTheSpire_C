@@ -14,15 +14,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: STS.Game::STS.Game.DataAssets.CardDataAsset
   id: heavy_blade
   type: 0
-  rarity: 1
+  rarity: 2
   costIsX: 0
   unplayable: 0
   exhausts: 0
   ethereal: 0
   colorless: 0
-  baseName: "\u5343\u921E\u65AC"
+  baseName: "\u91CD\u5200"
   baseCost: 2
-  baseDescription: "\u9020\u6210 {dmg} \u9EDE\u50B7\u5BB3,\u529B\u91CF\u6548\u679C\u4EE5
+  baseDescription: "\u9020\u6210 {dmg} \u9EDE\u50B7\u5BB3,\u529B\u91CF\u5C0D\u6B64\u724C\u4EE5
     3 \u500D\u8A08\u7B97\u3002"
   baseSteps:
   - op: 0
@@ -38,9 +38,9 @@ MonoBehaviour:
     customId: 
   baseTurnEndSteps: []
   hasUpgrade: 1
-  upgradeName: "\u5343\u921E\u65AC+"
+  upgradeName: "\u91CD\u5200+"
   upgradeCost: 2
-  upgradeDescription: "\u9020\u6210 {dmg} \u9EDE\u50B7\u5BB3,\u529B\u91CF\u6548\u679C\u4EE5
+  upgradeDescription: "\u9020\u6210 {dmg} \u9EDE\u50B7\u5BB3,\u529B\u91CF\u5C0D\u6B64\u724C\u4EE5
     5 \u500D\u8A08\u7B97\u3002"
   upgradeSteps:
   - op: 0

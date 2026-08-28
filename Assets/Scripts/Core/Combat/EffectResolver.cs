@@ -44,7 +44,7 @@ namespace STS.Core.Combat
                             var targets = CollectTargets(engine, sourceIndex, step.Target, chosenTargetIndex);
                             for (int t = 0; t < targets.Count; t++)
                             {
-                                int amount = ResolveAmount(engine, step, sourceIndex);
+                                int amount = ResolveAmount(engine, step, sourceIndex, chosenTargetIndex);
                                 if (ignoreModifiers)
                                 {
                                     engine.GainBlockRaw(targets[t], amount);
@@ -63,17 +63,35 @@ namespace STS.Core.Combat
                             var targets = CollectTargets(engine, sourceIndex, step.Target, chosenTargetIndex);
                             for (int t = 0; t < targets.Count; t++)
                             {
-                                engine.ApplyStatusTo(targets[t], step.Status, step.Amount);
+                                // 層數也可以是成長型(主宰:敵人每有一層易傷就給 1 點力量)
+                                engine.ApplyStatusTo(targets[t], step.Status,
+                                    ResolveAmount(engine, step, sourceIndex, chosenTargetIndex));
+                            }
+                        }
+                        break;
+
+                    case EffectOp.ExhaustTopOfDraw:
+                        engine.ExhaustTopOfDraw(step.Amount <= 0 ? 1 : step.Amount);
+                        break;
+
+                    case EffectOp.DoubleStatus:
+                        for (int r = 0; r < repeat; r++)
+                        {
+                            var targets = CollectTargets(engine, sourceIndex, step.Target, chosenTargetIndex);
+                            for (int t = 0; t < targets.Count; t++)
+                            {
+                                int stacks = engine.GetCombatant(targets[t]).GetStatus(step.Status);
+                                if (stacks > 0) engine.ApplyStatusTo(targets[t], step.Status, stacks);
                             }
                         }
                         break;
 
                     case EffectOp.Draw:
-                        engine.DrawCards(ResolveAmount(engine, step, sourceIndex));
+                        engine.DrawCards(ResolveAmount(engine, step, sourceIndex, chosenTargetIndex));
                         break;
 
                     case EffectOp.GainEnergy:
-                        engine.GainEnergy(ResolveAmount(engine, step, sourceIndex));
+                        engine.GainEnergy(ResolveAmount(engine, step, sourceIndex, chosenTargetIndex));
                         break;
 
                     case EffectOp.LoseHp:
@@ -82,7 +100,7 @@ namespace STS.Core.Combat
                             var targets = CollectTargets(engine, sourceIndex, step.Target, chosenTargetIndex);
                             for (int t = 0; t < targets.Count; t++)
                             {
-                                engine.LoseHpDirect(targets[t], ResolveAmount(engine, step, sourceIndex));
+                                engine.LoseHpDirect(targets[t], ResolveAmount(engine, step, sourceIndex, chosenTargetIndex));
                             }
                         }
                         break;
@@ -93,7 +111,7 @@ namespace STS.Core.Combat
                             var targets = CollectTargets(engine, sourceIndex, step.Target, chosenTargetIndex);
                             for (int t = 0; t < targets.Count; t++)
                             {
-                                engine.HealHp(targets[t], ResolveAmount(engine, step, sourceIndex));
+                                engine.HealHp(targets[t], ResolveAmount(engine, step, sourceIndex, chosenTargetIndex));
                             }
                         }
                         break;
@@ -138,7 +156,7 @@ namespace STS.Core.Combat
             {
                 var targets = CollectTargets(engine, sourceIndex, step.Target, chosenTargetIndex);
                 if (targets.Count == 0) return;
-                int baseAmount = ResolveDamageBase(engine, step, sourceIndex);
+                int baseAmount = ResolveDamageBase(engine, step, sourceIndex, targets[0]);
                 for (int t = 0; t < targets.Count; t++)
                 {
                     if (ignoreModifiers)
@@ -155,7 +173,7 @@ namespace STS.Core.Combat
         }
 
         /// <summary>非 Damage op 的數值解讀。StrengthTimes 只對 Damage 有意義,其他 op 用到就是資料錯。</summary>
-        private static int ResolveAmount(CombatEngine engine, EffectStep step, int sourceIndex)
+        private static int ResolveAmount(CombatEngine engine, EffectStep step, int sourceIndex, int targetIndex)
         {
             switch (step.AmountKind)
             {
@@ -165,8 +183,33 @@ namespace STS.Core.Combat
                     return engine.XEnergySpent;
                 case AmountKind.CurrentBlock:
                     return engine.GetCombatant(sourceIndex).Block;
+                case AmountKind.PerExhaustedCard:
+                case AmountKind.PerTargetVulnerable:
+                case AmountKind.PerAttackPlayedThisTurn:
+                case AmountKind.PerStrikeCard:
+                    return step.Amount + step.SecondaryAmount * ScalingCount(engine, step.AmountKind, targetIndex);
                 default:
                     throw new NotSupportedException($"AmountKind {step.AmountKind} 不適用於 {step.Op}");
+            }
+        }
+
+        /// <summary>成長型數值的「數量」來源。四種共用 Amount + Secondary × count 的公式。</summary>
+        private static int ScalingCount(CombatEngine engine, AmountKind kind, int targetIndex)
+        {
+            switch (kind)
+            {
+                case AmountKind.PerExhaustedCard:
+                    return engine.State.ExhaustPile.Count;
+                case AmountKind.PerTargetVulnerable:
+                    if (targetIndex < 0 || targetIndex >= engine.State.Enemies.Count) return 0;
+                    return engine.GetCombatant(targetIndex).GetStatus(Statuses.StatusId.Vulnerable);
+                case AmountKind.PerAttackPlayedThisTurn:
+                    // 「其他」攻擊牌:這張自己在出牌時已經計進去,扣回來
+                    return engine.State.AttacksPlayedThisTurn > 0 ? engine.State.AttacksPlayedThisTurn - 1 : 0;
+                case AmountKind.PerStrikeCard:
+                    return engine.CountCardsNamedContaining("打擊");
+                default:
+                    return 0;
             }
         }
 
@@ -174,7 +217,7 @@ namespace STS.Core.Combat
         /// Damage 的基礎值解讀。StrengthTimes:力量以 SecondaryAmount 倍計——
         /// 基礎值先加上 力量×(倍率-1),再走 CombatMath(那裡會再加一次力量),總計恰為 N 倍。
         /// </summary>
-        private static int ResolveDamageBase(CombatEngine engine, EffectStep step, int sourceIndex)
+        private static int ResolveDamageBase(CombatEngine engine, EffectStep step, int sourceIndex, int targetIndex)
         {
             switch (step.AmountKind)
             {
@@ -184,6 +227,11 @@ namespace STS.Core.Combat
                     return engine.XEnergySpent;
                 case AmountKind.CurrentBlock:
                     return engine.GetCombatant(sourceIndex).Block;
+                case AmountKind.PerExhaustedCard:
+                case AmountKind.PerTargetVulnerable:
+                case AmountKind.PerAttackPlayedThisTurn:
+                case AmountKind.PerStrikeCard:
+                    return step.Amount + step.SecondaryAmount * ScalingCount(engine, step.AmountKind, targetIndex);
                 case AmountKind.StrengthTimes:
                 {
                     int multiplier = step.SecondaryAmount <= 1 ? 1 : step.SecondaryAmount;
