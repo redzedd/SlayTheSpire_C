@@ -30,6 +30,10 @@ namespace STS.Core.Cards
         /// Pile 決定打完後去哪:Exhaust = 打完消耗,其餘 = 進棄牌堆。
         /// </summary>
         PlayTopOfDraw,
+        /// <summary>把 Amount 點傷害永久加到「正在打出的這張牌」上,只在本場戰鬥有效(暴走型)。</summary>
+        GrowThisCardDamage,
+        /// <summary>消耗手上一張隨機攻擊牌,把它的傷害加到正在打出的這張牌上(痛毆型)。</summary>
+        AbsorbRandomAttackFromHand,
         /// <summary>把目標身上某個狀態的層數翻倍(熔融之拳型)。</summary>
         DoubleStatus,
         Custom
@@ -67,6 +71,17 @@ namespace STS.Core.Cards
         PerLastExhausted
     }
 
+    /// <summary>Repeat(段數)的解讀方式。</summary>
+    public enum RepeatKind
+    {
+        /// <summary>就是 Repeat 欄位的數字。</summary>
+        Fixed,
+        /// <summary>段數 = 這張 X 費卡消耗掉的能量(旋風斬型)。</summary>
+        XEnergy,
+        /// <summary>段數 = Repeat + 本場戰鬥你失去生命的次數(扯碎型)。</summary>
+        PerHpLossThisCombat
+    }
+
     public enum PileType
     {
         Draw,
@@ -87,8 +102,7 @@ namespace STS.Core.Cards
         public readonly int SecondaryAmount;
         /// <summary>段數;0 或 1 = 單次。</summary>
         public readonly int Repeat;
-        /// <summary>段數 = 消耗的能量(旋風斬型)。</summary>
-        public readonly bool RepeatIsX;
+        public readonly RepeatKind RepeatKind;
         public readonly StatusId Status;
         public readonly string CardId;
         public readonly PileType Pile;
@@ -101,7 +115,7 @@ namespace STS.Core.Cards
             AmountKind amountKind = AmountKind.Fixed,
             int secondaryAmount = 0,
             int repeat = 0,
-            bool repeatIsX = false,
+            RepeatKind repeatKind = RepeatKind.Fixed,
             StatusId status = StatusId.None,
             string cardId = null,
             PileType pile = PileType.Discard,
@@ -113,7 +127,7 @@ namespace STS.Core.Cards
             AmountKind = amountKind;
             SecondaryAmount = secondaryAmount;
             Repeat = repeat;
-            RepeatIsX = repeatIsX;
+            RepeatKind = repeatKind;
             Status = status;
             CardId = cardId;
             Pile = pile;

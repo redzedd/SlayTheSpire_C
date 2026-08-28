@@ -32,7 +32,7 @@ MonoBehaviour:
     amountKind: 5
     secondaryAmount: 2
     repeat: 0
-    repeatIsX: 0
+    repeatKind: 0
     status: 0
     cardId: 
     pile: 2
@@ -50,7 +50,7 @@ MonoBehaviour:
     amountKind: 5
     secondaryAmount: 3
     repeat: 0
-    repeatIsX: 0
+    repeatKind: 0
     status: 0
     cardId: 
     pile: 2

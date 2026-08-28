@@ -475,7 +475,7 @@ namespace STS.Core.Tests
                 Id = "cascade", Name = "傾瀉", Type = CardType.Skill, Rarity = CardRarity.Rare,
                 Cost = 0, CostIsX = true,
                 DescriptionTemplate = "打出抽牌堆頂部的 X 張牌。",
-                Steps = new[] { new EffectStep(EffectOp.PlayTopOfDraw, EffectTarget.Self, 0, repeatIsX: true, pile: PileType.Discard) }
+                Steps = new[] { new EffectStep(EffectOp.PlayTopOfDraw, EffectTarget.Self, 0, repeatKind: RepeatKind.XEnergy, pile: PileType.Discard) }
             };
             // 全牌組只有一張傾瀉,其餘全是防禦:自動打出的牌不可能再是傾瀉,巢狀不會污染計數
             var deck = new[] { "cascade", "defend", "defend", "defend", "defend",
@@ -610,6 +610,94 @@ namespace STS.Core.Tests
 
             出牌(engine, "strike");   // 恢復正常,只打一次
             Assert.AreEqual(182, engine.State.Enemies[0].Hp);
+        }
+
+        [Test]
+        public void 暴走_同一張牌每打一次就更痛()
+        {
+            var 暴走 = new CardDef
+            {
+                Id = "rampage", Name = "暴走", Type = CardType.Attack, Rarity = CardRarity.Uncommon, Cost = 0,
+                DescriptionTemplate = "造成 {dmg} 點傷害。",
+                Steps = new[]
+                {
+                    new EffectStep(EffectOp.Damage, EffectTarget.TargetEnemy, 9),
+                    new EffectStep(EffectOp.GrowThisCardDamage, EffectTarget.Self, 5)
+                }
+            };
+            // 牌組只有一張暴走:結束回合後空堆重洗,同一張(InstanceId 相同)會再回到手上
+            var engine = 標準引擎(new[] { "rampage" }, enemyHp: 200, enemyAttack: 0, extraDefs: new[] { 暴走 });
+            engine.StartCombat();
+
+            出牌(engine, "rampage");
+            Assert.AreEqual(191, engine.State.Enemies[0].Hp, "第一次就是基礎 9 點");
+
+            engine.EndPlayerTurn();
+            出牌(engine, "rampage");
+            Assert.AreEqual(177, engine.State.Enemies[0].Hp, "第二次要是 9+5=14 點");
+
+            engine.EndPlayerTurn();
+            出牌(engine, "rampage");
+            Assert.AreEqual(158, engine.State.Enemies[0].Hp, "第三次要是 9+10=19 點");
+        }
+
+        [Test]
+        public void 痛毆_吃掉手上的攻擊牌後變強()
+        {
+            var 痛毆 = new CardDef
+            {
+                Id = "thrash", Name = "痛毆", Type = CardType.Attack, Rarity = CardRarity.Rare, Cost = 0,
+                DescriptionTemplate = "造成 {dmg} 點傷害兩次。",
+                Steps = new[]
+                {
+                    new EffectStep(EffectOp.Damage, EffectTarget.TargetEnemy, 4, repeat: 2),
+                    new EffectStep(EffectOp.AbsorbRandomAttackFromHand, EffectTarget.Self)
+                }
+            };
+            // 手上只有打擊(6 點)可以被吃
+            var engine = 標準引擎(new[] { "thrash", "strike", "defend", "defend", "defend" },
+                enemyHp: 200, enemyAttack: 0, extraDefs: new[] { 痛毆 });
+            engine.StartCombat();
+
+            出牌(engine, "thrash");
+            Assert.AreEqual(192, engine.State.Enemies[0].Hp, "這次還是 4 點打兩下");
+            Assert.AreEqual(-1, 手牌位置(engine, "strike"), "手上的打擊要被吃掉");
+            Assert.AreEqual(1, engine.State.ExhaustPile.Count);
+
+            engine.EndPlayerTurn();
+            出牌(engine, "thrash");
+            // 吸收了打擊的 6 點 → (4+6) 打兩下 = 20
+            Assert.AreEqual(172, engine.State.Enemies[0].Hp, "吃過打擊後每段要多 6 點");
+        }
+
+        [Test]
+        public void 扯碎_每失血一次就多打一段()
+        {
+            var 扯碎 = new CardDef
+            {
+                Id = "tear", Name = "扯碎", Type = CardType.Attack, Rarity = CardRarity.Rare, Cost = 0,
+                DescriptionTemplate = "造成 {dmg} 點傷害。",
+                Steps = new[]
+                {
+                    new EffectStep(EffectOp.Damage, EffectTarget.TargetEnemy, 5, repeat: 1,
+                        repeatKind: RepeatKind.PerHpLossThisCombat)
+                }
+            };
+            var engine = 標準引擎(new[] { "tear", "bleed", "bleed", "defend", "defend" },
+                enemyHp: 200, enemyAttack: 0, extraDefs: new[] { 扯碎, 放血(2) });
+            engine.StartCombat();
+
+            出牌(engine, "tear");
+            Assert.AreEqual(195, engine.State.Enemies[0].Hp, "還沒失血過就只打一段");
+
+            出牌(engine, "bleed");   // 失血一次
+            出牌(engine, "bleed");   // 失血兩次
+            Assert.AreEqual(2, engine.State.HpLossEventsThisCombat);
+
+            engine.EndPlayerTurn();
+            出牌(engine, "tear");
+            // 1 + 2 段 × 5 點 = 15
+            Assert.AreEqual(180, engine.State.Enemies[0].Hp, "失血兩次就要打三段");
         }
 
         [Test]

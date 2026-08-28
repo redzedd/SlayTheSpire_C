@@ -31,7 +31,7 @@ MonoBehaviour:
     amountKind: 0
     secondaryAmount: 0
     repeat: 0
-    repeatIsX: 0
+    repeatKind: 0
     status: 4
     cardId: 
     pile: 2
@@ -48,7 +48,7 @@ MonoBehaviour:
     amountKind: 0
     secondaryAmount: 0
     repeat: 0
-    repeatIsX: 0
+    repeatKind: 0
     status: 4
     cardId: 
     pile: 2

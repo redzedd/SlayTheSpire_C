@@ -40,5 +40,13 @@ namespace STS.Core.Combat
         public int AttacksPlayedThisTurn;
         /// <summary>同一張牌前一個消耗步驟剛消耗掉的張數,供下一個步驟換算數值(重振精神/惡魔之焰)。</summary>
         public int LastExhaustedCount;
+        /// <summary>本場戰鬥玩家失去生命的「次數」(不是點數);扯碎的段數靠它成長。</summary>
+        public int HpLossEventsThisCombat;
+        /// <summary>
+        /// 單張卡在本場戰鬥中累積的額外傷害,key = CardInstance.InstanceId(暴走/痛毆)。
+        /// 刻意放在戰鬥狀態而不是 CardInstance 上——CardInstance 是跨戰鬥的 run 資料,
+        /// 直接改它會把加成帶進下一場戰鬥。
+        /// </summary>
+        public readonly Dictionary<int, int> CardDamageBonus = new Dictionary<int, int>();
     }
 }

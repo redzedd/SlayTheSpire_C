@@ -16,7 +16,7 @@ namespace STS.Game.DataAssets
         [Tooltip("主數值的解讀方式(固定/X能量/當前格擋/力量倍計)")] public AmountKind amountKind = AmountKind.Fixed;
         [Tooltip("副數值(力量倍率/複製張數)")] public int secondaryAmount;
         [Tooltip("段數;0 或 1 = 單次")] public int repeat;
-        [Tooltip("段數 = 消耗的能量(X 費卡用)")] public bool repeatIsX;
+        [Tooltip("段數的算法:X 費卡吃消耗的能量,失血成長型加上本場失血次數")] public RepeatKind repeatKind = RepeatKind.Fixed;
         [Tooltip("ApplyStatus 的狀態種類")] public StatusId status = StatusId.None;
         [Tooltip("AddCardToPile 的卡牌 id")] public string cardId;
         [Tooltip("AddCardToPile 的目標牌堆")] public PileType pile = PileType.Discard;
@@ -24,7 +24,7 @@ namespace STS.Game.DataAssets
 
         public EffectStep ToStep()
         {
-            return new EffectStep(op, target, amount, amountKind, secondaryAmount, repeat, repeatIsX, status,
+            return new EffectStep(op, target, amount, amountKind, secondaryAmount, repeat, repeatKind, status,
                 string.IsNullOrEmpty(cardId) ? null : cardId, pile,
                 string.IsNullOrEmpty(customId) ? null : customId);
         }

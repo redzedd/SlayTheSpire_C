@@ -13,7 +13,7 @@ namespace STS.Data.Dto
         public string amountKind = "Fixed";
         public int secondaryAmount;
         public int repeat;
-        public bool repeatIsX;
+        public string repeatKind = "Fixed";
         public string status = "None";
         public string cardId;
         public string pile = "Discard";

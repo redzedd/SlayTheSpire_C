@@ -35,7 +35,7 @@ namespace STS.Core.Combat
                 if (!engine.GetCombatant(sourceIndex).IsAlive) return;   // 施放者已死(尖刺皮/反傷情境)即中止
 
                 var step = steps[s];
-                int repeat = step.RepeatIsX ? engine.XEnergySpent : (step.Repeat <= 1 ? 1 : step.Repeat);
+                int repeat = ResolveRepeat(engine, step);
 
                 switch (step.Op)
                 {
@@ -95,10 +95,18 @@ namespace STS.Core.Combat
                         engine.DrawUntilNonAttack();
                         break;
 
+                    case EffectOp.GrowThisCardDamage:
+                        engine.GrowCurrentCardDamage(step.Amount);
+                        break;
+
+                    case EffectOp.AbsorbRandomAttackFromHand:
+                        engine.AbsorbRandomAttackFromHand();
+                        break;
+
                     case EffectOp.PlayTopOfDraw:
                     {
                         // X 型時 amount 當成額外加成(傾瀉+ 是 X+1 張),固定型時 amount 就是張數
-                        int count = step.RepeatIsX
+                        int count = step.RepeatKind == RepeatKind.XEnergy
                             ? engine.XEnergySpent + step.Amount
                             : (step.Amount <= 0 ? 1 : step.Amount);
                         engine.PlayTopOfDraw(count, step.Pile);
@@ -230,6 +238,23 @@ namespace STS.Core.Combat
             }
         }
 
+        /// <summary>段數解讀。Fixed 直接用 Repeat;X 型吃消耗掉的能量;失血成長型是 Repeat + 本場失血次數。</summary>
+        private static int ResolveRepeat(CombatEngine engine, EffectStep step)
+        {
+            switch (step.RepeatKind)
+            {
+                case RepeatKind.XEnergy:
+                    return engine.XEnergySpent;
+                case RepeatKind.PerHpLossThisCombat:
+                {
+                    int baseRepeat = step.Repeat <= 1 ? 1 : step.Repeat;
+                    return baseRepeat + engine.State.HpLossEventsThisCombat;
+                }
+                default:
+                    return step.Repeat <= 1 ? 1 : step.Repeat;
+            }
+        }
+
         private static int TargetVulnerable(CombatEngine engine, int targetIndex)
         {
             if (targetIndex < 0 || targetIndex >= engine.State.Enemies.Count) return 0;
@@ -242,24 +267,26 @@ namespace STS.Core.Combat
         /// </summary>
         private static int ResolveDamageBase(CombatEngine engine, EffectStep step, int sourceIndex, int targetIndex)
         {
+            // 這張牌在本場戰鬥累積的加成(暴走/痛毆)一律疊在基礎值上,不分哪種 AmountKind
+            int grown = engine.CurrentCardDamageBonus;
             if (CombatEngine.IsScalingKind(step.AmountKind))
             {
-                return step.Amount + step.SecondaryAmount
+                return grown + step.Amount + step.SecondaryAmount
                     * engine.ScalingCount(step.AmountKind, TargetVulnerable(engine, targetIndex));
             }
             switch (step.AmountKind)
             {
                 case AmountKind.Fixed:
-                    return step.Amount;
+                    return grown + step.Amount;
                 case AmountKind.XEnergy:
-                    return engine.XEnergySpent;
+                    return grown + engine.XEnergySpent;
                 case AmountKind.CurrentBlock:
-                    return engine.GetCombatant(sourceIndex).Block;
+                    return grown + engine.GetCombatant(sourceIndex).Block;
                 case AmountKind.StrengthTimes:
                 {
                     int multiplier = step.SecondaryAmount <= 1 ? 1 : step.SecondaryAmount;
                     int strength = engine.GetCombatant(sourceIndex).GetStatus(Statuses.StatusId.Strength);
-                    return step.Amount + strength * (multiplier - 1);
+                    return grown + step.Amount + strength * (multiplier - 1);
                 }
                 default:
                     throw new NotSupportedException($"AmountKind {step.AmountKind} 尚未實作");

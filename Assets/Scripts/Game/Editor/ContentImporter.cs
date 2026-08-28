@@ -275,7 +275,7 @@ namespace STS.Game.Editor
                     amountKind = ParseEnum<Core.Cards.AmountKind>(s.amountKind),
                     secondaryAmount = s.secondaryAmount,
                     repeat = s.repeat,
-                    repeatIsX = s.repeatIsX,
+                    repeatKind = ParseEnum<Core.Cards.RepeatKind>(s.repeatKind),
                     status = ParseEnum<Core.Combat.Statuses.StatusId>(s.status),
                     cardId = s.cardId,
                     pile = ParseEnum<Core.Cards.PileType>(s.pile),

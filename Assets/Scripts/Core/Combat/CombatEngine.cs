@@ -365,7 +365,8 @@ namespace STS.Core.Combat
                     enemy.GetStatus(StatusId.Strength),
                     enemy.GetStatus(StatusId.Weak) > 0,
                     State.Player.GetStatus(StatusId.Vulnerable) > 0);
-                hits = step.RepeatIsX ? 0 : (step.Repeat <= 1 ? 1 : step.Repeat);
+                // 敵人不會有 X 費/失血成長型招式;真的出現就顯示 0 段,由資料端修正
+                hits = step.RepeatKind != RepeatKind.Fixed ? 0 : (step.Repeat <= 1 ? 1 : step.Repeat);
                 break;
             }
             return new IntentInfo(move.Intent, move.Name, damage, hits);
@@ -623,6 +624,8 @@ namespace STS.Core.Combat
         private void AfterHpLoss(int index, int hpLost)
         {
             if (hpLost <= 0) return;
+            // 數的是「次數」不是點數:扯碎每失血一次多打一段
+            if (index == PlayerIndex) State.HpLossEventsThisCombat++;
             // 掉血 hook 對玩家與敵人都要觸發(撕裂/獄火靠它);敵人專屬的死亡與換模式邏輯在下面
             FireHook(new HookContext(HookPoint.HpLost, targetIndex: index, amount: hpLost));
             if (index == PlayerIndex) return;
@@ -969,6 +972,53 @@ namespace STS.Core.Combat
                 _autoPlayDepth--;
             }
             CheckOutcome();
+        }
+
+        /// <summary>正在結算的這張牌在本場戰鬥累積的額外傷害(暴走/痛毆);沒有加成就是 0。</summary>
+        internal int CurrentCardDamageBonus
+        {
+            get
+            {
+                if (_pendingPlayedCard == null) return 0;
+                return State.CardDamageBonus.TryGetValue(_pendingPlayedCard.InstanceId, out int bonus) ? bonus : 0;
+            }
+        }
+
+        /// <summary>把加成累加到正在結算的這張牌上(暴走);加成只活在本場戰鬥。</summary>
+        internal void GrowCurrentCardDamage(int amount)
+        {
+            if (_pendingPlayedCard == null || amount == 0) return;
+            int id = _pendingPlayedCard.InstanceId;
+            State.CardDamageBonus.TryGetValue(id, out int bonus);
+            State.CardDamageBonus[id] = bonus + amount;
+        }
+
+        /// <summary>
+        /// 消耗手上一張隨機攻擊牌,把它的基礎傷害加到正在結算的這張牌上(痛毆)。
+        /// 手上沒有攻擊牌就什麼都不做。回傳吸收到的傷害。
+        /// </summary>
+        internal int AbsorbRandomAttackFromHand()
+        {
+            var candidates = new List<int>(State.Hand.Count);
+            for (int i = 0; i < State.Hand.Count; i++)
+            {
+                if (_db.GetCard(State.Hand[i].ResolvedCardId).Type == CardType.Attack) candidates.Add(i);
+            }
+            if (candidates.Count == 0) return 0;
+
+            int handIndex = candidates[_rng.CombatMisc.NextInt(candidates.Count)];
+            var eaten = State.Hand[handIndex];
+            var eatenDef = _db.GetCard(eaten.ResolvedCardId);
+            State.Hand.RemoveAt(handIndex);
+            ExhaustCard(eaten);
+
+            int absorbed = 0;
+            for (int i = 0; i < eatenDef.Steps.Length; i++)
+            {
+                if (eatenDef.Steps[i].Op == EffectOp.Damage) absorbed += eatenDef.Steps[i].Amount;
+            }
+            GrowCurrentCardDamage(absorbed);
+            return absorbed;
         }
 
         /// <summary>對所有活著的敵人造成一次真正的攻擊傷害(彼岸咆哮的回合起始重擊)。</summary>

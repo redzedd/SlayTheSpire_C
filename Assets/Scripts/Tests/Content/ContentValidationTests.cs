@@ -159,7 +159,7 @@ namespace STS.Content.Tests
             Assert.Throws<ContentValidationException>(() => ContentParser.BuildDefs(raw1));
 
             // X 型欄位出現在非 X 費卡
-            string badX = "{ \"cards\": [ { \"id\": \"x\", \"base\": { \"name\": \"x\", \"cost\": 1, \"steps\": [ { \"op\": \"Damage\", \"target\": \"TargetEnemy\", \"amount\": 5, \"repeatIsX\": true } ] } } ] }";
+            string badX = "{ \"cards\": [ { \"id\": \"x\", \"base\": { \"name\": \"x\", \"cost\": 1, \"steps\": [ { \"op\": \"Damage\", \"target\": \"TargetEnemy\", \"amount\": 5, \"repeatKind\": \"XEnergy\" } ] } } ] }";
             var raw2 = ContentParser.ParseRaw(badX, "{\"enemies\":[]}", "{\"relics\":[]}", "{\"potions\":[]}", "{\"encounters\":[]}", "{}");
             Assert.Throws<ContentValidationException>(() => ContentParser.BuildDefs(raw2));
 

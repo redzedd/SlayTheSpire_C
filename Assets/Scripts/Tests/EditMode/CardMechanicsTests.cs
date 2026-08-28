@@ -41,7 +41,7 @@ namespace STS.Core.Tests
             var 旋風 = new CardDef
             {
                 Id = "whirl", Name = "旋風連斬", Type = CardType.Attack, Rarity = CardRarity.Uncommon, CostIsX = true,
-                Steps = new[] { new EffectStep(EffectOp.Damage, EffectTarget.AllEnemies, 5, repeatIsX: true) }
+                Steps = new[] { new EffectStep(EffectOp.Damage, EffectTarget.AllEnemies, 5, repeatKind: RepeatKind.XEnergy) }
             };
             var db = 基礎DB(旋風);
             db.Enemies["a"] = 木樁(id: "a", hp: 50);

@@ -343,9 +343,9 @@
     {
       "id": "whirlwind", "type": "Attack", "rarity": "Uncommon", "costIsX": true,
       "base": { "name": "旋風斬", "cost": 0, "description": "消耗全部能量,對所有敵人造成 {dmg} 點傷害 X 次。",
-        "steps": [ { "op": "Damage", "target": "AllEnemies", "amount": 5, "repeatIsX": true } ] },
+        "steps": [ { "op": "Damage", "target": "AllEnemies", "amount": 5, "repeatKind": "XEnergy" } ] },
       "upgrade": { "name": "旋風斬+", "cost": 0, "description": "消耗全部能量,對所有敵人造成 {dmg} 點傷害 X 次。",
-        "steps": [ { "op": "Damage", "target": "AllEnemies", "amount": 8, "repeatIsX": true } ] }
+        "steps": [ { "op": "Damage", "target": "AllEnemies", "amount": 8, "repeatKind": "XEnergy" } ] }
     },
 
     {
@@ -456,6 +456,35 @@
     },
 
     {
+      "id": "rampage", "type": "Attack", "rarity": "Uncommon",
+      "base": { "name": "暴走", "cost": 1, "description": "造成 {dmg} 點傷害。本場戰鬥中,這張牌的傷害增加 5。",
+        "steps": [
+          { "op": "Damage", "target": "TargetEnemy", "amount": 9 },
+          { "op": "GrowThisCardDamage", "target": "Self", "amount": 5 } ] },
+      "upgrade": { "name": "暴走+", "cost": 1, "description": "造成 {dmg} 點傷害。本場戰鬥中,這張牌的傷害增加 9。",
+        "steps": [
+          { "op": "Damage", "target": "TargetEnemy", "amount": 9 },
+          { "op": "GrowThisCardDamage", "target": "Self", "amount": 9 } ] }
+    },
+    {
+      "id": "thrash", "type": "Attack", "rarity": "Rare",
+      "base": { "name": "痛毆", "cost": 1, "description": "造成 {dmg} 點傷害兩次。消耗手上一張隨機攻擊牌,把它的傷害加到這張牌上。",
+        "steps": [
+          { "op": "Damage", "target": "TargetEnemy", "amount": 4, "repeat": 2 },
+          { "op": "AbsorbRandomAttackFromHand", "target": "Self" } ] },
+      "upgrade": { "name": "痛毆+", "cost": 1, "description": "造成 {dmg} 點傷害兩次。消耗手上一張隨機攻擊牌,把它的傷害加到這張牌上。",
+        "steps": [
+          { "op": "Damage", "target": "TargetEnemy", "amount": 6, "repeat": 2 },
+          { "op": "AbsorbRandomAttackFromHand", "target": "Self" } ] }
+    },
+    {
+      "id": "tear_asunder", "type": "Attack", "rarity": "Rare",
+      "base": { "name": "扯碎", "cost": 2, "description": "造成 {dmg} 點傷害。本場戰鬥你每失去過一次生命,就額外打一次。",
+        "steps": [ { "op": "Damage", "target": "TargetEnemy", "amount": 5, "repeat": 1, "repeatKind": "PerHpLossThisCombat" } ] },
+      "upgrade": { "name": "扯碎+", "cost": 2, "description": "造成 {dmg} 點傷害。本場戰鬥你每失去過一次生命,就額外打一次。",
+        "steps": [ { "op": "Damage", "target": "TargetEnemy", "amount": 7, "repeat": 1, "repeatKind": "PerHpLossThisCombat" } ] }
+    },
+    {
       "id": "unrelenting", "type": "Attack", "rarity": "Uncommon",
       "base": { "name": "無情猛攻", "cost": 2, "description": "造成 {dmg} 點傷害。你打出的下一張攻擊牌費用變為 0。",
         "steps": [
@@ -497,9 +526,9 @@
     {
       "id": "cascade", "type": "Skill", "rarity": "Rare", "costIsX": true,
       "base": { "name": "傾瀉", "cost": 0, "description": "消耗全部能量,打出抽牌堆頂部的 X 張牌。",
-        "steps": [ { "op": "PlayTopOfDraw", "target": "Self", "amount": 0, "repeatIsX": true, "pile": "Discard" } ] },
+        "steps": [ { "op": "PlayTopOfDraw", "target": "Self", "amount": 0, "repeatKind": "XEnergy", "pile": "Discard" } ] },
       "upgrade": { "name": "傾瀉+", "cost": 0, "description": "消耗全部能量,打出抽牌堆頂部的 X+1 張牌。",
-        "steps": [ { "op": "PlayTopOfDraw", "target": "Self", "amount": 1, "repeatIsX": true, "pile": "Discard" } ] }
+        "steps": [ { "op": "PlayTopOfDraw", "target": "Self", "amount": 1, "repeatKind": "XEnergy", "pile": "Discard" } ] }
     },
     {
       "id": "howl_from_beyond", "type": "Attack", "rarity": "Uncommon", "exhausts": true,

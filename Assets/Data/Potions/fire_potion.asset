@@ -23,7 +23,7 @@ MonoBehaviour:
     amountKind: 0
     secondaryAmount: 0
     repeat: 0
-    repeatIsX: 0
+    repeatKind: 0
     status: 0
     cardId: 
     pile: 2

@@ -318,7 +318,7 @@ namespace STS.Data
                     ParseEnum<AmountKind>(s.amountKind, $"{context}.amountKind"),
                     s.secondaryAmount,
                     s.repeat,
-                    s.repeatIsX,
+                    ParseEnum<RepeatKind>(s.repeatKind, $"{context}.repeatKind"),
                     ParseEnum<StatusId>(s.status, $"{context}.status"),
                     s.cardId,
                     ParseEnum<PileType>(s.pile, $"{context}.pile"),
@@ -336,7 +336,7 @@ namespace STS.Data
                 {
                     Require(step.Op == EffectOp.Damage, $"{context}:StrengthTimes 只能配 Damage");
                 }
-                if (step.RepeatIsX || step.AmountKind == AmountKind.XEnergy)
+                if (step.RepeatKind == RepeatKind.XEnergy || step.AmountKind == AmountKind.XEnergy)
                 {
                     Require(cardIsX, $"{context}:X 型欄位只能出現在 costIsX 的卡上");
                 }
