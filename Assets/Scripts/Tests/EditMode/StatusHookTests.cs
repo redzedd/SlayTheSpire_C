@@ -133,6 +133,61 @@ namespace STS.Core.Tests
             Assert.AreEqual(0, engine.State.Player.GetStatus(StatusId.LoseStrengthAtTurnEnd));
         }
 
+        [Test]
+        public void 尖刺皮_多段攻擊每段都反彈()
+        {
+            var 三連斬 = new CardDef
+            {
+                Id = "triple", Name = "三連斬", Type = CardType.Attack, Rarity = CardRarity.Common, Cost = 1,
+                Steps = new[] { new EffectStep(EffectOp.Damage, EffectTarget.TargetEnemy, 4, repeat: 3) }
+            };
+            var engine = 標準引擎(重複("triple", 8), enemyHp: 200, enemyAttack: 0, seed: 1234UL, playerHp: 80, null, null, 三連斬);
+            engine.StartCombat();
+            engine.State.Enemies[0].ModifyStatus(StatusId.SharpHide, 3);
+
+            engine.PlayCard(0, 0);
+            // 打三下就反彈三次:80 - 3×3 = 71(舊行為只反彈一次會是 77)
+            Assert.AreEqual(71, engine.State.Player.Hp);
+            Assert.AreEqual(188, engine.State.Enemies[0].Hp);
+        }
+
+        [Test]
+        public void 捲曲_多段攻擊全部命中後才上盾()
+        {
+            var 三連斬 = new CardDef
+            {
+                Id = "triple", Name = "三連斬", Type = CardType.Attack, Rarity = CardRarity.Common, Cost = 1,
+                Steps = new[] { new EffectStep(EffectOp.Damage, EffectTarget.TargetEnemy, 4, repeat: 3) }
+            };
+            var engine = 標準引擎(重複("triple", 8), enemyHp: 50, enemyAttack: 0, seed: 1234UL, playerHp: 80, null, null, 三連斬);
+            engine.StartCombat();
+            engine.State.Enemies[0].ModifyStatus(StatusId.Curl, 5);
+
+            engine.PlayCard(0, 0);
+            // 三段共 12 全部進血量(盾若當場生效,後兩段會被吃掉),打完才上 5 點盾
+            Assert.AreEqual(38, engine.State.Enemies[0].Hp);
+            Assert.AreEqual(5, engine.State.Enemies[0].Block);
+            Assert.AreEqual(0, engine.State.Enemies[0].GetStatus(StatusId.Curl));
+        }
+
+        [Test]
+        public void 捲曲_當回合打死就不上盾()
+        {
+            var 三連斬 = new CardDef
+            {
+                Id = "triple", Name = "三連斬", Type = CardType.Attack, Rarity = CardRarity.Common, Cost = 1,
+                Steps = new[] { new EffectStep(EffectOp.Damage, EffectTarget.TargetEnemy, 4, repeat: 3) }
+            };
+            var engine = 標準引擎(重複("triple", 8), enemyHp: 10, enemyAttack: 0, seed: 1234UL, playerHp: 80, null, null, 三連斬);
+            engine.StartCombat();
+            engine.State.Enemies[0].ModifyStatus(StatusId.Curl, 5);
+
+            engine.PlayCard(0, 0);
+            Assert.AreEqual(0, engine.State.Enemies[0].Hp);
+            Assert.AreEqual(0, engine.State.Enemies[0].Block, "死掉就不該再上盾");
+            Assert.AreEqual(CombatPhase.Victory, engine.State.Phase);
+        }
+
         // ---- 遺物 ----
 
         [Test]

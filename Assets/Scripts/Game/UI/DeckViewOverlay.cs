@@ -18,9 +18,13 @@ namespace STS.Game.UI
         private const float 卡縮放 = 0.92f;
         private const float 每列張數 = 6f;
 
+        /// <param name="upgradedLookup">
+        /// 非 null 時進入「升級預覽」模式:點卡不直接執行,先顯示升級前後對照再確認。
+        /// </param>
         public static DeckViewOverlay Open(Transform overlayLayer, string title,
             IReadOnlyList<CardInstance> deck, Func<CardInstance, CardDef> defLookup,
-            Func<CardInstance, bool> filter, Action<int> onPick, CombatantState previewPlayer = null)
+            Func<CardInstance, bool> filter, Action<int> onPick, CombatantState previewPlayer = null,
+            Func<CardInstance, CardDef> upgradedLookup = null)
         {
             var panel = UiKit.CreatePanel("牌組檢視", overlayLayer, UiKit.面板色);
             UiKit.Place(panel.rectTransform, Vector2.zero, new Vector2(1500f, 860f));
@@ -82,8 +86,18 @@ namespace STS.Game.UI
                 if (pickable)
                 {
                     var button = face.gameObject.AddComponent<Button>();
+                    var previewPlayerRef = previewPlayer;
                     button.onClick.AddListener(() =>
                     {
+                        if (upgradedLookup != null)
+                        {
+                            view.ShowUpgradePreview(def, upgradedLookup(card), previewPlayerRef, () =>
+                            {
+                                Destroy(view.gameObject);
+                                onPick(index);
+                            });
+                            return;
+                        }
                         Destroy(view.gameObject);
                         onPick(index);
                     });
@@ -104,6 +118,46 @@ namespace STS.Game.UI
                 new Color(0.5f, 0.3f, 0.3f), () => Destroy(view.gameObject)).transform,
                 new Vector2(0f, -390f), new Vector2(200f, 54f));
             return view;
+        }
+
+        /// <summary>升級前後對照:左邊現在的卡、中間箭頭、右邊升級後,確認才真的升級。</summary>
+        private void ShowUpgradePreview(CardDef current, CardDef upgraded, CombatantState previewPlayer, Action onConfirm)
+        {
+            var backdrop = UiKit.CreatePanel("升級預覽", transform, new Color(0.04f, 0.04f, 0.06f, 0.97f));
+            // 刻意開超過面板尺寸:遮罩要蓋掉整個螢幕,不然背後的燈火畫面會透出來
+            UiKit.Place(backdrop.rectTransform, Vector2.zero, new Vector2(2400f, 1400f));
+            backdrop.transform.SetAsLastSibling();
+
+            var group = backdrop.gameObject.AddComponent<CanvasGroup>();
+            group.alpha = 0f;
+            group.DOFade(1f, 0.15f).SetLink(backdrop.gameObject);
+
+            var player = previewPlayer ?? 空玩家;
+            var before = UiKit.MakeCardFace(backdrop.transform, current,
+                CardTextFormatter.FormatDescription(current, player), 1.35f);
+            UiKit.Place(before, new Vector2(-260f, 40f), before.sizeDelta);
+
+            // 箭頭只用 ASCII:繁中字型沒有 ➤ 這類符號的字形,會變成豆腐方塊
+            for (int i = 0; i < 3; i++)
+            {
+                var arrow = UiKit.CreateText($"箭頭{i}", backdrop.transform, ">", 56f, new Color(1f, 0.82f, 0.3f));
+                UiKit.Place(arrow.rectTransform, new Vector2(-46f + i * 46f, 40f), new Vector2(60f, 70f));
+            }
+
+            var after = UiKit.MakeCardFace(backdrop.transform, upgraded,
+                CardTextFormatter.FormatDescription(upgraded, player), 1.35f);
+            UiKit.Place(after, new Vector2(260f, 40f), after.sizeDelta);
+            var afterName = UiKit.CreateText("升級標記", backdrop.transform, "升級後", 28f, new Color(0.5f, 1f, 0.5f));
+            UiKit.Place(afterName.rectTransform, new Vector2(260f, -145f), new Vector2(200f, 36f));
+            var beforeName = UiKit.CreateText("目前標記", backdrop.transform, "目前", 28f, new Color(0.8f, 0.8f, 0.8f));
+            UiKit.Place(beforeName.rectTransform, new Vector2(-260f, -145f), new Vector2(200f, 36f));
+
+            UiKit.Place((RectTransform)UiKit.CreateButton("確認", backdrop.transform, "確認升級", 28f,
+                new Color(0.3f, 0.55f, 0.35f), () => onConfirm()).transform,
+                new Vector2(-160f, -280f), new Vector2(240f, 62f));
+            UiKit.Place((RectTransform)UiKit.CreateButton("取消", backdrop.transform, "再看看", 28f,
+                new Color(0.45f, 0.3f, 0.3f), () => Destroy(backdrop.gameObject)).transform,
+                new Vector2(160f, -280f), new Vector2(240f, 62f));
         }
 
         /// <summary>牌組檢視在戰鬥外開啟時沒有玩家狀態可參考——用空白狀態算基礎值。</summary>

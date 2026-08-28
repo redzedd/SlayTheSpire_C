@@ -41,6 +41,21 @@ namespace STS.Core.Combat
         private CardDef _pendingPlayedDef;
         private bool _pendingIgnoreModifiers;
 
+        /// <summary>延後到「整個效果來源結算完」才生效的格擋(捲曲用)。</summary>
+        private readonly struct DeferredBlock
+        {
+            internal readonly int Index;
+            internal readonly int Amount;
+
+            internal DeferredBlock(int index, int amount)
+            {
+                Index = index;
+                Amount = amount;
+            }
+        }
+
+        private readonly List<DeferredBlock> _deferredBlocks = new List<DeferredBlock>();
+
         public CombatEngine(IContentDb db, RunRng rng, CombatSetup setup)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
@@ -241,6 +256,7 @@ namespace STS.Core.Combat
             {
                 throw new NotSupportedException("切片藥水不支援中斷選擇型效果");
             }
+            FlushDeferredBlocks();   // 整瓶藥水打完才結清延後格擋
             CheckOutcome();
         }
 
@@ -260,6 +276,7 @@ namespace STS.Core.Combat
                 if (def.TurnEndInHandSteps.Length > 0)
                 {
                     EffectResolver.Resolve(this, def.TurnEndInHandSteps, PlayerIndex, -1);
+                    FlushDeferredBlocks();
                 }
             }
             if (!State.Player.IsAlive)
@@ -369,6 +386,7 @@ namespace STS.Core.Combat
                 string moveId = runtime.NextMoveId;
                 Emit(new CombatEvent(EventKind.EnemyMoveStarted, sourceIndex: i, cardId: moveId));
                 EffectResolver.Resolve(this, runtime.Def.GetMove(moveId).Steps, i, PlayerIndex);
+                FlushDeferredBlocks();   // 整個敵招結算完才結清延後格擋
 
                 if (!State.Player.IsAlive)
                 {
@@ -447,6 +465,7 @@ namespace STS.Core.Combat
 
         private void FinishCardPlay()
         {
+            FlushDeferredBlocks();   // 整張牌打完才結清捲曲之類的延後格擋
             var card = _pendingPlayedCard;
             var def = _pendingPlayedDef;
             _pendingPlayedCard = null;
@@ -507,10 +526,12 @@ namespace STS.Core.Combat
                 amount: final, amount2: result.BlockConsumed, hpLost: result.HpLost,
                 remainingBlock: result.RemainingBlock, remainingHp: result.RemainingHp));
 
-            AfterHpLoss(targetIndex, result.HpLost);
-            // 攻擊 hook(捲曲/青銅鱗片);非攻擊傷害(反傷)不觸發,否則反傷互咬無限循環
+            // 攻擊 hook(捲曲/尖刺皮/青銅鱗片);非攻擊傷害(反傷)不觸發,否則反傷互咬無限循環。
+            // 順序要點:hook 先跑、AfterHpLoss(死亡判定與守護者換模式)後跑——
+            // 否則「這一刀打出來的尖刺皮」會回頭反彈這一刀自己。
             FireHook(new HookContext(HookPoint.AttackDealt, sourceIndex: sourceIndex, targetIndex: targetIndex, amount: result.HpLost));
             FireHook(new HookContext(HookPoint.AttackReceived, sourceIndex: sourceIndex, targetIndex: targetIndex, amount: result.HpLost));
+            AfterHpLoss(targetIndex, result.HpLost);
         }
 
         /// <summary>非攻擊傷害(反傷/尖刺皮):吃格擋,但不吃力量/虛弱/易傷修正,不觸發攻擊 hook。</summary>
@@ -576,6 +597,31 @@ namespace STS.Core.Combat
                 combatant.GetStatus(StatusId.Frail) > 0);
             combatant.Block += gain;
             Emit(new CombatEvent(EventKind.BlockGained, sourceIndex: index, amount: gain, remainingBlock: combatant.Block));
+        }
+
+        /// <summary>
+        /// 登記一筆延後格擋:等當前這張牌/藥水/敵招整個結算完才實際獲得。
+        /// 用意是讓多段攻擊的每一段都打在同樣的防禦狀態上,不會被自己觸發的盾吃掉後段傷害。
+        /// </summary>
+        internal void DeferBlock(int index, int amount)
+        {
+            if (amount <= 0) return;
+            _deferredBlocks.Add(new DeferredBlock(index, amount));
+        }
+
+        /// <summary>結清延後格擋;期間死掉的單位不再上盾。</summary>
+        private void FlushDeferredBlocks()
+        {
+            if (_deferredBlocks.Count == 0) return;
+            var pending = new List<DeferredBlock>(_deferredBlocks);
+            _deferredBlocks.Clear();
+            foreach (var entry in pending)
+            {
+                if (GetCombatant(entry.Index).IsAlive)
+                {
+                    GainBlock(entry.Index, entry.Amount);
+                }
+            }
         }
 
         /// <summary>不吃敏捷/脆弱的原始格擋(藥水用)。</summary>

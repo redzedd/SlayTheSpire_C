@@ -185,7 +185,7 @@ namespace STS.Core.Tests
             Assert.AreEqual(3, engine.State.Enemies[0].GetStatus(StatusId.SharpHide));
             Assert.AreEqual("滾壓", engine.GetIntentPreview(0).MoveName);
 
-            // 第二刀:先吃尖刺皮 3 反傷,再命中
+            // 第二刀:命中後被尖刺皮反彈 3(觸發模式切換的第一刀不會被自己長出來的刺反彈)
             engine.PlayCard(0, 0);
             Assert.AreEqual(265, engine.State.Player.Hp);
             engine.EndPlayerTurn();   // 滾壓 9

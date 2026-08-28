@@ -71,25 +71,26 @@ namespace STS.Core.Combat.Statuses
                     break;
 
                 case StatusId.SharpHide:
-                    // 尖刺皮:玩家每打出一張攻擊牌,對玩家造成等同層數的非攻擊傷害
-                    if (ctx.Point == HookPoint.CardPlayed
+                    // 尖刺皮:每被攻擊命中一次就反彈一次(多段攻擊打幾下就反彈幾下)
+                    if (ctx.Point == HookPoint.AttackDealt
                         && ctx.SourceIndex == CombatEngine.PlayerIndex
-                        && ctx.CardType == Cards.CardType.Attack
-                        && ownerIndex != CombatEngine.PlayerIndex)
+                        && ctx.TargetIndex == ownerIndex)
                     {
                         engine.DealNonAttackDamage(ownerIndex, CombatEngine.PlayerIndex, status.Stacks);
                     }
                     break;
 
                 case StatusId.Curl:
-                    // 捲曲:首次受到攻擊掉血時獲得等同層數的格擋,之後移除([近似] 蝨子行為,測試鎖定)
+                    // 捲曲:首次受到攻擊掉血時觸發,但格擋要等整張牌(或藥水)打完才上——
+                    // 立刻上盾會讓同一張多段攻擊的後續段被自己觸發的盾擋掉,傷害就算錯了。
+                    // 狀態當場移除,避免同一張牌的後續段重複觸發。
                     if (ctx.Point == HookPoint.AttackReceived
                         && ctx.TargetIndex == ownerIndex
                         && ctx.Amount > 0)
                     {
                         int stacks = status.Stacks;
-                        engine.GainBlock(ownerIndex, stacks);
                         engine.ApplyStatusTo(ownerIndex, StatusId.Curl, -stacks);
+                        engine.DeferBlock(ownerIndex, stacks);
                     }
                     break;
 

@@ -285,12 +285,14 @@ namespace STS.Game
         {
             DeckViewOverlay.Open(_overlayLayer, "選擇要升級的卡", Run.State.Deck,
                 card => Db.GetCard(card.ResolvedCardId),
-                card => !card.Upgraded,
+                // 已升級、或本來就沒有升級版的卡(狀態卡)不可選
+                card => !card.Upgraded && Db.AllCards.ContainsKey(card.CardId + "+"),
                 deckIndex =>
                 {
                     Run.RestUpgrade(deckIndex);
                     ShowMap("鍛造完成,卡牌升級!");
-                });
+                },
+                upgradedLookup: card => Db.GetCard(card.CardId + "+"));
         }
 
         // ---- 整輪煙霧(verify 管道 3):走與 UI 按鈕相同的動作方法 ----
