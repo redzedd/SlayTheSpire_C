@@ -171,8 +171,6 @@ namespace STS.Core.Combat
             Emit(new CombatEvent(EventKind.CardPlayed, sourceIndex: PlayerIndex, targetIndex: targetEnemyIndex,
                 cardId: card.CardId, cardInstanceId: card.InstanceId));
 
-            if (def.Type == CardType.Attack) State.AttacksPlayedThisTurn++;
-
             // 出牌 hook(激怒/尖刺皮/雙節棍)在效果結算前觸發([近似] StS 時序,測試鎖定)
             FireHook(new HookContext(HookPoint.CardPlayed, sourceIndex: PlayerIndex, cardType: def.Type));
             if (!State.Player.IsAlive)
@@ -474,6 +472,10 @@ namespace STS.Core.Combat
             _pendingPlayedDef = null;
             if (card == null) return;
 
+            // 攻擊牌計數在「這張打完之後」才加:計數的語意固定是「本回合已打完的其他攻擊牌」,
+            // 結算時與卡面預覽時看到的數字才會是同一個(焚燒型成長卡靠這個對齊)
+            if (def.Type == CardType.Attack) State.AttacksPlayedThisTurn++;
+
             if (def.Type == CardType.Power)
             {
                 State.PowersPlayed.Add(card);   // 能力卡不進任何牌堆
@@ -641,6 +643,37 @@ namespace STS.Core.Combat
                 if (def.Name != null && def.Name.Contains(fragment)) count++;
             }
             return count;
+        }
+
+        /// <summary>
+        /// 成長型數值的「數量」來源。結算與卡面預覽都走這裡——分兩份實作,兩邊就會漂掉
+        /// (卡面說 6 點、實際打 12 點這種 bug 已經付過一次代價)。
+        /// targetVulnerable:目標身上的易傷層數,沒有目標時傳 0。
+        /// </summary>
+        internal int ScalingCount(AmountKind kind, int targetVulnerable)
+        {
+            switch (kind)
+            {
+                case AmountKind.PerExhaustedCard:
+                    return State.ExhaustPile.Count;
+                case AmountKind.PerTargetVulnerable:
+                    return targetVulnerable;
+                case AmountKind.PerAttackPlayedThisTurn:
+                    return State.AttacksPlayedThisTurn;
+                case AmountKind.PerStrikeCard:
+                    return CountCardsNamedContaining("打擊");
+                default:
+                    return 0;
+            }
+        }
+
+        /// <summary>該 AmountKind 是不是 Amount + Secondary × 數量 的成長型。</summary>
+        internal static bool IsScalingKind(AmountKind kind)
+        {
+            return kind == AmountKind.PerExhaustedCard
+                || kind == AmountKind.PerTargetVulnerable
+                || kind == AmountKind.PerAttackPlayedThisTurn
+                || kind == AmountKind.PerStrikeCard;
         }
 
         /// <summary>隨機挑一個活著的敵人;全滅回 -1。</summary>

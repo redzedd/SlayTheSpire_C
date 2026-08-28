@@ -51,6 +51,28 @@ namespace STS.Core.Tests
             return index;
         }
 
+        /// <summary>卡面上「現在」會顯示的傷害數字:描述模板換成純 {dmg},格式化結果就是那個數。</summary>
+        private static int 卡面傷害(CombatEngine engine, CardDef def, CombatantState target)
+        {
+            var probe = new CardDef
+            {
+                Id = def.Id, Name = def.Name, Type = def.Type, Rarity = def.Rarity, Cost = def.Cost,
+                DescriptionTemplate = "{dmg}", Steps = def.Steps
+            };
+            return int.Parse(CardTextFormatter.FormatDescription(probe, engine.State.Player, target, engine));
+        }
+
+        /// <summary>出牌前先讀卡面數字,出牌後比對敵人實際掉的血——兩者必須一致。</summary>
+        private static void 卡面與實際一致(CombatEngine engine, CardDef def, bool 帶目標 = true)
+        {
+            var enemy = engine.State.Enemies[0];
+            int shown = 卡面傷害(engine, def, 帶目標 ? enemy : null);
+            int hpBefore = enemy.Hp;
+            出牌(engine, def.Id);
+            Assert.AreEqual(shown, hpBefore - enemy.Hp,
+                $"{def.Name}:卡面顯示 {shown},實際打了 {hpBefore - enemy.Hp}");
+        }
+
         [Test]
         public void 無懼疼痛_每消耗一張牌就補盾()
         {
@@ -153,8 +175,9 @@ namespace STS.Core.Tests
             出牌(engine, "selfexhaust");
             出牌(engine, "selfexhaust");
             Assert.AreEqual(2, engine.State.ExhaustPile.Count);
-            出牌(engine, "ashen");
-            // 6 + 3×2 = 12
+            // 6 + 3×2 = 12,而且卡面在打之前就要顯示 12
+            Assert.AreEqual(12, 卡面傷害(engine, 灰燼, engine.State.Enemies[0]));
+            卡面與實際一致(engine, 灰燼);
             Assert.AreEqual(38, engine.State.Enemies[0].Hp);
         }
 
@@ -179,7 +202,9 @@ namespace STS.Core.Tests
             Assert.AreEqual(42, engine.State.Enemies[0].Hp);
             Assert.AreEqual(2, engine.State.Enemies[0].GetStatus(StatusId.Vulnerable));
 
-            出牌(engine, "bully");  // 基礎 4 + 2×2 = 8,再吃易傷 ×1.5 = 12
+            // 基礎 4 + 2×2 = 8,再吃易傷 ×1.5 = 12;卡面要在打之前就顯示 12
+            Assert.AreEqual(12, 卡面傷害(engine, 欺凌, engine.State.Enemies[0]));
+            卡面與實際一致(engine, 欺凌);
             Assert.AreEqual(30, engine.State.Enemies[0].Hp);
         }
 
@@ -202,7 +227,9 @@ namespace STS.Core.Tests
 
             出牌(engine, "strike");   // 60 → 54
             出牌(engine, "strike");   // 54 → 48
-            出牌(engine, "conf");     // 已打出 2 張其他攻擊 → 8 + 2×2 = 12
+            // 已打出 2 張其他攻擊 → 8 + 2×2 = 12,卡面在打之前就要是 12
+            Assert.AreEqual(12, 卡面傷害(engine, 焚燒, engine.State.Enemies[0]));
+            卡面與實際一致(engine, 焚燒);
             Assert.AreEqual(36, engine.State.Enemies[0].Hp);
         }
 
@@ -224,8 +251,43 @@ namespace STS.Core.Tests
             engine.StartCombat();
 
             // 名字含「打擊」:打擊×2 + 完美打擊×1 = 3 張 → 6 + 2×3 = 12
-            出牌(engine, "perfect");
+            // 沒指到敵人也要顯示 12:成長來自牌堆,跟目標無關(使用者實測回報的問題)
+            Assert.AreEqual(12, 卡面傷害(engine, 完美, null), "沒指目標時卡面就該顯示成長後的數字");
+            卡面與實際一致(engine, 完美, 帶目標: false);
             Assert.AreEqual(38, engine.State.Enemies[0].Hp);
+        }
+
+        [Test]
+        public void 完美打擊_數的是整個牌堆不是只有手牌()
+        {
+            var 完美 = new CardDef
+            {
+                Id = "perfect", Name = "完美打擊", Type = CardType.Attack, Rarity = CardRarity.Common, Cost = 0,
+                DescriptionTemplate = "造成 {dmg} 點傷害。",
+                Steps = new[]
+                {
+                    new EffectStep(EffectOp.Damage, EffectTarget.TargetEnemy, 6,
+                        AmountKind.PerStrikeCard, secondaryAmount: 2)
+                }
+            };
+            // 8 張牌開場只抽 5 → 一定有「打擊」留在抽牌堆;若只數手牌,數字會少
+            var deck = new[] { "perfect", "strike", "strike", "strike", "strike", "strike", "strike", "defend" };
+            var engine = 標準引擎(deck, enemyHp: 200, extraDefs: new[] { 完美 });
+            engine.StartCombat();
+
+            int perfectIndex = 手牌位置(engine, "perfect");
+            if (perfectIndex < 0) Assert.Ignore("這個種子沒把完美打擊抽進手裡");
+
+            int 手牌中的打擊 = 0;
+            for (int i = 0; i < engine.State.Hand.Count; i++)
+            {
+                if (engine.GetCardDef(engine.State.Hand[i]).Name.Contains("打擊")) 手牌中的打擊++;
+            }
+            // 全牌堆:完美打擊 1 + 打擊 6 = 7 張 → 6 + 2×7 = 20
+            Assert.Less(手牌中的打擊, 7, "測試前提:手牌不可能裝下全部 7 張含「打擊」的牌");
+            Assert.AreEqual(20, 卡面傷害(engine, 完美, engine.State.Enemies[0]),
+                "要數抽牌堆/棄牌堆/消耗堆裡的牌,不能只數手牌");
+            卡面與實際一致(engine, 完美);
         }
 
         [Test]

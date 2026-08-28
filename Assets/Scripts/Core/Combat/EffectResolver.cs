@@ -187,30 +187,17 @@ namespace STS.Core.Combat
                 case AmountKind.PerTargetVulnerable:
                 case AmountKind.PerAttackPlayedThisTurn:
                 case AmountKind.PerStrikeCard:
-                    return step.Amount + step.SecondaryAmount * ScalingCount(engine, step.AmountKind, targetIndex);
+                    return step.Amount + step.SecondaryAmount
+                        * engine.ScalingCount(step.AmountKind, TargetVulnerable(engine, targetIndex));
                 default:
                     throw new NotSupportedException($"AmountKind {step.AmountKind} 不適用於 {step.Op}");
             }
         }
 
-        /// <summary>成長型數值的「數量」來源。四種共用 Amount + Secondary × count 的公式。</summary>
-        private static int ScalingCount(CombatEngine engine, AmountKind kind, int targetIndex)
+        private static int TargetVulnerable(CombatEngine engine, int targetIndex)
         {
-            switch (kind)
-            {
-                case AmountKind.PerExhaustedCard:
-                    return engine.State.ExhaustPile.Count;
-                case AmountKind.PerTargetVulnerable:
-                    if (targetIndex < 0 || targetIndex >= engine.State.Enemies.Count) return 0;
-                    return engine.GetCombatant(targetIndex).GetStatus(Statuses.StatusId.Vulnerable);
-                case AmountKind.PerAttackPlayedThisTurn:
-                    // 「其他」攻擊牌:這張自己在出牌時已經計進去,扣回來
-                    return engine.State.AttacksPlayedThisTurn > 0 ? engine.State.AttacksPlayedThisTurn - 1 : 0;
-                case AmountKind.PerStrikeCard:
-                    return engine.CountCardsNamedContaining("打擊");
-                default:
-                    return 0;
-            }
+            if (targetIndex < 0 || targetIndex >= engine.State.Enemies.Count) return 0;
+            return engine.GetCombatant(targetIndex).GetStatus(Statuses.StatusId.Vulnerable);
         }
 
         /// <summary>
@@ -231,7 +218,8 @@ namespace STS.Core.Combat
                 case AmountKind.PerTargetVulnerable:
                 case AmountKind.PerAttackPlayedThisTurn:
                 case AmountKind.PerStrikeCard:
-                    return step.Amount + step.SecondaryAmount * ScalingCount(engine, step.AmountKind, targetIndex);
+                    return step.Amount + step.SecondaryAmount
+                        * engine.ScalingCount(step.AmountKind, TargetVulnerable(engine, targetIndex));
                 case AmountKind.StrengthTimes:
                 {
                     int multiplier = step.SecondaryAmount <= 1 ? 1 : step.SecondaryAmount;

@@ -159,7 +159,7 @@ namespace STS.Game.UI
             var target = enemyIndex >= 0
                 ? _engine.State.Enemies[enemyIndex]
                 : HandView.DefaultPreviewTarget(_engine);
-            _draggingCard.RefreshDescription(_engine.State.Player, target);
+            _draggingCard.RefreshDescription(_engine.State.Player, target, _engine);
         }
 
         public void EndTargeting()
@@ -168,7 +168,7 @@ namespace STS.Game.UI
             if (_draggingCard != null)
             {
                 // 出牌失敗/取消時卡會留在手上,描述要回到預設目標的值
-                _draggingCard.RefreshDescription(_engine.State.Player, HandView.DefaultPreviewTarget(_engine));
+                _draggingCard.RefreshDescription(_engine.State.Player, HandView.DefaultPreviewTarget(_engine), _engine);
                 _draggingCard = null;
             }
             _lastPreviewEnemyIndex = NoPreviewIndex;

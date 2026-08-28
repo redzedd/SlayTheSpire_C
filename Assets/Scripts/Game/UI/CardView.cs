@@ -92,9 +92,9 @@ namespace STS.Game.UI
         }
 
         /// <summary>依指定目標重算描述數值(拖曳指向敵人時即時更新)。</summary>
-        public void RefreshDescription(CombatantState player, CombatantState target)
+        public void RefreshDescription(CombatantState player, CombatantState target, CombatEngine engine)
         {
-            _descText.text = CardTextFormatter.FormatDescription(Def, player, target);
+            _descText.text = CardTextFormatter.FormatDescription(Def, player, target, engine);
         }
 
         /// <summary>剛抽到:縮小半透明地從抽牌堆方向飛入。</summary>
