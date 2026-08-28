@@ -155,6 +155,7 @@ namespace STS.Game.Editor
             asset.exhausts = dto.exhausts;
             asset.ethereal = dto.ethereal;
             asset.colorless = dto.colorless;
+            asset.costScaling = ParseEnum<Core.Cards.CostScaling>(dto.costScaling);
             asset.baseName = dto.@base.name;
             asset.baseCost = dto.@base.cost;
             asset.baseDescription = dto.@base.description;

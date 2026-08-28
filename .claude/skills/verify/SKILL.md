@@ -41,7 +41,8 @@ internal class CommandScript : IRunCommand
 }
 ```
 
-3. `Unity_ReadConsole`(Types=["Error"])→ 必須零筆。isCompiling=True 就等一輪再查,不要在編譯中下結論。
+3. `Unity_GetConsoleLogs`(LogTypes=["Error","Exception"])→ **必須零筆,這步不可省**。isCompiling=True 就等一輪再查,不要在編譯中下結論。
+   **`File.Exists("Library/ScriptAssemblies/*.dll")` 不是編譯成功的證據(2026-08-29 付過代價)**——編譯失敗時舊的 DLL 還留在磁碟上,檔案照樣存在,檢查會一路綠燈放行,直到匯入器噴「找不到欄位」才發現根本沒編過。判斷編譯成功只認 console 零 Error。
 
 ## 管道 2:EditMode 測試(邏輯變更後必跑;改到 STS.Core 一律跑)
 
@@ -87,7 +88,7 @@ internal class CommandScript : IRunCommand
 }
 ```
 
-回收結果:輪詢 `Temp/STS_TestResult.txt`(bash,約 2 秒間隔,30 秒上限),必須看到 `Passed | pass=N fail=0`;失敗時讀 `Temp/STS_TestFails.txt` 或 console 掃 `STS_TEST_FAIL`。基線:2026-08-29 為 141 tests(引擎/地圖/新機制 110 + 內容/Run 31)/約 1.3s。七份 JSON(含 statuses.json)。改到 STS.Core 或 STS.Data 或 `Assets/Data/Source/*.json` 都必跑;改了 JSON 記得先跑匯入器選單 `STS/重新匯入資料(JSON→SO)`。三個已付代價的陷阱:(a) 編輯器重啟會丟掉進行中的測試回呼;(b) **同一個 RunCommand 裡 Refresh+啟動測試,domain reload 會把回呼吃掉**——正確做法:先 Refresh 等編譯完,再用「另一個」RunCommand 單獨啟動測試;(c) **在 play mode 中 EditMode 測試根本跑不起來**(console 噴 `This cannot be used during play mode`,結果檔永遠不出現)——**啟動測試前先斷言 `EditorApplication.isPlaying == false`**,腳本裡就擋掉,別靠記得手動退出。結果檔 30 秒不出現先查這三項,不要盲目重試。
+回收結果:輪詢 `Temp/STS_TestResult.txt`(bash,約 2 秒間隔,30 秒上限),必須看到 `Passed | pass=N fail=0`;失敗時讀 `Temp/STS_TestFails.txt` 或 console 掃 `STS_TEST_FAIL`。基線:2026-08-29 為 145 tests(引擎/地圖/新機制 114 + 內容/Run 31)/約 1.2s。七份 JSON(含 statuses.json)。改到 STS.Core 或 STS.Data 或 `Assets/Data/Source/*.json` 都必跑;改了 JSON 記得先跑匯入器選單 `STS/重新匯入資料(JSON→SO)`。三個已付代價的陷阱:(a) 編輯器重啟會丟掉進行中的測試回呼;(b) **同一個 RunCommand 裡 Refresh+啟動測試,domain reload 會把回呼吃掉**——正確做法:先 Refresh 等編譯完,再用「另一個」RunCommand 單獨啟動測試;(c) **在 play mode 中 EditMode 測試根本跑不起來**(console 噴 `This cannot be used during play mode`,結果檔永遠不出現)——**啟動測試前先斷言 `EditorApplication.isPlaying == false`**,腳本裡就擋掉,別靠記得手動退出。結果檔 30 秒不出現先查這三項,不要盲目重試。
 
 ## 管道 3:play 煙霧(行為/場景變更後跑;M4 起有具體流程)
 
@@ -100,6 +101,8 @@ internal class CommandScript : IRunCommand
 
 M6 起的整輪煙霧(Run 層變更後跑,取代單場出牌):Play → RunCommand 呼叫 `game.煙霧_啟動自動一輪()` → 輪詢 `Temp/STS_RunSmoke.txt`(整輪要 1-3 分鐘,先清舊檔;可用 RunCommand 讀 `game.煙霧狀態` 查進度)→ 見 `STS_RUN_SMOKE: GameOver|RunClear` 即通過(無腦自動打敗北是正常結局,驗的是「不噴例外走到終局」)→ console 掃 Error → Stop。
 **失焦停幀陷阱(2026-08-28 付過代價):編輯器失焦時 play mode 停幀,協程/tween 全部假死——煙霧「啟動了但狀態永遠不前進、零例外」就是這個,不是程式壞掉。** GameController.Awake 已常駐 `Application.runInBackground = true`;若煙霧卡住先確認這行還在。
+
+**選卡模式卡死(2026-08-29 付過代價):** 觸發 `ChooseExhaustFromHand` 的牌(燃燒契約/堅毅+/烙印)會讓播放停在選卡等玩家點牌,`InputEnabled` 永遠不會變 true。煙霧的等待條件與分支都已納入 `Combat.IsChoiceMode`(自動選滿走 `煙霧_選滿要消耗的牌()`)。**診斷法:煙霧狀態連續兩次探針完全不變 = 真的卡住(單純變慢的話動作數會前進);接著查 `game.Combat.IsChoiceMode`。** 注意主執行緒沒死——RunCommand 探針還能回應,所以不是引擎無窮迴圈。
 
 ## 管道 4:效能哨兵(基準已於 2026-08-28 M7 建立)
 

@@ -90,7 +90,8 @@ namespace STS.Game.UI
                     _cards[instance.InstanceId] = view;
                 }
                 view.Bind(i, instance.InstanceId, def,
-                    CardTextFormatter.FormatDescription(def, engine.State.Player, previewTarget, engine));
+                    CardTextFormatter.FormatDescription(def, engine.State.Player, previewTarget, engine),
+                    engine.GetCardCost(def));
                 _ordered.Add(view);
             }
             Relayout();

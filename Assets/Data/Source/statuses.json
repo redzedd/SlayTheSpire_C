@@ -47,6 +47,12 @@
     { "id": "DrumOfBattle", "name": "戰鼓",
       "description": "回合開始時消耗抽牌堆頂部 {n} 張牌。" },
     { "id": "HowlFromBeyond", "name": "彼岸咆哮",
-      "description": "回合開始時對所有敵人造成 {n} 點傷害。" }
+      "description": "回合開始時對所有敵人造成 {n} 點傷害。" },
+    { "id": "NextAttackFree", "name": "蓄勢",
+      "description": "接下來 {n} 張攻擊牌的費用為 0。" },
+    { "id": "Corruption", "name": "腐化",
+      "description": "技能牌費用為 0,但打出後一律消耗。" },
+    { "id": "NextAttackDoubled", "name": "連環",
+      "description": "接下來 {n} 張攻擊牌會額外生效一次。" }
   ]
 }

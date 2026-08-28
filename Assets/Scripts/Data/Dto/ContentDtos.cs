@@ -39,6 +39,7 @@ namespace STS.Data.Dto
         public bool exhausts;
         public bool ethereal;
         public bool colorless;
+        public string costScaling = "None";
         public CardVariantDto @base;
         /// <summary>null = 此卡無升級版(狀態卡)。</summary>
         public CardVariantDto upgrade;

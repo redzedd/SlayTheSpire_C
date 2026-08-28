@@ -116,6 +116,26 @@ namespace STS.Core.Combat
             BeginPlayerTurn(true);
         }
 
+        /// <summary>
+        /// 這張牌「現在」要花多少能量。所有讀費用的地方(能否出牌、實際扣款、卡面顯示)都走這裡——
+        /// 分頭各算一次,卡面顯示 3 費、實際扣 1 費這種 bug 就是這樣長出來的。
+        /// X 費卡不適用(它吃光能量,由呼叫端另外處理)。
+        /// </summary>
+        public int GetCardCost(CardDef def)
+        {
+            if (def.CostIsX) return 0;
+            var player = State.Player;
+            if (def.Type == CardType.Attack && player.GetStatus(StatusId.NextAttackFree) > 0) return 0;
+            if (def.Type == CardType.Skill && player.GetStatus(StatusId.Corruption) > 0) return 0;
+
+            int cost = def.Cost;
+            if (def.CostScaling == CostScaling.MinusPerAttackPlayedThisTurn)
+            {
+                cost -= State.AttacksPlayedThisTurn;
+            }
+            return cost < 0 ? 0 : cost;
+        }
+
         public bool CanPlayCard(int handIndex, int targetEnemyIndex, out string reason)
         {
             if (State.Phase != CombatPhase.PlayerTurn)
@@ -134,7 +154,7 @@ namespace STS.Core.Combat
                 reason = "此卡不可打出";
                 return false;
             }
-            if (!def.CostIsX && State.Energy < def.Cost)
+            if (!def.CostIsX && State.Energy < GetCardCost(def))
             {
                 reason = "能量不足";
                 return false;
@@ -165,9 +185,14 @@ namespace STS.Core.Combat
             var card = State.Hand[handIndex];
             var def = _db.GetCard(card.ResolvedCardId);
 
-            int cost = def.CostIsX ? State.Energy : def.Cost;
+            int cost = def.CostIsX ? State.Energy : GetCardCost(def);
             _xEnergySpent = def.CostIsX ? State.Energy : 0;
             State.Energy -= cost;
+            // 無情猛攻的「下一張攻擊 0 費」在打出攻擊牌時就用掉,不管實際有沒有省到能量
+            if (def.Type == CardType.Attack && State.Player.GetStatus(StatusId.NextAttackFree) > 0)
+            {
+                ApplyStatusTo(PlayerIndex, StatusId.NextAttackFree, -1);
+            }
             Emit(new CombatEvent(EventKind.EnergyChanged, amount: State.Energy, amount2: State.MaxEnergy));
 
             State.Hand.RemoveAt(handIndex);
@@ -184,6 +209,7 @@ namespace STS.Core.Combat
 
             _pendingPlayedCard = card;
             _pendingPlayedDef = def;
+            _pendingTargetIndex = targetEnemyIndex;
             EffectResolver.Resolve(this, def.Steps, PlayerIndex, targetEnemyIndex);
             if (State.Phase == CombatPhase.AwaitingChoice) return;   // 等 ResolveChoice 收尾
 
@@ -471,19 +497,37 @@ namespace STS.Core.Combat
             FlushDeferredBlocks();   // 整張牌打完才結清捲曲之類的延後格擋
             var card = _pendingPlayedCard;
             var def = _pendingPlayedDef;
+            int targetIndex = _pendingTargetIndex;
             _pendingPlayedCard = null;
             _pendingPlayedDef = null;
+            _pendingTargetIndex = -1;
             if (card == null) return;
+
+            // 連環拳:再結算一次同樣的步驟。走 autoPlay,因為這一次沒有玩家可以再做選擇,
+            // 停在 AwaitingChoice 會讓這張牌永遠收不了尾。
+            if (def.Type == CardType.Attack && State.Player.GetStatus(StatusId.NextAttackDoubled) > 0)
+            {
+                ApplyStatusTo(PlayerIndex, StatusId.NextAttackDoubled, -1);
+                if (State.Player.IsAlive)
+                {
+                    EffectResolver.Resolve(this, def.Steps, PlayerIndex, targetIndex, autoPlay: true);
+                    FlushDeferredBlocks();
+                }
+            }
 
             // 攻擊牌計數在「這張打完之後」才加:計數的語意固定是「本回合已打完的其他攻擊牌」,
             // 結算時與卡面預覽時看到的數字才會是同一個(焚燒型成長卡靠這個對齊)
             if (def.Type == CardType.Attack) State.AttacksPlayedThisTurn++;
 
+            // 腐化:技能牌打完一律消耗(不是「本來就消耗」的那種,是狀態強加的)
+            bool corruptionExhaust = def.Type == CardType.Skill
+                && State.Player.GetStatus(StatusId.Corruption) > 0;
+
             if (def.Type == CardType.Power)
             {
                 State.PowersPlayed.Add(card);   // 能力卡不進任何牌堆
             }
-            else if (def.Exhausts)
+            else if (def.Exhausts || corruptionExhaust)
             {
                 ExhaustCard(card);
             }

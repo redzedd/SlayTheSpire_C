@@ -40,6 +40,12 @@ namespace STS.Core.Combat.Statuses
         /// <summary>戰鼓:回合開始時消耗抽牌堆頂部等同層數的牌。</summary>
         DrumOfBattle,
         /// <summary>彼岸咆哮:回合開始時對所有敵人造成等同層數的攻擊傷害(等同於從消耗堆再打一次)。</summary>
-        HowlFromBeyond
+        HowlFromBeyond,
+        /// <summary>無情猛攻:接下來等同層數的攻擊牌費用為 0,每打出一張消耗一層。</summary>
+        NextAttackFree,
+        /// <summary>腐化:技能牌費用為 0,但打出後一律消耗。</summary>
+        Corruption,
+        /// <summary>連環拳:接下來等同層數的攻擊牌會額外生效一次,每打出一張消耗一層。</summary>
+        NextAttackDoubled
     }
 }

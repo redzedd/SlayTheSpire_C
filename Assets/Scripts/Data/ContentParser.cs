@@ -297,6 +297,7 @@ namespace STS.Data
                 Exhausts = dto.exhausts,
                 Ethereal = dto.ethereal,
                 Colorless = dto.colorless,
+                CostScaling = ParseEnum<CostScaling>(dto.costScaling, $"cards.json:{dto.id}.costScaling"),
                 Steps = BuildSteps(variant.steps, $"cards.json:{defId}"),
                 TurnEndInHandSteps = BuildSteps(variant.turnEndInHandSteps, $"cards.json:{defId}(turnEnd)")
             };

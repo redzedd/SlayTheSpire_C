@@ -456,6 +456,38 @@
     },
 
     {
+      "id": "unrelenting", "type": "Attack", "rarity": "Uncommon",
+      "base": { "name": "無情猛攻", "cost": 2, "description": "造成 {dmg} 點傷害。你打出的下一張攻擊牌費用變為 0。",
+        "steps": [
+          { "op": "Damage", "target": "TargetEnemy", "amount": 12 },
+          { "op": "ApplyStatus", "target": "Self", "amount": 1, "status": "NextAttackFree" } ] },
+      "upgrade": { "name": "無情猛攻+", "cost": 2, "description": "造成 {dmg} 點傷害。你打出的下一張攻擊牌費用變為 0。",
+        "steps": [
+          { "op": "Damage", "target": "TargetEnemy", "amount": 18 },
+          { "op": "ApplyStatus", "target": "Self", "amount": 1, "status": "NextAttackFree" } ] }
+    },
+    {
+      "id": "stomp", "type": "Attack", "rarity": "Uncommon", "costScaling": "MinusPerAttackPlayedThisTurn",
+      "base": { "name": "踩踏", "cost": 3, "description": "對所有敵人造成 {dmg} 點傷害。本回合每打出過一張攻擊牌就少 1 費。",
+        "steps": [ { "op": "Damage", "target": "AllEnemies", "amount": 12 } ] },
+      "upgrade": { "name": "踩踏+", "cost": 3, "description": "對所有敵人造成 {dmg} 點傷害。本回合每打出過一張攻擊牌就少 1 費。",
+        "steps": [ { "op": "Damage", "target": "AllEnemies", "amount": 15 } ] }
+    },
+    {
+      "id": "one_two_punch", "type": "Skill", "rarity": "Rare",
+      "base": { "name": "連環拳", "cost": 1, "description": "本回合你打出的下一張攻擊牌會額外生效一次。",
+        "steps": [ { "op": "ApplyStatus", "target": "Self", "amount": 1, "status": "NextAttackDoubled" } ] },
+      "upgrade": { "name": "連環拳+", "cost": 1, "description": "本回合你打出的下 2 張攻擊牌會額外生效一次。",
+        "steps": [ { "op": "ApplyStatus", "target": "Self", "amount": 2, "status": "NextAttackDoubled" } ] }
+    },
+    {
+      "id": "corruption", "type": "Power", "rarity": "Rare",
+      "base": { "name": "腐化", "cost": 3, "description": "技能牌費用變為 0,但打出後一律消耗。",
+        "steps": [ { "op": "ApplyStatus", "target": "Self", "amount": 1, "status": "Corruption" } ] },
+      "upgrade": { "name": "腐化+", "cost": 2, "description": "技能牌費用變為 0,但打出後一律消耗。",
+        "steps": [ { "op": "ApplyStatus", "target": "Self", "amount": 1, "status": "Corruption" } ] }
+    },
+    {
       "id": "havoc", "type": "Skill", "rarity": "Common",
       "base": { "name": "破滅", "cost": 1, "description": "打出抽牌堆頂部的牌,然後消耗它。",
         "steps": [ { "op": "PlayTopOfDraw", "target": "Self", "amount": 1, "pile": "Exhaust" } ] },

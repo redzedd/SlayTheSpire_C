@@ -1,0 +1,56 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 864927395ecc3534e9fd9f61f33a2072, type: 3}
+  m_Name: one_two_punch
+  m_EditorClassIdentifier: STS.Game::STS.Game.DataAssets.CardDataAsset
+  id: one_two_punch
+  type: 1
+  rarity: 3
+  costIsX: 0
+  unplayable: 0
+  exhausts: 0
+  ethereal: 0
+  colorless: 0
+  costScaling: 0
+  baseName: "\u9023\u74B0\u62F3"
+  baseCost: 1
+  baseDescription: "\u672C\u56DE\u5408\u4F60\u6253\u51FA\u7684\u4E0B\u4E00\u5F35\u653B\u64CA\u724C\u6703\u984D\u5916\u751F\u6548\u4E00\u6B21\u3002"
+  baseSteps:
+  - op: 2
+    target: 0
+    amount: 1
+    amountKind: 0
+    secondaryAmount: 0
+    repeat: 0
+    repeatIsX: 0
+    status: 27
+    cardId: 
+    pile: 2
+    customId: 
+  baseTurnEndSteps: []
+  hasUpgrade: 1
+  upgradeName: "\u9023\u74B0\u62F3+"
+  upgradeCost: 1
+  upgradeDescription: "\u672C\u56DE\u5408\u4F60\u6253\u51FA\u7684\u4E0B 2 \u5F35\u653B\u64CA\u724C\u6703\u984D\u5916\u751F\u6548\u4E00\u6B21\u3002"
+  upgradeSteps:
+  - op: 2
+    target: 0
+    amount: 2
+    amountKind: 0
+    secondaryAmount: 0
+    repeat: 0
+    repeatIsX: 0
+    status: 27
+    cardId: 
+    pile: 2
+    customId: 
+  upgradeTurnEndSteps: []

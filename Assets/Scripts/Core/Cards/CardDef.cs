@@ -17,6 +17,14 @@ namespace STS.Core.Cards
         Rare
     }
 
+    /// <summary>卡牌自身的費用縮放規則(全域性的折扣走狀態,這裡只放「這張卡自己的算法」)。</summary>
+    public enum CostScaling
+    {
+        None,
+        /// <summary>本回合每打出過一張攻擊牌就少 1 費(踩踏)。</summary>
+        MinusPerAttackPlayedThisTurn
+    }
+
     /// <summary>
     /// 卡牌定義。升級版是另一個獨立實體(id 慣例:「strike」/「strike+」),不做欄位差分——最笨最穩。
     /// </summary>
@@ -30,6 +38,7 @@ namespace STS.Core.Cards
         public CardRarity Rarity;
         public int Cost;
         public bool CostIsX;
+        public CostScaling CostScaling;
         public bool Unplayable;
         public bool Exhausts;
         public bool Ethereal;

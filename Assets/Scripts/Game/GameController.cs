@@ -387,10 +387,18 @@ namespace STS.Game
                     }
                     case RunPhase.InCombat:
                     {
-                        // 等播放結束才下指令;打得動就出牌,否則結束回合
+                        // 等播放結束才下指令;打得動就出牌,否則結束回合。
+                        // 選卡模式也要算「可以下指令」——播放會停在那裡等玩家點牌,
+                        // 不把它列進等待條件,任何觸發選卡的牌都會讓整輪煙霧永遠卡死。
                         yield return new WaitUntil(() => Combat == null || Combat.InputEnabled
-                            || Run.State.Phase != RunPhase.InCombat);
+                            || Combat.IsChoiceMode || Run.State.Phase != RunPhase.InCombat);
                         if (Run.State.Phase != RunPhase.InCombat || Combat == null) break;
+                        if (Combat.IsChoiceMode)
+                        {
+                            Combat.煙霧_選滿要消耗的牌();
+                            yield return new WaitForSeconds(0.15f);
+                            break;
+                        }
                         string outcome = Combat.煙霧_出第一張可出的牌();
                         if (outcome == "無可出之牌")
                         {

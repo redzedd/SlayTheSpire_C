@@ -19,6 +19,7 @@ namespace STS.Game.DataAssets
         [Tooltip("打出後消耗")] public bool exhausts;
         [Tooltip("虛無(回合結束在手即消耗)")] public bool ethereal;
         [Tooltip("無色牌:不進戰後卡牌獎勵池,只在商店的無色區出現")] public bool colorless;
+        [Tooltip("費用縮放規則(踩踏型:本回合每打出一張攻擊牌就少 1 費)")] public CostScaling costScaling = CostScaling.None;
 
         [Header("基礎版")]
         [Tooltip("顯示名稱")] public string baseName;
@@ -60,6 +61,7 @@ namespace STS.Game.DataAssets
                 Exhausts = exhausts,
                 Ethereal = ethereal,
                 Colorless = colorless,
+                CostScaling = costScaling,
                 Steps = EffectStepData.ToSteps(steps),
                 TurnEndInHandSteps = EffectStepData.ToSteps(turnEndSteps)
             };

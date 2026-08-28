@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffdee9d7f60e7d040ac8f435a119cd43, type: 3}
+  m_Name: NextAttackFree
+  m_EditorClassIdentifier: STS.Game::STS.Game.DataAssets.StatusDataAsset
+  id: 25
+  statusName: "\u84C4\u52E2"
+  description: "\u63A5\u4E0B\u4F86 {n} \u5F35\u653B\u64CA\u724C\u7684\u8CBB\u7528\u70BA
+    0\u3002"

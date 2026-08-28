@@ -20,6 +20,7 @@ MonoBehaviour:
   exhausts: 0
   ethereal: 0
   colorless: 0
+  costScaling: 0
   baseName: "\u71D2\u50B7"
   baseCost: 0
   baseDescription: "\u4E0D\u53EF\u6253\u51FA\u3002\u56DE\u5408\u7D50\u675F\u6642\u82E5\u5728\u624B\u724C,\u5931\u53BB

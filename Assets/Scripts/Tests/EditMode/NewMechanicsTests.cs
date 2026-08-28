@@ -521,6 +521,97 @@ namespace STS.Core.Tests
             Assert.AreEqual(168, engine.State.Enemies[0].Hp, "回合開始要再造成一次 16 點");
         }
 
+        /// <summary>賦予某個狀態的 0 費技能牌(測試用的載具)。</summary>
+        private static CardDef 技能(string id, string name, StatusId status, int stacks)
+        {
+            return new CardDef
+            {
+                Id = id, Name = name, Type = CardType.Skill, Rarity = CardRarity.Uncommon, Cost = 0,
+                DescriptionTemplate = name,
+                Steps = new[] { new EffectStep(EffectOp.ApplyStatus, EffectTarget.Self, stacks, status: status) }
+            };
+        }
+
+        [Test]
+        public void 無情猛攻_下一張攻擊零費_只免一張()
+        {
+            var 蓄勢 = 技能("free", "蓄勢", StatusId.NextAttackFree, 1);
+            var engine = 標準引擎(new[] { "free", "strike", "strike", "defend", "defend" },
+                enemyHp: 200, extraDefs: new[] { 蓄勢 });
+            engine.StartCombat();
+
+            出牌(engine, "free");
+            Assert.AreEqual(3, engine.State.Energy);
+
+            出牌(engine, "strike");   // 這張免費
+            Assert.AreEqual(3, engine.State.Energy, "下一張攻擊應該不花能量");
+            Assert.AreEqual(0, engine.State.Player.GetStatus(StatusId.NextAttackFree), "用掉就該消失");
+
+            出牌(engine, "strike");   // 這張要正常付費
+            Assert.AreEqual(2, engine.State.Energy, "只免一張,第二張要照付");
+        }
+
+        [Test]
+        public void 腐化_技能零費且打完消耗()
+        {
+            var 腐化 = 能力("corrupt", "腐化", StatusId.Corruption, 1);
+            var engine = 標準引擎(new[] { "corrupt", "defend", "defend", "strike", "strike" },
+                enemyHp: 200, extraDefs: new[] { 腐化 });
+            engine.StartCombat();
+
+            出牌(engine, "corrupt");
+            int exhaustBefore = engine.State.ExhaustPile.Count;
+            int discardBefore = engine.State.DiscardPile.Count;
+
+            出牌(engine, "defend");
+            Assert.AreEqual(3, engine.State.Energy, "技能牌在腐化下不花能量");
+            Assert.AreEqual(exhaustBefore + 1, engine.State.ExhaustPile.Count, "技能牌打完要被消耗");
+            Assert.AreEqual(discardBefore, engine.State.DiscardPile.Count, "不該進棄牌堆");
+
+            出牌(engine, "strike");
+            Assert.AreEqual(2, engine.State.Energy, "攻擊牌不受腐化影響");
+        }
+
+        [Test]
+        public void 踩踏_本回合每打出一張攻擊就少一費()
+        {
+            var 踩踏 = new CardDef
+            {
+                Id = "stomp", Name = "踩踏", Type = CardType.Attack, Rarity = CardRarity.Uncommon, Cost = 3,
+                CostScaling = CostScaling.MinusPerAttackPlayedThisTurn,
+                DescriptionTemplate = "對所有敵人造成 {dmg} 點傷害。",
+                Steps = new[] { new EffectStep(EffectOp.Damage, EffectTarget.AllEnemies, 12) }
+            };
+            var engine = 標準引擎(new[] { "stomp", "strike", "strike", "defend", "defend" },
+                enemyHp: 200, extraDefs: new[] { 踩踏 });
+            engine.StartCombat();
+
+            Assert.AreEqual(3, engine.GetCardCost(踩踏), "還沒打過攻擊牌就是原價");
+            出牌(engine, "strike");
+            Assert.AreEqual(2, engine.GetCardCost(踩踏), "打過一張攻擊牌就少 1 費");
+
+            出牌(engine, "stomp");
+            Assert.AreEqual(0, engine.State.Energy, "3 能量 - 打擊 1 - 踩踏 2 = 0");
+            Assert.AreEqual(182, engine.State.Enemies[0].Hp);
+        }
+
+        [Test]
+        public void 連環拳_下一張攻擊額外生效一次()
+        {
+            var 連環 = 技能("combo", "連環拳", StatusId.NextAttackDoubled, 1);
+            var engine = 標準引擎(new[] { "combo", "strike", "strike", "defend", "defend" },
+                enemyHp: 200, extraDefs: new[] { 連環 });
+            engine.StartCombat();
+
+            出牌(engine, "combo");
+            出牌(engine, "strike");   // 6 點打兩次 = 12
+            Assert.AreEqual(188, engine.State.Enemies[0].Hp, "這張攻擊要結算兩次");
+            Assert.AreEqual(0, engine.State.Player.GetStatus(StatusId.NextAttackDoubled));
+
+            出牌(engine, "strike");   // 恢復正常,只打一次
+            Assert.AreEqual(182, engine.State.Enemies[0].Hp);
+        }
+
         [Test]
         public void 餘燼_消耗抽牌堆最上面一張()
         {

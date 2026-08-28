@@ -20,6 +20,7 @@ MonoBehaviour:
   exhausts: 1
   ethereal: 0
   colorless: 1
+  costScaling: 0
   baseName: "\u5305\u7D2E"
   baseCost: 0
   baseDescription: "\u56DE\u5FA9 4 \u9EDE\u751F\u547D\u3002\u6D88\u8017\u3002"

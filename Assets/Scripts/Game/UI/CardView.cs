@@ -78,14 +78,23 @@ namespace STS.Game.UI
             return view;
         }
 
-        public void Bind(int handIndex, int instanceId, CardDef def, string formattedDescription)
+        /// <param name="effectiveCost">
+        /// 現在實際要花的能量(腐化/無情猛攻/踩踏會改它);傳 -1 代表照卡面基礎費用顯示。
+        /// </param>
+        public void Bind(int handIndex, int instanceId, CardDef def, string formattedDescription,
+            int effectiveCost = -1)
         {
             HandIndex = handIndex;
             InstanceId = instanceId;
             Def = def;
             RequiresTarget = ComputeRequiresTarget(def);
             _background.color = UiKit.卡牌顏色(def.Type);
-            _costText.text = def.CostIsX ? "X" : def.Cost.ToString();
+            int shownCost = effectiveCost >= 0 ? effectiveCost : def.Cost;
+            _costText.text = def.CostIsX ? "X" : shownCost.ToString();
+            // 被折扣過就標成綠色,玩家才看得出來這張現在比較便宜
+            _costText.color = !def.CostIsX && effectiveCost >= 0 && effectiveCost < def.Cost
+                ? new Color(0.25f, 0.8f, 0.35f)
+                : Color.black;
             _nameText.text = def.Name;
             _descText.text = formattedDescription;
             name = $"卡牌_{def.Id}";

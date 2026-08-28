@@ -276,6 +276,27 @@ namespace STS.Game.UI
             _choiceHint.gameObject.SetActive(false);
         }
 
+        /// <summary>
+        /// verify 煙霧入口:選卡模式下從左邊開始選滿要求的張數。
+        /// 自動化沒有偏好,只需要能把流程推下去——沒有這條,任何觸發選卡的牌都會讓整輪煙霧永遠卡住。
+        /// </summary>
+        public string 煙霧_選滿要消耗的牌()
+        {
+            if (!IsChoiceMode) return "不在選卡模式";
+            int guard = 0;
+            while (IsChoiceMode && guard++ <= CombatState.HandLimit)
+            {
+                int pick = -1;
+                for (int i = 0; i < _engine.State.Hand.Count; i++)
+                {
+                    if (!IsChosen(i)) { pick = i; break; }
+                }
+                if (pick < 0) break;
+                ToggleChoiceSelection(pick);   // 湊滿張數時它自己會送出
+            }
+            return IsChoiceMode ? "選卡未完成" : "已選滿並送出";
+        }
+
         public void SubmitChoice(int[] handIndices)
         {
             ExitChoiceMode();
