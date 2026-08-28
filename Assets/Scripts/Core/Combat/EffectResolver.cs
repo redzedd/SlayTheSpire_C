@@ -74,6 +74,22 @@ namespace STS.Core.Combat
                         engine.ExhaustTopOfDraw(step.Amount <= 0 ? 1 : step.Amount);
                         break;
 
+                    case EffectOp.ExhaustHand:
+                        engine.ExhaustHand(false);
+                        break;
+
+                    case EffectOp.ExhaustNonAttacksInHand:
+                        engine.ExhaustHand(true);
+                        break;
+
+                    case EffectOp.DiscardHandDrawSame:
+                        engine.DiscardHandDrawSame();
+                        break;
+
+                    case EffectOp.DrawUntilNonAttack:
+                        engine.DrawUntilNonAttack();
+                        break;
+
                     case EffectOp.DoubleStatus:
                         for (int r = 0; r < repeat; r++)
                         {
@@ -175,6 +191,12 @@ namespace STS.Core.Combat
         /// <summary>非 Damage op 的數值解讀。StrengthTimes 只對 Damage 有意義,其他 op 用到就是資料錯。</summary>
         private static int ResolveAmount(CombatEngine engine, EffectStep step, int sourceIndex, int targetIndex)
         {
+            // 成長型統一先攔下來,新增一種 AmountKind 時不必回頭補這裡的 case 清單
+            if (CombatEngine.IsScalingKind(step.AmountKind))
+            {
+                return step.Amount + step.SecondaryAmount
+                    * engine.ScalingCount(step.AmountKind, TargetVulnerable(engine, targetIndex));
+            }
             switch (step.AmountKind)
             {
                 case AmountKind.Fixed:
@@ -183,12 +205,6 @@ namespace STS.Core.Combat
                     return engine.XEnergySpent;
                 case AmountKind.CurrentBlock:
                     return engine.GetCombatant(sourceIndex).Block;
-                case AmountKind.PerExhaustedCard:
-                case AmountKind.PerTargetVulnerable:
-                case AmountKind.PerAttackPlayedThisTurn:
-                case AmountKind.PerStrikeCard:
-                    return step.Amount + step.SecondaryAmount
-                        * engine.ScalingCount(step.AmountKind, TargetVulnerable(engine, targetIndex));
                 default:
                     throw new NotSupportedException($"AmountKind {step.AmountKind} 不適用於 {step.Op}");
             }
@@ -206,6 +222,11 @@ namespace STS.Core.Combat
         /// </summary>
         private static int ResolveDamageBase(CombatEngine engine, EffectStep step, int sourceIndex, int targetIndex)
         {
+            if (CombatEngine.IsScalingKind(step.AmountKind))
+            {
+                return step.Amount + step.SecondaryAmount
+                    * engine.ScalingCount(step.AmountKind, TargetVulnerable(engine, targetIndex));
+            }
             switch (step.AmountKind)
             {
                 case AmountKind.Fixed:
@@ -214,12 +235,6 @@ namespace STS.Core.Combat
                     return engine.XEnergySpent;
                 case AmountKind.CurrentBlock:
                     return engine.GetCombatant(sourceIndex).Block;
-                case AmountKind.PerExhaustedCard:
-                case AmountKind.PerTargetVulnerable:
-                case AmountKind.PerAttackPlayedThisTurn:
-                case AmountKind.PerStrikeCard:
-                    return step.Amount + step.SecondaryAmount
-                        * engine.ScalingCount(step.AmountKind, TargetVulnerable(engine, targetIndex));
                 case AmountKind.StrengthTimes:
                 {
                     int multiplier = step.SecondaryAmount <= 1 ? 1 : step.SecondaryAmount;

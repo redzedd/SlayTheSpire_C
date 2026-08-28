@@ -167,6 +167,13 @@ namespace STS.Core.Combat.Statuses
                     }
                     break;
 
+                case StatusId.DrumOfBattle:
+                    if (IsOwnersTurnStart(ctx, ownerIndex))
+                    {
+                        engine.ExhaustTopOfDraw(status.Stacks);
+                    }
+                    break;
+
                 case StatusId.CrimsonMantle:
                     if (IsOwnersTurnStart(ctx, ownerIndex))
                     {

@@ -17,6 +17,14 @@ namespace STS.Core.Cards
         ChooseExhaustFromHand,
         /// <summary>消耗抽牌堆最上面 Amount 張(餘燼型)。</summary>
         ExhaustTopOfDraw,
+        /// <summary>消耗整手牌(惡魔之焰型);消耗張數記進 LastExhaustedCount 供後續步驟取用。</summary>
+        ExhaustHand,
+        /// <summary>消耗手牌中所有非攻擊牌(重振精神型);同樣記進 LastExhaustedCount。</summary>
+        ExhaustNonAttacksInHand,
+        /// <summary>棄掉整手牌,然後抽等量的牌(添柴型)。</summary>
+        DiscardHandDrawSame,
+        /// <summary>持續抽牌直到抽到一張非攻擊牌(劫掠型)。</summary>
+        DrawUntilNonAttack,
         /// <summary>把目標身上某個狀態的層數翻倍(熔融之拳型)。</summary>
         DoubleStatus,
         Custom
@@ -49,7 +57,9 @@ namespace STS.Core.Cards
         /// <summary>本回合每打出過一張攻擊牌(焚燒)。</summary>
         PerAttackPlayedThisTurn,
         /// <summary>牌組中每有一張名字含「打擊」的牌(完美打擊)。</summary>
-        PerStrikeCard
+        PerStrikeCard,
+        /// <summary>同一張牌前一個步驟剛消耗掉的張數(重振精神/惡魔之焰)。</summary>
+        PerLastExhausted
     }
 
     public enum PileType

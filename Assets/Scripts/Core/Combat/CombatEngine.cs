@@ -662,6 +662,8 @@ namespace STS.Core.Combat
                     return State.AttacksPlayedThisTurn;
                 case AmountKind.PerStrikeCard:
                     return CountCardsNamedContaining("打擊");
+                case AmountKind.PerLastExhausted:
+                    return State.LastExhaustedCount;
                 default:
                     return 0;
             }
@@ -673,7 +675,8 @@ namespace STS.Core.Combat
             return kind == AmountKind.PerExhaustedCard
                 || kind == AmountKind.PerTargetVulnerable
                 || kind == AmountKind.PerAttackPlayedThisTurn
-                || kind == AmountKind.PerStrikeCard;
+                || kind == AmountKind.PerStrikeCard
+                || kind == AmountKind.PerLastExhausted;
         }
 
         /// <summary>隨機挑一個活著的敵人;全滅回 -1。</summary>
@@ -842,6 +845,58 @@ namespace STS.Core.Combat
             State.ExhaustPile.Add(card);
             Emit(new CombatEvent(EventKind.CardExhausted, cardId: card.CardId, cardInstanceId: card.InstanceId));
             FireHook(new HookContext(HookPoint.CardExhausted, sourceIndex: PlayerIndex));
+        }
+
+        /// <summary>
+        /// 消耗整手牌(nonAttacksOnly = true 時只消耗非攻擊牌),回傳消耗張數並記進 LastExhaustedCount。
+        /// 先把要消耗的牌整批抽離手牌再逐張入消耗堆——消耗 hook(黑暗之擁)會抽新牌進手裡,
+        /// 邊走邊改集合的話新抽的牌會被一起消耗掉。
+        /// </summary>
+        internal int ExhaustHand(bool nonAttacksOnly)
+        {
+            var taken = new List<CardInstance>();
+            for (int i = State.Hand.Count - 1; i >= 0; i--)
+            {
+                var card = State.Hand[i];
+                if (nonAttacksOnly && _db.GetCard(card.ResolvedCardId).Type == CardType.Attack) continue;
+                State.Hand.RemoveAt(i);
+                taken.Add(card);
+            }
+            for (int i = 0; i < taken.Count; i++)
+            {
+                ExhaustCard(taken[i]);
+            }
+            State.LastExhaustedCount = taken.Count;
+            return taken.Count;
+        }
+
+        /// <summary>棄掉整手牌,再抽等量的牌(添柴)。</summary>
+        internal void DiscardHandDrawSame()
+        {
+            int count = State.Hand.Count;
+            if (count == 0) return;
+            for (int i = State.Hand.Count - 1; i >= 0; i--)
+            {
+                var card = State.Hand[i];
+                State.Hand.RemoveAt(i);
+                State.DiscardPile.Add(card);
+                Emit(new CombatEvent(EventKind.CardDiscarded, cardId: card.CardId, cardInstanceId: card.InstanceId));
+            }
+            DrawCards(count);
+        }
+
+        /// <summary>一直抽到抽出一張非攻擊牌為止(劫掠);牌堆抽乾或手牌滿就停。</summary>
+        internal void DrawUntilNonAttack()
+        {
+            const int 保險上限 = 20;   // 全是攻擊牌的牌組不該把這裡變成無窮迴圈
+            for (int i = 0; i < 保險上限; i++)
+            {
+                int before = State.Hand.Count;
+                DrawCards(1);
+                if (State.Hand.Count == before) return;   // 抽不動了(牌堆空/手牌滿/禁抽)
+                var drawn = State.Hand[State.Hand.Count - 1];
+                if (_db.GetCard(drawn.ResolvedCardId).Type != CardType.Attack) return;
+            }
         }
 
         /// <summary>消耗抽牌堆最上面 N 張(餘燼/戰鼓);抽牌堆空了就停,不重洗。</summary>

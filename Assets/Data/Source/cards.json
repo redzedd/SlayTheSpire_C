@@ -456,6 +456,58 @@
     },
 
     {
+      "id": "pillage", "type": "Attack", "rarity": "Uncommon",
+      "base": { "name": "劫掠", "cost": 1, "description": "造成 {dmg} 點傷害。持續抽牌直到抽出一張非攻擊牌。",
+        "steps": [
+          { "op": "Damage", "target": "TargetEnemy", "amount": 6 },
+          { "op": "DrawUntilNonAttack", "target": "Self" } ] },
+      "upgrade": { "name": "劫掠+", "cost": 1, "description": "造成 {dmg} 點傷害。持續抽牌直到抽出一張非攻擊牌。",
+        "steps": [
+          { "op": "Damage", "target": "TargetEnemy", "amount": 9 },
+          { "op": "DrawUntilNonAttack", "target": "Self" } ] }
+    },
+    {
+      "id": "second_wind", "type": "Skill", "rarity": "Uncommon",
+      "base": { "name": "重振精神", "cost": 1, "description": "消耗手牌中所有非攻擊牌,每消耗一張獲得 5 點格擋。",
+        "steps": [
+          { "op": "ExhaustNonAttacksInHand", "target": "Self" },
+          { "op": "Block", "target": "Self", "amount": 0, "amountKind": "PerLastExhausted", "secondaryAmount": 5 } ] },
+      "upgrade": { "name": "重振精神+", "cost": 1, "description": "消耗手牌中所有非攻擊牌,每消耗一張獲得 7 點格擋。",
+        "steps": [
+          { "op": "ExhaustNonAttacksInHand", "target": "Self" },
+          { "op": "Block", "target": "Self", "amount": 0, "amountKind": "PerLastExhausted", "secondaryAmount": 7 } ] }
+    },
+    {
+      "id": "drum_of_battle", "type": "Power", "rarity": "Uncommon",
+      "base": { "name": "戰鼓", "cost": 0, "description": "抽 2 張牌。回合開始時消耗抽牌堆頂部 1 張牌。",
+        "steps": [
+          { "op": "Draw", "target": "Self", "amount": 2 },
+          { "op": "ApplyStatus", "target": "Self", "amount": 1, "status": "DrumOfBattle" } ] },
+      "upgrade": { "name": "戰鼓+", "cost": 0, "description": "抽 3 張牌。回合開始時消耗抽牌堆頂部 1 張牌。",
+        "steps": [
+          { "op": "Draw", "target": "Self", "amount": 3 },
+          { "op": "ApplyStatus", "target": "Self", "amount": 1, "status": "DrumOfBattle" } ] }
+    },
+    {
+      "id": "fiend_fire", "type": "Attack", "rarity": "Rare", "exhausts": true,
+      "base": { "name": "惡魔之焰", "cost": 2, "description": "消耗整手牌,每消耗一張造成 {dmg} 點傷害。消耗。",
+        "steps": [
+          { "op": "ExhaustHand", "target": "Self" },
+          { "op": "Damage", "target": "TargetEnemy", "amount": 0, "amountKind": "PerLastExhausted", "secondaryAmount": 7 } ] },
+      "upgrade": { "name": "惡魔之焰+", "cost": 2, "description": "消耗整手牌,每消耗一張造成 {dmg} 點傷害。消耗。",
+        "steps": [
+          { "op": "ExhaustHand", "target": "Self" },
+          { "op": "Damage", "target": "TargetEnemy", "amount": 0, "amountKind": "PerLastExhausted", "secondaryAmount": 10 } ] }
+    },
+    {
+      "id": "stoke", "type": "Skill", "rarity": "Rare",
+      "base": { "name": "添柴", "cost": 1, "description": "棄掉整手牌,然後抽等量的牌。",
+        "steps": [ { "op": "DiscardHandDrawSame", "target": "Self" } ] },
+      "upgrade": { "name": "添柴+", "cost": 0, "description": "棄掉整手牌,然後抽等量的牌。",
+        "steps": [ { "op": "DiscardHandDrawSame", "target": "Self" } ] }
+    },
+
+    {
       "id": "flash_of_steel", "type": "Attack", "rarity": "Common", "colorless": true,
       "base": { "name": "鋼鐵閃光", "cost": 0, "description": "造成 {dmg} 點傷害。抽 1 張牌。",
         "steps": [

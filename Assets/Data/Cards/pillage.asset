@@ -10,23 +10,23 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 864927395ecc3534e9fd9f61f33a2072, type: 3}
-  m_Name: molten_fist
+  m_Name: pillage
   m_EditorClassIdentifier: STS.Game::STS.Game.DataAssets.CardDataAsset
-  id: molten_fist
+  id: pillage
   type: 0
-  rarity: 1
+  rarity: 2
   costIsX: 0
   unplayable: 0
-  exhausts: 1
+  exhausts: 0
   ethereal: 0
   colorless: 0
-  baseName: "\u7194\u878D\u4E4B\u62F3"
+  baseName: "\u52AB\u63A0"
   baseCost: 1
-  baseDescription: "\u9020\u6210 {dmg} \u9EDE\u50B7\u5BB3,\u4E26\u5C07\u76EE\u6A19\u7684\u6613\u50B7\u5C64\u6578\u7FFB\u500D\u3002\u6D88\u8017\u3002"
+  baseDescription: "\u9020\u6210 {dmg} \u9EDE\u50B7\u5BB3\u3002\u6301\u7E8C\u62BD\u724C\u76F4\u5230\u62BD\u51FA\u4E00\u5F35\u975E\u653B\u64CA\u724C\u3002"
   baseSteps:
   - op: 0
     target: 1
-    amount: 10
+    amount: 6
     amountKind: 0
     secondaryAmount: 0
     repeat: 0
@@ -35,26 +35,26 @@ MonoBehaviour:
     cardId: 
     pile: 2
     customId: 
-  - op: 15
-    target: 1
+  - op: 14
+    target: 0
     amount: 0
     amountKind: 0
     secondaryAmount: 0
     repeat: 0
     repeatIsX: 0
-    status: 4
+    status: 0
     cardId: 
     pile: 2
     customId: 
   baseTurnEndSteps: []
   hasUpgrade: 1
-  upgradeName: "\u7194\u878D\u4E4B\u62F3+"
+  upgradeName: "\u52AB\u63A0+"
   upgradeCost: 1
-  upgradeDescription: "\u9020\u6210 {dmg} \u9EDE\u50B7\u5BB3,\u4E26\u5C07\u76EE\u6A19\u7684\u6613\u50B7\u5C64\u6578\u7FFB\u500D\u3002\u6D88\u8017\u3002"
+  upgradeDescription: "\u9020\u6210 {dmg} \u9EDE\u50B7\u5BB3\u3002\u6301\u7E8C\u62BD\u724C\u76F4\u5230\u62BD\u51FA\u4E00\u5F35\u975E\u653B\u64CA\u724C\u3002"
   upgradeSteps:
   - op: 0
     target: 1
-    amount: 14
+    amount: 9
     amountKind: 0
     secondaryAmount: 0
     repeat: 0
@@ -63,14 +63,14 @@ MonoBehaviour:
     cardId: 
     pile: 2
     customId: 
-  - op: 15
-    target: 1
+  - op: 14
+    target: 0
     amount: 0
     amountKind: 0
     secondaryAmount: 0
     repeat: 0
     repeatIsX: 0
-    status: 4
+    status: 0
     cardId: 
     pile: 2
     customId: 

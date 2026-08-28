@@ -38,5 +38,7 @@ namespace STS.Core.Combat
         public int PendingChoiceCount;
         /// <summary>本回合玩家已打出的攻擊牌數(焚燒型「每打出一張攻擊就加傷」用);回合開始歸零。</summary>
         public int AttacksPlayedThisTurn;
+        /// <summary>同一張牌前一個消耗步驟剛消耗掉的張數,供下一個步驟換算數值(重振精神/惡魔之焰)。</summary>
+        public int LastExhaustedCount;
     }
 }

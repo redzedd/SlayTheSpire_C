@@ -36,6 +36,8 @@ namespace STS.Core.Combat.Statuses
         /// <summary>緋紅披風:回合開始失去 1 點生命並獲得等同層數的格擋。</summary>
         CrimsonMantle,
         /// <summary>狂怒:本回合每打出一張攻擊牌就獲得等同層數的格擋(回合結束移除)。</summary>
-        Rage
+        Rage,
+        /// <summary>戰鼓:回合開始時消耗抽牌堆頂部等同層數的牌。</summary>
+        DrumOfBattle
     }
 }

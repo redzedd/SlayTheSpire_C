@@ -314,6 +314,118 @@ namespace STS.Core.Tests
         }
 
         [Test]
+        public void 重振精神_消耗非攻擊牌_每張換格擋()
+        {
+            var 重振 = new CardDef
+            {
+                Id = "wind", Name = "重振精神", Type = CardType.Skill, Rarity = CardRarity.Uncommon, Cost = 0,
+                DescriptionTemplate = "消耗手牌中所有非攻擊牌。",
+                Steps = new[]
+                {
+                    new EffectStep(EffectOp.ExhaustNonAttacksInHand, EffectTarget.Self),
+                    new EffectStep(EffectOp.Block, EffectTarget.Self, 0,
+                        AmountKind.PerLastExhausted, secondaryAmount: 5)
+                }
+            };
+            var engine = 標準引擎(new[] { "wind", "defend", "defend", "strike", "strike" },
+                extraDefs: new[] { 重振 });
+            engine.StartCombat();
+
+            出牌(engine, "wind");
+            // 手上剩防禦×2(非攻擊)與打擊×2:只有 2 張防禦被消耗 → 2×5 = 10 點格擋
+            Assert.AreEqual(2, engine.State.ExhaustPile.Count);
+            Assert.AreEqual(10, engine.State.Player.Block);
+            Assert.AreEqual(2, engine.State.Hand.Count, "攻擊牌要留在手上");
+        }
+
+        [Test]
+        public void 惡魔之焰_消耗整手_每張換傷害()
+        {
+            var 惡魔之焰 = new CardDef
+            {
+                Id = "fiend", Name = "惡魔之焰", Type = CardType.Attack, Rarity = CardRarity.Rare, Cost = 0,
+                DescriptionTemplate = "造成 {dmg} 點傷害。", Exhausts = true,
+                Steps = new[]
+                {
+                    new EffectStep(EffectOp.ExhaustHand, EffectTarget.Self),
+                    new EffectStep(EffectOp.Damage, EffectTarget.TargetEnemy, 0,
+                        AmountKind.PerLastExhausted, secondaryAmount: 7)
+                }
+            };
+            var engine = 標準引擎(new[] { "fiend", "defend", "defend", "strike", "strike" },
+                enemyHp: 50, extraDefs: new[] { 惡魔之焰 });
+            engine.StartCombat();
+
+            出牌(engine, "fiend");
+            // 打出後手上剩 4 張全被消耗 → 0 + 7×4 = 28
+            Assert.AreEqual(0, engine.State.Hand.Count);
+            Assert.AreEqual(22, engine.State.Enemies[0].Hp);
+        }
+
+        [Test]
+        public void 添柴_棄掉整手再抽等量()
+        {
+            var 添柴 = new CardDef
+            {
+                Id = "stoke", Name = "添柴", Type = CardType.Skill, Rarity = CardRarity.Rare, Cost = 0,
+                DescriptionTemplate = "棄掉整手牌,然後抽等量的牌。",
+                Steps = new[] { new EffectStep(EffectOp.DiscardHandDrawSame, EffectTarget.Self) }
+            };
+            // 8 張牌:開場抽 5,抽牌堆留 3
+            var deck = new[] { "stoke", "stoke", "stoke", "stoke", "stoke", "defend", "defend", "defend" };
+            var engine = 標準引擎(deck, extraDefs: new[] { 添柴 });
+            engine.StartCombat();
+
+            出牌(engine, "stoke");
+            // 打出後手上 4 張全棄掉,再抽 4 張(抽牌堆 3 張 + 重洗棄牌堆補 1)
+            Assert.AreEqual(4, engine.State.Hand.Count, "棄幾張就要抽回幾張");
+        }
+
+        [Test]
+        public void 劫掠_持續抽牌直到抽出非攻擊牌()
+        {
+            var 劫掠 = new CardDef
+            {
+                Id = "pillage", Name = "劫掠", Type = CardType.Attack, Rarity = CardRarity.Uncommon, Cost = 0,
+                DescriptionTemplate = "造成 {dmg} 點傷害。",
+                Steps = new[]
+                {
+                    new EffectStep(EffectOp.Damage, EffectTarget.TargetEnemy, 6),
+                    new EffectStep(EffectOp.DrawUntilNonAttack, EffectTarget.Self)
+                }
+            };
+            // 7 張全是攻擊牌:抽到牌堆乾為止都不該停,也不該無窮迴圈
+            var deck = new[] { "pillage", "pillage", "pillage", "pillage", "pillage", "strike", "strike" };
+            var engine = 標準引擎(deck, enemyHp: 60, extraDefs: new[] { 劫掠 });
+            engine.StartCombat();
+            Assert.AreEqual(2, engine.State.DrawPile.Count);
+
+            出牌(engine, "pillage");
+            Assert.AreEqual(0, engine.State.DrawPile.Count, "全是攻擊牌就該一路抽到底");
+            Assert.AreEqual(6, engine.State.Hand.Count);
+            Assert.AreEqual(54, engine.State.Enemies[0].Hp);
+        }
+
+        [Test]
+        public void 戰鼓_回合開始消耗抽牌堆頂()
+        {
+            var 戰鼓 = 能力("drum", "戰鼓", StatusId.DrumOfBattle, 1);
+            var deck = new[] { "drum", "drum", "drum", "drum", "drum", "defend", "defend", "defend", "defend", "defend" };
+            var engine = 標準引擎(deck, enemyHp: 200, enemyAttack: 0, extraDefs: new[] { 戰鼓 });
+            engine.StartCombat();
+
+            if (手牌位置(engine, "drum") < 0) Assert.Ignore("這個種子沒把戰鼓抽進手裡");
+            出牌(engine, "drum");
+            Assert.AreEqual(1, engine.State.Player.GetStatus(StatusId.DrumOfBattle));
+
+            int exhaustBefore = engine.State.ExhaustPile.Count;
+            int drawBefore = engine.State.DrawPile.Count;
+            engine.EndPlayerTurn();   // 敵人待機 → 回到玩家回合開始
+            if (drawBefore == 0) Assert.Ignore("回合開始時抽牌堆本來就空的,消耗不到東西");
+            Assert.AreEqual(exhaustBefore + 1, engine.State.ExhaustPile.Count, "回合開始要消耗抽牌堆頂 1 張");
+        }
+
+        [Test]
         public void 餘燼_消耗抽牌堆最上面一張()
         {
             var 餘燼 = new CardDef
