@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6ea3e4052a8cdc54c99a387b3b8f7007, type: 3}
+  m_Name: blood_vial
+  m_EditorClassIdentifier: STS.Game::STS.Game.DataAssets.RelicDataAsset
+  id: blood_vial
+  relicName: "\u8840\u4E4B\u5C0F\u74F6"
+  rarity: 1
+  description: "\u958B\u6230\u6642\u56DE\u5FA9 2 \u9EDE\u751F\u547D\u3002"

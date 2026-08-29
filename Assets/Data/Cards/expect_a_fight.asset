@@ -1,0 +1,86 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 864927395ecc3534e9fd9f61f33a2072, type: 3}
+  m_Name: expect_a_fight
+  m_EditorClassIdentifier: STS.Game::STS.Game.DataAssets.CardDataAsset
+  id: expect_a_fight
+  type: 1
+  rarity: 2
+  costIsX: 0
+  unplayable: 0
+  exhausts: 0
+  ethereal: 0
+  colorless: 0
+  costScaling: 0
+  playCondition: 0
+  playConditionAmount: 0
+  baseName: "\u8E8D\u8E8D\u6B32\u8A66"
+  baseCost: 2
+  baseDescription: "\u624B\u724C\u4E2D\u6BCF\u6709\u4E00\u5F35\u653B\u64CA\u724C\u5C31\u7372\u5F97
+    1 \u9EDE\u80FD\u91CF\u3002\u672C\u56DE\u5408\u4E0D\u518D\u7372\u5F97\u984D\u5916\u80FD\u91CF\u3002"
+  baseSteps:
+  - op: 4
+    target: 0
+    amount: 0
+    amountKind: 9
+    secondaryAmount: 1
+    repeat: 0
+    repeatKind: 0
+    condition: 0
+    status: 0
+    cardId: 
+    pile: 2
+    customId: 
+  - op: 2
+    target: 0
+    amount: 1
+    amountKind: 0
+    secondaryAmount: 0
+    repeat: 0
+    repeatKind: 0
+    condition: 0
+    status: 34
+    cardId: 
+    pile: 2
+    customId: 
+  baseTurnEndSteps: []
+  hasUpgrade: 1
+  upgradeName: "\u8E8D\u8E8D\u6B32\u8A66+"
+  upgradeCost: 1
+  upgradeDescription: "\u624B\u724C\u4E2D\u6BCF\u6709\u4E00\u5F35\u653B\u64CA\u724C\u5C31\u7372\u5F97
+    1 \u9EDE\u80FD\u91CF\u3002\u672C\u56DE\u5408\u4E0D\u518D\u7372\u5F97\u984D\u5916\u80FD\u91CF\u3002"
+  upgradeSteps:
+  - op: 4
+    target: 0
+    amount: 0
+    amountKind: 9
+    secondaryAmount: 1
+    repeat: 0
+    repeatKind: 0
+    condition: 0
+    status: 0
+    cardId: 
+    pile: 2
+    customId: 
+  - op: 2
+    target: 0
+    amount: 1
+    amountKind: 0
+    secondaryAmount: 0
+    repeat: 0
+    repeatKind: 0
+    condition: 0
+    status: 34
+    cardId: 
+    pile: 2
+    customId: 
+  upgradeTurnEndSteps: []

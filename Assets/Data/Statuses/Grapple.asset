@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffdee9d7f60e7d040ac8f435a119cd43, type: 3}
+  m_Name: Grapple
+  m_EditorClassIdentifier: STS.Game::STS.Game.DataAssets.StatusDataAsset
+  id: 32
+  statusName: "\u64D2\u62FF"
+  description: "\u6BCF\u7576\u73A9\u5BB6\u7372\u5F97\u683C\u64CB,\u9019\u540D\u6575\u4EBA\u53D7\u5230
+    {n} \u9EDE\u50B7\u5BB3\u3002"

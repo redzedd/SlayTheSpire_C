@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffdee9d7f60e7d040ac8f435a119cd43, type: 3}
+  m_Name: Frail
+  m_EditorClassIdentifier: STS.Game::STS.Game.DataAssets.StatusDataAsset
+  id: 5
+  statusName: "\u8106\u5F31"
+  description: "\u7372\u5F97\u7684\u683C\u64CB\u6E1B\u5C11 25%\u3002\u5269\u9918
+    {n} \u56DE\u5408,\u6BCF\u56DE\u5408\u7D50\u675F\u905E\u6E1B 1 \u5C64\u3002"

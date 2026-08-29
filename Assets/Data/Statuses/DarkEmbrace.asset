@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffdee9d7f60e7d040ac8f435a119cd43, type: 3}
+  m_Name: DarkEmbrace
+  m_EditorClassIdentifier: STS.Game::STS.Game.DataAssets.StatusDataAsset
+  id: 16
+  statusName: "\u9ED1\u6697\u4E4B\u64C1"
+  description: "\u6BCF\u7576\u4E00\u5F35\u724C\u88AB\u6D88\u8017,\u62BD {n} \u5F35\u724C\u3002"

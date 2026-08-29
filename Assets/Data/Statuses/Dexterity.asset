@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffdee9d7f60e7d040ac8f435a119cd43, type: 3}
+  m_Name: Dexterity
+  m_EditorClassIdentifier: STS.Game::STS.Game.DataAssets.StatusDataAsset
+  id: 2
+  statusName: "\u654F\u6377"
+  description: "\u6BCF\u6B21\u7372\u5F97\u7684\u683C\u64CB\u589E\u52A0 {n} \u9EDE\u3002"

@@ -1,0 +1,65 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fd0705723b45f2e468ea98be8dbfdc7a, type: 3}
+  m_Name: Balance
+  m_EditorClassIdentifier: STS.Game::STS.Game.DataAssets.BalanceAsset
+  startHp: 80
+  startGold: 99
+  startingDeckCardIds:
+  - strike
+  - strike
+  - strike
+  - strike
+  - strike
+  - defend
+  - defend
+  - defend
+  - defend
+  - bash
+  startingRelicIds:
+  - burning_blood
+  startingPotionIds: []
+  shopCardCommonCost: 50
+  shopCardUncommonCost: 75
+  shopCardRareCost: 150
+  shopRelicCost: 150
+  shopPotionCost: 50
+  shopClassCardCount: 5
+  shopColorlessCardCount: 2
+  shopRelicCount: 3
+  shopPotionCount: 3
+  mapCombatWeight: 60
+  mapEliteWeight: 16
+  mapRestWeight: 12
+  mapShopWeight: 7
+  mapTreasureWeight: 5
+  mapMinRowForElite: 5
+  mapMinRowForRest: 5
+  mapNoRestRow: 13
+  normalGoldMin: 10
+  normalGoldMax: 20
+  eliteGoldMin: 25
+  eliteGoldMax: 35
+  bossGoldMin: 95
+  bossGoldMax: 105
+  cardRewardCommonWeight: 77
+  cardRewardUncommonWeight: 22
+  cardRewardRareWeight: 1
+  potionDropBasePercent: 40
+  potionDropDeltaPercent: 10
+  shopRemoveBaseCost: 75
+  shopRemoveCostIncrement: 25
+  restHealPercent: 30
+  mapColumns: 7
+  mapRows: 15
+  mapPathCount: 6
+  weakPoolFightCount: 3

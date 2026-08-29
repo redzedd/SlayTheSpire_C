@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6ea3e4052a8cdc54c99a387b3b8f7007, type: 3}
+  m_Name: bag_of_preparation
+  m_EditorClassIdentifier: STS.Game::STS.Game.DataAssets.RelicDataAsset
+  id: bag_of_preparation
+  relicName: "\u6574\u5099\u884C\u56CA"
+  rarity: 1
+  description: "\u958B\u6230\u6642\u984D\u5916\u62BD 2 \u5F35\u724C\u3002"

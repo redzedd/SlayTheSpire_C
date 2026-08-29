@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffdee9d7f60e7d040ac8f435a119cd43, type: 3}
+  m_Name: Aggression
+  m_EditorClassIdentifier: STS.Game::STS.Game.DataAssets.StatusDataAsset
+  id: 35
+  statusName: "\u597D\u52C7\u9B25\u72E0"
+  description: "\u56DE\u5408\u958B\u59CB\u6642,\u5F9E\u68C4\u724C\u5806\u62FF\u4E00\u5F35\u96A8\u6A5F\u653B\u64CA\u724C\u5230\u624B\u4E0A\u4E26\u5347\u7D1A\u5B83\u3002"

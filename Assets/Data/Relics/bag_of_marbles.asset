@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6ea3e4052a8cdc54c99a387b3b8f7007, type: 3}
+  m_Name: bag_of_marbles
+  m_EditorClassIdentifier: STS.Game::STS.Game.DataAssets.RelicDataAsset
+  id: bag_of_marbles
+  relicName: "\u73BB\u7483\u5F48\u73E0\u888B"
+  rarity: 1
+  description: "\u958B\u6230\u6642\u4F7F\u6240\u6709\u6575\u4EBA\u7372\u5F97 1 \u5C64\u6613\u50B7\u3002"

@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 864927395ecc3534e9fd9f61f33a2072, type: 3}
+  m_Name: primal_force
+  m_EditorClassIdentifier: STS.Game::STS.Game.DataAssets.CardDataAsset
+  id: primal_force
+  type: 1
+  rarity: 3
+  costIsX: 0
+  unplayable: 0
+  exhausts: 0
+  ethereal: 0
+  colorless: 0
+  costScaling: 0
+  playCondition: 0
+  playConditionAmount: 0
+  baseName: "\u539F\u59CB\u529B\u91CF"
+  baseCost: 0
+  baseDescription: "\u628A\u624B\u724C\u4E2D\u6240\u6709\u653B\u64CA\u724C\u8B8A\u6210\u5DE8\u77F3\u3002"
+  baseSteps:
+  - op: 21
+    target: 0
+    amount: 0
+    amountKind: 0
+    secondaryAmount: 0
+    repeat: 0
+    repeatKind: 0
+    condition: 0
+    status: 0
+    cardId: giant_rock
+    pile: 2
+    customId: 
+  baseTurnEndSteps: []
+  hasUpgrade: 1
+  upgradeName: "\u539F\u59CB\u529B\u91CF+"
+  upgradeCost: 0
+  upgradeDescription: "\u628A\u624B\u724C\u4E2D\u6240\u6709\u653B\u64CA\u724C\u8B8A\u6210\u5DE8\u77F3+\u3002"
+  upgradeSteps:
+  - op: 21
+    target: 0
+    amount: 0
+    amountKind: 0
+    secondaryAmount: 1
+    repeat: 0
+    repeatKind: 0
+    condition: 0
+    status: 0
+    cardId: giant_rock
+    pile: 2
+    customId: 
+  upgradeTurnEndSteps: []
