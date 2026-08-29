@@ -18,6 +18,8 @@ namespace STS.Core.Combat
         CardExhausted,
         /// <summary>有人獲得格擋(勢不可當);Amount = 實際獲得量。</summary>
         BlockGained,
+        /// <summary>某個狀態被「加上」(兇惡);只在層數增加時觸發,衰減/移除不觸發。</summary>
+        StatusApplied,
         Shuffled,
         CombatVictory,
         EnemyDied
@@ -41,15 +43,19 @@ namespace STS.Core.Combat
         public readonly CardType CardType;
         /// <summary>附帶數值(受擊 hpLost 等)。</summary>
         public readonly int Amount;
+        /// <summary>StatusApplied 時被施加的狀態種類。</summary>
+        public readonly Statuses.StatusId Status;
 
         public HookContext(HookPoint point, int sourceIndex = NoIndex, int targetIndex = NoIndex,
-            CardType cardType = CardType.Attack, int amount = 0)
+            CardType cardType = CardType.Attack, int amount = 0,
+            Statuses.StatusId status = Statuses.StatusId.None)
         {
             Point = point;
             SourceIndex = sourceIndex;
             TargetIndex = targetIndex;
             CardType = cardType;
             Amount = amount;
+            Status = status;
         }
     }
 }

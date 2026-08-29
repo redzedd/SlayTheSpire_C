@@ -76,7 +76,9 @@ namespace STS.Core.Cards
         /// <summary>牌組中每有一張名字含「打擊」的牌(完美打擊)。</summary>
         PerStrikeCard,
         /// <summary>同一張牌前一個步驟剛消耗掉的張數(重振精神/惡魔之焰)。</summary>
-        PerLastExhausted
+        PerLastExhausted,
+        /// <summary>手牌中每有一張攻擊牌(躍躍欲試)。</summary>
+        PerAttackInHand
     }
 
     /// <summary>
@@ -91,7 +93,9 @@ namespace STS.Core.Cards
         /// <summary>你本回合失去過生命(怨恨)。</summary>
         LostHpThisTurn,
         /// <summary>這張牌前一段攻擊剛好把目標打死(狂宴)。</summary>
-        LastAttackKilled
+        LastAttackKilled,
+        /// <summary>你本回合消耗過牌(邪眼/被遺忘的儀式)。</summary>
+        ExhaustedThisTurn
     }
 
     /// <summary>卡片能不能打出的額外條件(能量與目標之外的)。</summary>

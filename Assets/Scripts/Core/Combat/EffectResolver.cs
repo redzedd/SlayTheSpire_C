@@ -274,6 +274,8 @@ namespace STS.Core.Combat
                     return engine.State.LostHpThisTurn;
                 case StepCondition.LastAttackKilled:
                     return engine.State.LastAttackKilled;
+                case StepCondition.ExhaustedThisTurn:
+                    return engine.State.ExhaustedThisTurn;
                 default:
                     return true;
             }

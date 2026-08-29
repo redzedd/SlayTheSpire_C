@@ -50,6 +50,20 @@ namespace STS.Core.Combat.Statuses
         /// <summary>殘酷:你對「有易傷的敵人」造成的傷害額外增加等同層數的百分比。</summary>
         Cruelty,
         /// <summary>巨像:本回合「有易傷的攻擊者」對你造成的傷害減半(回合結束移除)。</summary>
-        Colossus
+        Colossus,
+        /// <summary>
+        /// 覆甲:自己回合結束時獲得等同層數的格擋,然後層數 -1(打出的當回合就生效)。
+        /// 刻意不用 DecrementAtOwnerTurnEnd:那條規則有「同回合剛施加就跳過首次」的語意,
+        /// 覆甲不跳。
+        /// </summary>
+        Plating,
+        /// <summary>岿然不動:本回合第一次獲得格擋時,該次格擋翻倍。</summary>
+        Unmovable,
+        /// <summary>擒拿:本回合每當你獲得格擋,對隨機敵人造成等同層數的傷害(回合結束移除)。</summary>
+        Grapple,
+        /// <summary>兇惡:每當你對敵人施加易傷,抽等同層數的牌。</summary>
+        Vicious,
+        /// <summary>躍躍欲試的副作用:本回合不再獲得任何額外能量(回合結束移除)。</summary>
+        NoEnergyGain
     }
 }

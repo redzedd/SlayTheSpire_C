@@ -1,0 +1,62 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 864927395ecc3534e9fd9f61f33a2072, type: 3}
+  m_Name: forgotten_ritual
+  m_EditorClassIdentifier: STS.Game::STS.Game.DataAssets.CardDataAsset
+  id: forgotten_ritual
+  type: 1
+  rarity: 2
+  costIsX: 0
+  unplayable: 0
+  exhausts: 1
+  ethereal: 0
+  colorless: 0
+  costScaling: 0
+  playCondition: 0
+  playConditionAmount: 0
+  baseName: "\u88AB\u907A\u5FD8\u7684\u5100\u5F0F"
+  baseCost: 1
+  baseDescription: "\u82E5\u4F60\u672C\u56DE\u5408\u6D88\u8017\u904E\u724C,\u7372\u5F97
+    3 \u9EDE\u80FD\u91CF\u3002\u6D88\u8017\u3002"
+  baseSteps:
+  - op: 4
+    target: 0
+    amount: 3
+    amountKind: 0
+    secondaryAmount: 0
+    repeat: 0
+    repeatKind: 0
+    condition: 4
+    status: 0
+    cardId: 
+    pile: 2
+    customId: 
+  baseTurnEndSteps: []
+  hasUpgrade: 1
+  upgradeName: "\u88AB\u907A\u5FD8\u7684\u5100\u5F0F+"
+  upgradeCost: 1
+  upgradeDescription: "\u82E5\u4F60\u672C\u56DE\u5408\u6D88\u8017\u904E\u724C,\u7372\u5F97
+    4 \u9EDE\u80FD\u91CF\u3002\u6D88\u8017\u3002"
+  upgradeSteps:
+  - op: 4
+    target: 0
+    amount: 4
+    amountKind: 0
+    secondaryAmount: 0
+    repeat: 0
+    repeatKind: 0
+    condition: 4
+    status: 0
+    cardId: 
+    pile: 2
+    customId: 
+  upgradeTurnEndSteps: []

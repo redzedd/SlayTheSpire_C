@@ -986,6 +986,140 @@ namespace STS.Core.Tests
         }
 
         [Test]
+        public void 覆甲_回合結束給等量護甲然後自己減一()
+        {
+            var 岩石鎧甲 = 能力("armor", "岩石鎧甲", StatusId.Plating, 4);
+            var engine = 標準引擎(new[] { "armor", "defend", "defend", "defend", "defend" },
+                enemyHp: 200, enemyAttack: 10, playerHp: 80, extraDefs: new[] { 岩石鎧甲 });
+            engine.StartCombat();
+
+            出牌(engine, "armor");
+            Assert.AreEqual(4, engine.State.Player.GetStatus(StatusId.Plating));
+            Assert.AreEqual(0, engine.State.Player.Block, "護甲要等回合結束才給");
+
+            engine.EndPlayerTurn();
+            // 回合結束給 4 點格擋 → 敵人打 10 → 擋掉 4,掉 6 血;覆甲降為 3
+            Assert.AreEqual(74, engine.State.Player.Hp, "打出的當回合就要生效");
+            Assert.AreEqual(3, engine.State.Player.GetStatus(StatusId.Plating), "給完護甲後覆甲要減 1");
+
+            engine.EndPlayerTurn();
+            // 這次只給 3 點 → 掉 7 血;覆甲降為 2
+            Assert.AreEqual(67, engine.State.Player.Hp);
+            Assert.AreEqual(2, engine.State.Player.GetStatus(StatusId.Plating));
+        }
+
+        [Test]
+        public void 邪眼_本回合消耗過牌才給第二份格擋()
+        {
+            var 邪眼 = new CardDef
+            {
+                Id = "eye", Name = "邪眼", Type = CardType.Skill, Rarity = CardRarity.Uncommon, Cost = 0,
+                DescriptionTemplate = "獲得 {blk} 點格擋。",
+                Steps = new[]
+                {
+                    new EffectStep(EffectOp.Block, EffectTarget.Self, 8),
+                    new EffectStep(EffectOp.Block, EffectTarget.Self, 8, condition: StepCondition.ExhaustedThisTurn)
+                }
+            };
+            var engine = 標準引擎(new[] { "eye", "eye", "selfexhaust", "defend", "defend" },
+                enemyHp: 200, enemyAttack: 0, extraDefs: new[] { 邪眼, 自消耗() });
+            engine.StartCombat();
+
+            出牌(engine, "eye");
+            Assert.AreEqual(8, engine.State.Player.Block, "沒消耗過牌就只有一份");
+
+            出牌(engine, "selfexhaust");
+            Assert.IsTrue(engine.State.ExhaustedThisTurn);
+            出牌(engine, "eye");
+            Assert.AreEqual(24, engine.State.Player.Block, "消耗過牌就給兩份(8 + 16)");
+        }
+
+        [Test]
+        public void 岿然不動_只翻倍本回合第一次格擋()
+        {
+            var 岿然 = 能力("unmov", "岿然不動", StatusId.Unmovable, 1);
+            var engine = 標準引擎(new[] { "unmov", "defend", "defend", "defend", "defend" },
+                enemyHp: 200, enemyAttack: 0, extraDefs: new[] { 岿然 });
+            engine.StartCombat();
+
+            出牌(engine, "unmov");
+            出牌(engine, "defend");
+            Assert.AreEqual(10, engine.State.Player.Block, "第一次格擋要翻倍");
+            出牌(engine, "defend");
+            Assert.AreEqual(15, engine.State.Player.Block, "第二次就不翻倍了");
+        }
+
+        [Test]
+        public void 擒拿_本回合獲得格擋就追打()
+        {
+            var 擒拿 = new CardDef
+            {
+                Id = "grapple", Name = "擒拿", Type = CardType.Attack, Rarity = CardRarity.Uncommon, Cost = 0,
+                DescriptionTemplate = "造成 {dmg} 點傷害。",
+                Steps = new[]
+                {
+                    new EffectStep(EffectOp.Damage, EffectTarget.TargetEnemy, 7),
+                    new EffectStep(EffectOp.ApplyStatus, EffectTarget.Self, 5, status: StatusId.Grapple)
+                }
+            };
+            var engine = 標準引擎(new[] { "grapple", "defend", "defend", "defend", "defend" },
+                enemyHp: 200, enemyAttack: 0, extraDefs: new[] { 擒拿 });
+            engine.StartCombat();
+
+            出牌(engine, "grapple");
+            Assert.AreEqual(193, engine.State.Enemies[0].Hp);
+            出牌(engine, "defend");
+            Assert.AreEqual(188, engine.State.Enemies[0].Hp, "獲得格擋要追打 5 點");
+        }
+
+        [Test]
+        public void 兇惡_施加易傷就抽牌()
+        {
+            var 兇惡 = 能力("vic", "兇惡", StatusId.Vicious, 1);
+            var engine = 標準引擎(new[] { "vic", "hex", "defend", "defend", "defend" },
+                enemyHp: 200, enemyAttack: 0, extraDefs: new[] { 兇惡, 上易傷() });
+            engine.StartCombat();
+
+            出牌(engine, "vic");
+            出牌(engine, "defend");   // 讓棄牌堆有料,抽牌才抽得動(抽牌堆此時是空的)
+            int drawnBefore = 事件數(engine, EventKind.CardDrawn);
+
+            出牌(engine, "hex");      // 施加易傷 → 兇惡抽 1 張
+            Assert.AreEqual(drawnBefore + 1, 事件數(engine, EventKind.CardDrawn), "施加易傷要抽 1 張");
+        }
+
+        [Test]
+        public void 躍躍欲試_依手上攻擊牌給能量_之後不再獲得能量()
+        {
+            var 躍躍欲試 = new CardDef
+            {
+                Id = "expect", Name = "躍躍欲試", Type = CardType.Skill, Rarity = CardRarity.Uncommon, Cost = 2,
+                DescriptionTemplate = "獲得能量。",
+                Steps = new[]
+                {
+                    new EffectStep(EffectOp.GainEnergy, EffectTarget.Self, 0,
+                        AmountKind.PerAttackInHand, secondaryAmount: 1),
+                    new EffectStep(EffectOp.ApplyStatus, EffectTarget.Self, 1, status: StatusId.NoEnergyGain)
+                }
+            };
+            var 補能 = new CardDef
+            {
+                Id = "refill", Name = "補能", Type = CardType.Skill, Rarity = CardRarity.Common, Cost = 0,
+                DescriptionTemplate = "獲得 2 點能量。",
+                Steps = new[] { new EffectStep(EffectOp.GainEnergy, EffectTarget.Self, 2) }
+            };
+            var engine = 標準引擎(new[] { "expect", "strike", "strike", "refill", "defend" },
+                enemyHp: 200, enemyAttack: 0, extraDefs: new[] { 躍躍欲試, 補能 });
+            engine.StartCombat();
+
+            出牌(engine, "expect");   // 花 2 能量,手上剩 2 張打擊 → 補回 2 → 3
+            Assert.AreEqual(3, engine.State.Energy, "手上兩張攻擊牌要補 2 點能量");
+
+            出牌(engine, "refill");   // 本回合不再獲得能量,這 2 點要被擋掉
+            Assert.AreEqual(3, engine.State.Energy, "力竭期間不該再拿到能量");
+        }
+
+        [Test]
         public void 餘燼_消耗抽牌堆最上面一張()
         {
             var 餘燼 = new CardDef

@@ -451,6 +451,8 @@ namespace STS.Core.Combat
             State.Phase = CombatPhase.PlayerTurn;
             State.AttacksPlayedThisTurn = 0;
             State.LostHpThisTurn = false;
+            State.ExhaustedThisTurn = false;
+            State.PlayerBlockGainsThisTurn = 0;
             // 格擋在「自己回合開始」清除,不是回合結束——回合末獲得的格擋要活過敵方回合(R5)
             // 壁壘:整條清除規則失效,格擋累積不掉
             ClearTurnStartStatuses(PlayerIndex);
@@ -754,6 +756,16 @@ namespace STS.Core.Combat
                 baseAmount,
                 combatant.GetStatus(StatusId.Dexterity),
                 combatant.GetStatus(StatusId.Frail) > 0);
+            // 岿然不動:本回合第一次獲得格擋翻倍([近似] 原作限「來自卡牌」的格擋,
+            // 這裡不分來源——引擎沒有把「這次格擋是誰給的」帶進來)
+            if (index == PlayerIndex)
+            {
+                if (State.PlayerBlockGainsThisTurn == 0 && combatant.GetStatus(StatusId.Unmovable) > 0)
+                {
+                    gain *= 2;
+                }
+                State.PlayerBlockGainsThisTurn++;
+            }
             combatant.Block += gain;
             Emit(new CombatEvent(EventKind.BlockGained, sourceIndex: index, amount: gain, remainingBlock: combatant.Block));
             // 勢不可當靠這個 hook;它打的是非攻擊傷害,所以不會和尖刺皮互相觸發成迴圈
@@ -818,6 +830,15 @@ namespace STS.Core.Combat
                     return CountCardsNamedContaining("打擊");
                 case AmountKind.PerLastExhausted:
                     return State.LastExhaustedCount;
+                case AmountKind.PerAttackInHand:
+                {
+                    int attacks = 0;
+                    for (int i = 0; i < State.Hand.Count; i++)
+                    {
+                        if (GetCardDef(State.Hand[i]).Type == CardType.Attack) attacks++;
+                    }
+                    return attacks;
+                }
                 default:
                     return 0;
             }
@@ -830,7 +851,8 @@ namespace STS.Core.Combat
                 || kind == AmountKind.PerTargetVulnerable
                 || kind == AmountKind.PerAttackPlayedThisTurn
                 || kind == AmountKind.PerStrikeCard
-                || kind == AmountKind.PerLastExhausted;
+                || kind == AmountKind.PerLastExhausted
+                || kind == AmountKind.PerAttackInHand;
         }
 
         /// <summary>隨機挑一個活著的敵人;全滅回 -1。</summary>
@@ -903,6 +925,11 @@ namespace STS.Core.Combat
                 }
             }
             Emit(new CombatEvent(EventKind.StatusChanged, targetIndex: index, amount: amount, amount2: stacks, status: status));
+            // 只在「加上去」時觸發:衰減與移除每回合都在跑,全部觸發會讓 hook 變成雜訊
+            if (amount > 0)
+            {
+                FireHook(new HookContext(HookPoint.StatusApplied, targetIndex: index, amount: amount, status: status));
+            }
         }
 
         /// <summary>是否在該單位「自己的回合」中(JustApplied 判定用)。</summary>
@@ -944,6 +971,8 @@ namespace STS.Core.Combat
         internal void GainEnergy(int amount)
         {
             if (amount == 0) return;
+            // 躍躍欲試的副作用:本回合不再獲得任何額外能量
+            if (amount > 0 && State.Player.GetStatus(StatusId.NoEnergyGain) > 0) return;
             State.Energy += amount;
             Emit(new CombatEvent(EventKind.EnergyChanged, amount: State.Energy, amount2: State.MaxEnergy));
         }
@@ -996,6 +1025,7 @@ namespace STS.Core.Combat
         /// </summary>
         internal void ExhaustCard(CardInstance card)
         {
+            State.ExhaustedThisTurn = true;
             State.ExhaustPile.Add(card);
             Emit(new CombatEvent(EventKind.CardExhausted, cardId: card.CardId, cardInstanceId: card.InstanceId));
             FireHook(new HookContext(HookPoint.CardExhausted, sourceIndex: PlayerIndex));

@@ -57,6 +57,16 @@
     { "id": "Cruelty", "name": "殘酷",
       "description": "你對有易傷的敵人造成的傷害額外增加 {n}%。" },
     { "id": "Colossus", "name": "巨像",
-      "description": "本回合有易傷的攻擊者對你造成的傷害減半。" }
+      "description": "本回合有易傷的攻擊者對你造成的傷害減半。" },
+    { "id": "Plating", "name": "覆甲",
+      "description": "回合結束時獲得 {n} 點格擋,然後覆甲減 1。" },
+    { "id": "Unmovable", "name": "岿然不動",
+      "description": "本回合第一次獲得的格擋翻倍。" },
+    { "id": "Grapple", "name": "擒拿",
+      "description": "本回合每當你獲得格擋,對一名隨機敵人造成 {n} 點傷害。" },
+    { "id": "Vicious", "name": "兇惡",
+      "description": "每當你對敵人施加易傷,抽 {n} 張牌。" },
+    { "id": "NoEnergyGain", "name": "力竭",
+      "description": "本回合不再獲得額外能量。" }
   ]
 }

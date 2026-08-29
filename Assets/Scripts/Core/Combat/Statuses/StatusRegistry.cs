@@ -31,6 +31,8 @@ namespace STS.Core.Combat.Statuses
                     return DecayRule.DecrementAtOwnerTurnEnd;
                 case StatusId.NoDraw:
                 case StatusId.Rage:
+                case StatusId.Grapple:
+                case StatusId.NoEnergyGain:
                     return DecayRule.RemoveAtOwnerTurnEnd;
                 case StatusId.Colossus:
                     return DecayRule.RemoveAtOwnerTurnStart;
@@ -204,6 +206,45 @@ namespace STS.Core.Combat.Statuses
                         && ctx.CardType == Cards.CardType.Attack)
                     {
                         engine.GainBlock(ownerIndex, status.Stacks);
+                    }
+                    break;
+
+                case StatusId.Plating:
+                    // 覆甲:回合結束給等量護甲,然後自己減 1
+                    if (IsOwnersTurnEnd(ctx, ownerIndex))
+                    {
+                        int armor = status.Stacks;
+                        engine.GainBlock(ownerIndex, armor);
+                        engine.ApplyStatusTo(ownerIndex, StatusId.Plating, -1);
+                    }
+                    break;
+
+                case StatusId.Grapple:
+                    // 擒拿:本回合獲得格擋就追打。走非攻擊傷害,避免與尖刺皮互相觸發
+                    if (ctx.Point == HookPoint.BlockGained
+                        && ctx.SourceIndex == ownerIndex
+                        && ownerIndex == CombatEngine.PlayerIndex)
+                    {
+                        int enemyIndex = engine.PickRandomLivingEnemy();
+                        if (enemyIndex >= 0)
+                        {
+                            engine.DealNonAttackDamage(ownerIndex, enemyIndex, status.Stacks);
+                        }
+                    }
+                    break;
+
+                case StatusId.Vicious:
+                    // 兇惡:自己對敵人施加易傷就抽牌
+                    // 施加者用「現在是玩家回合」判定,而不是把 SourceIndex 一路穿過
+                    // ApplyStatusTo 的二十幾個呼叫點——敵人回合上的易傷不算你施加的
+                    if (ctx.Point == HookPoint.StatusApplied
+                        && ownerIndex == CombatEngine.PlayerIndex
+                        && ctx.TargetIndex != CombatEngine.PlayerIndex
+                        && ctx.Status == StatusId.Vulnerable
+                        && ctx.Amount > 0
+                        && engine.IsOwnersTurn(CombatEngine.PlayerIndex))
+                    {
+                        engine.DrawCards(status.Stacks);
                     }
                     break;
 

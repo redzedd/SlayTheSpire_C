@@ -456,6 +456,67 @@
     },
 
     {
+      "id": "stone_armor", "type": "Power", "rarity": "Uncommon",
+      "base": { "name": "岩石鎧甲", "cost": 1, "description": "獲得 4 點覆甲。",
+        "steps": [ { "op": "ApplyStatus", "target": "Self", "amount": 4, "status": "Plating" } ] },
+      "upgrade": { "name": "岩石鎧甲+", "cost": 1, "description": "獲得 6 點覆甲。",
+        "steps": [ { "op": "ApplyStatus", "target": "Self", "amount": 6, "status": "Plating" } ] }
+    },
+    {
+      "id": "evil_eye", "type": "Skill", "rarity": "Uncommon",
+      "base": { "name": "邪眼", "cost": 1, "description": "獲得 {blk} 點格擋。若你本回合消耗過牌,再獲得 8 點格擋。",
+        "steps": [
+          { "op": "Block", "target": "Self", "amount": 8 },
+          { "op": "Block", "target": "Self", "amount": 8, "condition": "ExhaustedThisTurn" } ] },
+      "upgrade": { "name": "邪眼+", "cost": 1, "description": "獲得 {blk} 點格擋。若你本回合消耗過牌,再獲得 11 點格擋。",
+        "steps": [
+          { "op": "Block", "target": "Self", "amount": 11 },
+          { "op": "Block", "target": "Self", "amount": 11, "condition": "ExhaustedThisTurn" } ] }
+    },
+    {
+      "id": "forgotten_ritual", "type": "Skill", "rarity": "Uncommon", "exhausts": true,
+      "base": { "name": "被遺忘的儀式", "cost": 1, "description": "若你本回合消耗過牌,獲得 3 點能量。消耗。",
+        "steps": [ { "op": "GainEnergy", "target": "Self", "amount": 3, "condition": "ExhaustedThisTurn" } ] },
+      "upgrade": { "name": "被遺忘的儀式+", "cost": 1, "description": "若你本回合消耗過牌,獲得 4 點能量。消耗。",
+        "steps": [ { "op": "GainEnergy", "target": "Self", "amount": 4, "condition": "ExhaustedThisTurn" } ] }
+    },
+    {
+      "id": "unmovable", "type": "Power", "rarity": "Rare",
+      "base": { "name": "岿然不動", "cost": 2, "description": "本回合第一次獲得的格擋翻倍。",
+        "steps": [ { "op": "ApplyStatus", "target": "Self", "amount": 1, "status": "Unmovable" } ] },
+      "upgrade": { "name": "岿然不動+", "cost": 1, "description": "本回合第一次獲得的格擋翻倍。",
+        "steps": [ { "op": "ApplyStatus", "target": "Self", "amount": 1, "status": "Unmovable" } ] }
+    },
+    {
+      "id": "grapple", "type": "Attack", "rarity": "Uncommon",
+      "base": { "name": "擒拿", "cost": 1, "description": "造成 {dmg} 點傷害。本回合每當你獲得格擋,對一名敵人造成 5 點傷害。",
+        "steps": [
+          { "op": "Damage", "target": "TargetEnemy", "amount": 7 },
+          { "op": "ApplyStatus", "target": "Self", "amount": 5, "status": "Grapple" } ] },
+      "upgrade": { "name": "擒拿+", "cost": 1, "description": "造成 {dmg} 點傷害。本回合每當你獲得格擋,對一名敵人造成 7 點傷害。",
+        "steps": [
+          { "op": "Damage", "target": "TargetEnemy", "amount": 9 },
+          { "op": "ApplyStatus", "target": "Self", "amount": 7, "status": "Grapple" } ] }
+    },
+    {
+      "id": "vicious", "type": "Power", "rarity": "Uncommon",
+      "base": { "name": "兇惡", "cost": 1, "description": "每當你對敵人施加易傷,抽 1 張牌。",
+        "steps": [ { "op": "ApplyStatus", "target": "Self", "amount": 1, "status": "Vicious" } ] },
+      "upgrade": { "name": "兇惡+", "cost": 1, "description": "每當你對敵人施加易傷,抽 2 張牌。",
+        "steps": [ { "op": "ApplyStatus", "target": "Self", "amount": 2, "status": "Vicious" } ] }
+    },
+    {
+      "id": "expect_a_fight", "type": "Skill", "rarity": "Uncommon",
+      "base": { "name": "躍躍欲試", "cost": 2, "description": "手牌中每有一張攻擊牌就獲得 1 點能量。本回合不再獲得額外能量。",
+        "steps": [
+          { "op": "GainEnergy", "target": "Self", "amount": 0, "amountKind": "PerAttackInHand", "secondaryAmount": 1 },
+          { "op": "ApplyStatus", "target": "Self", "amount": 1, "status": "NoEnergyGain" } ] },
+      "upgrade": { "name": "躍躍欲試+", "cost": 1, "description": "手牌中每有一張攻擊牌就獲得 1 點能量。本回合不再獲得額外能量。",
+        "steps": [
+          { "op": "GainEnergy", "target": "Self", "amount": 0, "amountKind": "PerAttackInHand", "secondaryAmount": 1 },
+          { "op": "ApplyStatus", "target": "Self", "amount": 1, "status": "NoEnergyGain" } ] }
+    },
+    {
       "id": "cruelty", "type": "Power", "rarity": "Rare",
       "base": { "name": "殘酷", "cost": 1, "description": "你對有易傷的敵人造成的傷害額外增加 25%。",
         "steps": [ { "op": "ApplyStatus", "target": "Self", "amount": 25, "status": "Cruelty" } ] },
