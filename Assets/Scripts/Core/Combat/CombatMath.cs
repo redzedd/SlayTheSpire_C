@@ -31,6 +31,8 @@ namespace STS.Core.Combat
     {
         public const float VulnerableMultiplier = 1.5f;
         public const float WeakMultiplier = 0.75f;
+        /// <summary>巨像:易傷的攻擊者對你只造成一半傷害。</summary>
+        public const float ColossusMultiplier = 0.5f;
 
         /// <summary>
         /// 計算一次攻擊的最終傷害值(尚未扣格擋)。
@@ -39,7 +41,14 @@ namespace STS.Core.Combat
         /// <param name="attackerStrength">攻擊者力量(可為負,如衰弱效果)。</param>
         /// <param name="attackerWeak">攻擊者是否處於虛弱。</param>
         /// <param name="targetVulnerable">目標是否處於易傷。</param>
-        public static int CalculateAttackDamage(int baseDamage, int attackerStrength, bool attackerWeak, bool targetVulnerable)
+        /// <param name="vulnerableBonusPercent">
+        /// 攻擊者對易傷目標的額外加成百分比(殘酷)。只在目標易傷時生效,直接加在 1.5 倍上。
+        /// </param>
+        /// <param name="halveFromVulnerableAttacker">
+        /// 受擊方減半(巨像):攻擊者自己處於易傷時,這次傷害砍半。由呼叫端判定條件是否成立。
+        /// </param>
+        public static int CalculateAttackDamage(int baseDamage, int attackerStrength, bool attackerWeak,
+            bool targetVulnerable, int vulnerableBonusPercent = 0, bool halveFromVulnerableAttacker = false)
         {
             float damage = baseDamage + attackerStrength;
             if (attackerWeak)
@@ -48,7 +57,11 @@ namespace STS.Core.Combat
             }
             if (targetVulnerable)
             {
-                damage *= VulnerableMultiplier;
+                damage *= VulnerableMultiplier + vulnerableBonusPercent / 100f;
+            }
+            if (halveFromVulnerableAttacker)
+            {
+                damage *= ColossusMultiplier;
             }
             int result = (int)System.Math.Floor(damage);
             return result < 0 ? 0 : result;

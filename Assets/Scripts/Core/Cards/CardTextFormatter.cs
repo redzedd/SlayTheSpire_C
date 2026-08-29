@@ -56,11 +56,13 @@ namespace STS.Core.Cards
                     baseAmount = step.Amount + step.SecondaryAmount * count;
                 }
                 // 與 CombatEngine.DealAttackDamage 同一條公式,預覽才不會跟結算對不上
+                // 殘酷也要進預覽,否則卡面又會比實際打的少(這條規則已經付過兩次代價)
                 return CombatMath.CalculateAttackDamage(
                     baseAmount,
                     strength,
                     player.GetStatus(StatusId.Weak) > 0,
-                    target != null && target.GetStatus(StatusId.Vulnerable) > 0);
+                    target != null && target.GetStatus(StatusId.Vulnerable) > 0,
+                    player.GetStatus(StatusId.Cruelty));
             }
             return 0;
         }

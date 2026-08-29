@@ -927,6 +927,65 @@ namespace STS.Core.Tests
         }
 
         [Test]
+        public void 殘酷_只對易傷目標加成_且卡面同步()
+        {
+            var 殘酷 = 能力("cruel", "殘酷", StatusId.Cruelty, 25);
+            // 用 0 費的上易傷牌而不是痛擊:一回合只有 3 能量,痛擊要 2 費會爆
+            var engine = 標準引擎(new[] { "cruel", "strike", "hex", "strike", "defend" },
+                enemyHp: 200, extraDefs: new[] { 殘酷, 上易傷() });
+            engine.StartCombat();
+
+            出牌(engine, "cruel");
+            出牌(engine, "strike");   // 目標沒易傷 → 殘酷不生效,照樣 6 點
+            Assert.AreEqual(194, engine.State.Enemies[0].Hp, "沒易傷時殘酷不該加成");
+
+            出牌(engine, "hex");      // 上 3 層易傷
+
+            // 6 × (1.5 + 0.25) = 10.5 → 無條件捨去 = 10
+            var enemy = engine.State.Enemies[0];
+            int shown = int.Parse(CardTextFormatter.FormatDescription(
+                new CardDef { Id = "s", Name = "打擊", Type = CardType.Attack, Cost = 1,
+                    DescriptionTemplate = "{dmg}", Steps = 打擊().Steps },
+                engine.State.Player, enemy, engine));
+            Assert.AreEqual(10, shown, "卡面要把殘酷算進去");
+
+            出牌(engine, "strike");
+            Assert.AreEqual(184, engine.State.Enemies[0].Hp, "易傷 + 殘酷 = 10 點");
+        }
+
+        /// <summary>0 費的上易傷牌:測試裡要製造易傷又不想被能量卡住時用。</summary>
+        private static CardDef 上易傷()
+        {
+            return new CardDef
+            {
+                Id = "hex", Name = "虛弱術", Type = CardType.Skill, Rarity = CardRarity.Common, Cost = 0,
+                DescriptionTemplate = "施加 3 層易傷。",
+                Steps = new[] { new EffectStep(EffectOp.ApplyStatus, EffectTarget.TargetEnemy, 3, status: StatusId.Vulnerable) }
+            };
+        }
+
+        [Test]
+        public void 巨像_易傷的攻擊者對你只打一半()
+        {
+            var 巨像 = 技能("colossus", "巨像", StatusId.Colossus, 1);
+            // 敵人每回合打 10 點
+            var engine = 標準引擎(new[] { "colossus", "hex", "defend", "defend", "defend" },
+                enemyHp: 200, enemyAttack: 10, playerHp: 80, extraDefs: new[] { 巨像, 上易傷() });
+            engine.StartCombat();
+
+            出牌(engine, "hex");        // 敵人上易傷
+            Assert.AreEqual(10, engine.GetIntentPreview(0).Damage, "還沒放巨像,意圖是原本的 10");
+
+            出牌(engine, "colossus");   // 本回合減半
+            Assert.AreEqual(5, engine.GetIntentPreview(0).Damage, "意圖要立刻反映減半後的 5");
+
+            engine.EndPlayerTurn();
+            // 敵人易傷 + 玩家有巨像 → 10 × 0.5 = 5,再被 0 格擋吸收 → 掉 5 血
+            Assert.AreEqual(75, engine.State.Player.Hp, "易傷的攻擊者只能打一半");
+            Assert.AreEqual(0, engine.State.Player.GetStatus(StatusId.Colossus), "巨像回合結束就消失");
+        }
+
+        [Test]
         public void 餘燼_消耗抽牌堆最上面一張()
         {
             var 餘燼 = new CardDef

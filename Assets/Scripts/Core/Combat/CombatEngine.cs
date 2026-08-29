@@ -430,11 +430,14 @@ namespace STS.Core.Combat
             {
                 var step = move.Steps[i];
                 if (step.Op != EffectOp.Damage) continue;
+                // 意圖上的數字要跟真的打下來一樣:巨像的減半也得算進去
                 damage = CombatMath.CalculateAttackDamage(
                     step.Amount,
                     enemy.GetStatus(StatusId.Strength),
                     enemy.GetStatus(StatusId.Weak) > 0,
-                    State.Player.GetStatus(StatusId.Vulnerable) > 0);
+                    State.Player.GetStatus(StatusId.Vulnerable) > 0,
+                    enemy.GetStatus(StatusId.Cruelty),
+                    State.Player.GetStatus(StatusId.Colossus) > 0 && enemy.GetStatus(StatusId.Vulnerable) > 0);
                 // 敵人不會有 X 費/失血成長型招式;真的出現就顯示 0 段,由資料端修正
                 hits = step.RepeatKind != RepeatKind.Fixed ? 0 : (step.Repeat <= 1 ? 1 : step.Repeat);
                 break;
@@ -450,6 +453,7 @@ namespace STS.Core.Combat
             State.LostHpThisTurn = false;
             // 格擋在「自己回合開始」清除,不是回合結束——回合末獲得的格擋要活過敵方回合(R5)
             // 壁壘:整條清除規則失效,格擋累積不掉
+            ClearTurnStartStatuses(PlayerIndex);
             if (State.Player.Block != 0 && State.Player.GetStatus(StatusId.Barricade) <= 0)
             {
                 State.Player.Block = 0;
@@ -476,6 +480,7 @@ namespace STS.Core.Combat
                 if (!enemy.IsAlive) continue;
 
                 // 敵人格擋在牠自己行動開始時清除,與玩家同一條規則
+                ClearTurnStartStatuses(i);
                 if (enemy.Block != 0 && enemy.GetStatus(StatusId.Barricade) <= 0)
                 {
                     enemy.Block = 0;
@@ -534,6 +539,25 @@ namespace STS.Core.Combat
                     case DecayRule.RemoveAtOwnerTurnEnd:
                         ApplyStatusTo(ownerIndex, status.Id, -status.Stacks);
                         break;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 回合「開始」才移除的狀態(巨像)。與清格擋同一個時機:它們要活過對手的回合,
+        /// 在自己回合結束時清掉的話,對手打過來時早就不在了。
+        /// </summary>
+        private void ClearTurnStartStatuses(int ownerIndex)
+        {
+            var owner = GetCombatant(ownerIndex);
+            var snapshot = new List<StatusInstance>(owner.Statuses);
+            for (int i = 0; i < snapshot.Count; i++)
+            {
+                var status = snapshot[i];
+                if (status.Stacks <= 0) continue;
+                if (StatusRegistry.GetDecayRule(status.Id) == DecayRule.RemoveAtOwnerTurnStart)
+                {
+                    ApplyStatusTo(ownerIndex, status.Id, -status.Stacks);
                 }
             }
         }
@@ -639,7 +663,9 @@ namespace STS.Core.Combat
                 baseAmount,
                 source.GetStatus(StatusId.Strength),
                 source.GetStatus(StatusId.Weak) > 0,
-                target.GetStatus(StatusId.Vulnerable) > 0);
+                target.GetStatus(StatusId.Vulnerable) > 0,
+                source.GetStatus(StatusId.Cruelty),
+                target.GetStatus(StatusId.Colossus) > 0 && source.GetStatus(StatusId.Vulnerable) > 0);
             var result = CombatMath.ResolveAttack(final, target.Block, target.Hp);
             bool wasAlive = target.IsAlive;
             target.Block = result.RemainingBlock;

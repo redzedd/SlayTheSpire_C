@@ -456,6 +456,24 @@
     },
 
     {
+      "id": "cruelty", "type": "Power", "rarity": "Rare",
+      "base": { "name": "殘酷", "cost": 1, "description": "你對有易傷的敵人造成的傷害額外增加 25%。",
+        "steps": [ { "op": "ApplyStatus", "target": "Self", "amount": 25, "status": "Cruelty" } ] },
+      "upgrade": { "name": "殘酷+", "cost": 1, "description": "你對有易傷的敵人造成的傷害額外增加 50%。",
+        "steps": [ { "op": "ApplyStatus", "target": "Self", "amount": 50, "status": "Cruelty" } ] }
+    },
+    {
+      "id": "colossus", "type": "Skill", "rarity": "Rare",
+      "base": { "name": "巨像", "cost": 1, "description": "獲得 {blk} 點格擋。本回合有易傷的敵人對你造成的傷害減半。",
+        "steps": [
+          { "op": "Block", "target": "Self", "amount": 5 },
+          { "op": "ApplyStatus", "target": "Self", "amount": 1, "status": "Colossus" } ] },
+      "upgrade": { "name": "巨像+", "cost": 1, "description": "獲得 {blk} 點格擋。本回合有易傷的敵人對你造成的傷害減半。",
+        "steps": [
+          { "op": "Block", "target": "Self", "amount": 8 },
+          { "op": "ApplyStatus", "target": "Self", "amount": 1, "status": "Colossus" } ] }
+    },
+    {
       "id": "dismantle", "type": "Attack", "rarity": "Uncommon",
       "base": { "name": "拆卸", "cost": 1, "description": "造成 {dmg} 點傷害。若目標有易傷,則再打一次。",
         "steps": [

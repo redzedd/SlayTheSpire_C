@@ -53,6 +53,10 @@
     { "id": "Corruption", "name": "腐化",
       "description": "技能牌費用為 0,但打出後一律消耗。" },
     { "id": "NextAttackDoubled", "name": "連環",
-      "description": "接下來 {n} 張攻擊牌會額外生效一次。" }
+      "description": "接下來 {n} 張攻擊牌會額外生效一次。" },
+    { "id": "Cruelty", "name": "殘酷",
+      "description": "你對有易傷的敵人造成的傷害額外增加 {n}%。" },
+    { "id": "Colossus", "name": "巨像",
+      "description": "本回合有易傷的攻擊者對你造成的傷害減半。" }
   ]
 }

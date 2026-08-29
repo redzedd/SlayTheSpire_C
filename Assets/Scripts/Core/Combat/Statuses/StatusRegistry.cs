@@ -7,7 +7,12 @@ namespace STS.Core.Combat.Statuses
         /// <summary>擁有者回合結束 -1(虛弱/易傷/脆弱);同回合剛施加者首次跳過。</summary>
         DecrementAtOwnerTurnEnd,
         /// <summary>擁有者回合結束整個移除(NoDraw)。</summary>
-        RemoveAtOwnerTurnEnd
+        RemoveAtOwnerTurnEnd,
+        /// <summary>
+        /// 擁有者「下一個回合開始」才整個移除,與格擋同一個生命週期(巨像)。
+        /// 要擋對手回合的攻擊,就不能在自己回合結束時就消失。
+        /// </summary>
+        RemoveAtOwnerTurnStart
     }
 
     /// <summary>
@@ -27,6 +32,8 @@ namespace STS.Core.Combat.Statuses
                 case StatusId.NoDraw:
                 case StatusId.Rage:
                     return DecayRule.RemoveAtOwnerTurnEnd;
+                case StatusId.Colossus:
+                    return DecayRule.RemoveAtOwnerTurnStart;
                 default:
                     return DecayRule.None;
             }

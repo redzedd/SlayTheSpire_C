@@ -46,6 +46,10 @@ namespace STS.Core.Combat.Statuses
         /// <summary>腐化:技能牌費用為 0,但打出後一律消耗。</summary>
         Corruption,
         /// <summary>連環拳:接下來等同層數的攻擊牌會額外生效一次,每打出一張消耗一層。</summary>
-        NextAttackDoubled
+        NextAttackDoubled,
+        /// <summary>殘酷:你對「有易傷的敵人」造成的傷害額外增加等同層數的百分比。</summary>
+        Cruelty,
+        /// <summary>巨像:本回合「有易傷的攻擊者」對你造成的傷害減半(回合結束移除)。</summary>
+        Colossus
     }
 }
