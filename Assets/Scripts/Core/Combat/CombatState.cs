@@ -14,6 +14,22 @@ namespace STS.Core.Combat
         Defeat
     }
 
+    /// <summary>選卡中斷時,玩家要從哪一堆牌裡挑。</summary>
+    public enum ChoiceSource
+    {
+        Hand,
+        Discard
+    }
+
+    /// <summary>選完之後對那幾張牌做什麼。</summary>
+    public enum ChoiceAction
+    {
+        Exhaust,
+        /// <summary>本場戰鬥內升級(不影響 run 卡組)。</summary>
+        UpgradeForCombat,
+        MoveToDrawTop
+    }
+
     /// <summary>戰鬥的全部可變狀態。純資料聚合,禁止藏引擎邏輯或 UI 參照。</summary>
     public sealed class CombatState
     {
@@ -48,5 +64,15 @@ namespace STS.Core.Combat
         /// 直接改它會把加成帶進下一場戰鬥。
         /// </summary>
         public readonly Dictionary<int, int> CardDamageBonus = new Dictionary<int, int>();
+        /// <summary>
+        /// 本場戰鬥中被臨時升級的卡(key = CardInstance.InstanceId,武裝)。
+        /// 同樣不能寫進 CardInstance.Upgraded——戰鬥用的就是 run 卡組那批物件,
+        /// 寫下去會變成永久升級。
+        /// </summary>
+        public readonly HashSet<int> UpgradedInCombat = new HashSet<int>();
+
+        /// <summary>選卡中斷時,要從哪個牌堆選、選完要做什麼(UI 據此決定怎麼呈現)。</summary>
+        public ChoiceSource PendingChoiceSource;
+        public ChoiceAction PendingChoiceAction;
     }
 }

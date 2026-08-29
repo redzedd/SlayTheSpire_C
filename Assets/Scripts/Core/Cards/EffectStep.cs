@@ -15,6 +15,12 @@ namespace STS.Core.Cards
         AddCardToPile,
         ExhaustRandomFromHand,
         ChooseExhaustFromHand,
+        /// <summary>從手牌選 Amount 張,在本場戰鬥內升級它們(武裝型)。</summary>
+        ChooseUpgradeInHand,
+        /// <summary>把手上每一張能升的牌都在本場戰鬥內升級(武裝+型)。</summary>
+        UpgradeAllInHand,
+        /// <summary>從棄牌堆選 Amount 張放到抽牌堆頂(頭槌型)。</summary>
+        ChooseFromDiscardToDrawTop,
         /// <summary>消耗抽牌堆最上面 Amount 張(餘燼型)。</summary>
         ExhaustTopOfDraw,
         /// <summary>消耗整手牌(惡魔之焰型);消耗張數記進 LastExhaustedCount 供後續步驟取用。</summary>

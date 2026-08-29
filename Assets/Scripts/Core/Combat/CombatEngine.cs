@@ -148,7 +148,7 @@ namespace STS.Core.Combat
                 reason = "手牌索引無效";
                 return false;
             }
-            var def = _db.GetCard(State.Hand[handIndex].ResolvedCardId);
+            var def = GetCardDef(State.Hand[handIndex]);
             if (def.Unplayable)
             {
                 reason = "此卡不可打出";
@@ -183,7 +183,7 @@ namespace STS.Core.Combat
                 throw new InvalidOperationException("無法出牌:" + reason);
             }
             var card = State.Hand[handIndex];
-            var def = _db.GetCard(card.ResolvedCardId);
+            var def = GetCardDef(card);
 
             int cost = def.CostIsX ? State.Energy : GetCardCost(def);
             _xEnergySpent = def.CostIsX ? State.Energy : 0;
@@ -216,33 +216,34 @@ namespace STS.Core.Combat
             FinishCardPlay();
         }
 
-        /// <summary>AwaitingChoice 時由 UI 回填選擇的手牌索引(消耗它們),續跑剩餘效果。</summary>
-        public void ResolveChoice(int[] handIndices)
+        /// <summary>
+        /// AwaitingChoice 時由 UI 回填選好的索引,續跑剩餘效果。
+        /// 索引是對 PendingChoiceSource 指定的那一堆牌而言(手牌或棄牌堆),
+        /// 動作由 PendingChoiceAction 決定。
+        /// </summary>
+        public void ResolveChoice(int[] chosenIndices)
         {
             if (State.Phase != CombatPhase.AwaitingChoice)
             {
                 throw new InvalidOperationException("目前沒有待回填的選擇");
             }
-            if (handIndices == null || handIndices.Length != State.PendingChoiceCount)
+            if (chosenIndices == null || chosenIndices.Length != State.PendingChoiceCount)
             {
-                throw new InvalidOperationException($"必須恰好選擇 {State.PendingChoiceCount} 張手牌");
+                throw new InvalidOperationException($"必須恰好選擇 {State.PendingChoiceCount} 張牌");
             }
-            var sorted = new List<int>(handIndices);
+            var pile = State.PendingChoiceSource == ChoiceSource.Discard ? State.DiscardPile : State.Hand;
+            var sorted = new List<int>(chosenIndices);
             sorted.Sort();
             for (int i = 1; i < sorted.Count; i++)
             {
-                if (sorted[i] == sorted[i - 1]) throw new InvalidOperationException("選擇的手牌索引重複");
+                if (sorted[i] == sorted[i - 1]) throw new InvalidOperationException("選擇的索引重複");
             }
-            if (sorted.Count > 0 && (sorted[0] < 0 || sorted[sorted.Count - 1] >= State.Hand.Count))
+            if (sorted.Count > 0 && (sorted[0] < 0 || sorted[sorted.Count - 1] >= pile.Count))
             {
-                throw new InvalidOperationException("選擇的手牌索引無效");
+                throw new InvalidOperationException("選擇的索引無效");
             }
-            for (int i = sorted.Count - 1; i >= 0; i--)
-            {
-                var card = State.Hand[sorted[i]];
-                State.Hand.RemoveAt(sorted[i]);
-                ExhaustCard(card);
-            }
+
+            ApplyChoiceDirect(State.PendingChoiceSource, State.PendingChoiceAction, sorted.ToArray());
 
             State.PendingChoiceCount = 0;
             State.Phase = CombatPhase.PlayerTurn;
@@ -300,7 +301,7 @@ namespace STS.Core.Combat
             var handSnapshot = new List<CardInstance>(State.Hand);
             for (int i = 0; i < handSnapshot.Count; i++)
             {
-                var def = _db.GetCard(handSnapshot[i].ResolvedCardId);
+                var def = GetCardDef(handSnapshot[i]);
                 if (def.TurnEndInHandSteps.Length > 0)
                 {
                     EffectResolver.Resolve(this, def.TurnEndInHandSteps, PlayerIndex, -1);
@@ -317,7 +318,7 @@ namespace STS.Core.Combat
             for (int i = State.Hand.Count - 1; i >= 0; i--)
             {
                 var card = State.Hand[i];
-                var def = _db.GetCard(card.ResolvedCardId);
+                var def = GetCardDef(card);
                 State.Hand.RemoveAt(i);
                 if (def.Ethereal)
                 {
@@ -338,10 +339,72 @@ namespace STS.Core.Combat
             }
         }
 
-        /// <summary>純查詢:取卡牌實體對應的定義(UI 顯示用)。</summary>
+        /// <summary>
+        /// 取卡牌實體對應的定義。**戰鬥內所有查定義的地方都必須走這裡**——
+        /// 武裝的臨時升級只記在 CombatState,繞過去直接讀 ResolvedCardId 就會看不到它。
+        /// </summary>
         public CardDef GetCardDef(CardInstance card)
         {
+            if (!card.Upgraded && State.UpgradedInCombat.Contains(card.InstanceId)
+                && _db.TryGetCard(card.CardId + "+", out var upgraded))
+            {
+                return upgraded;
+            }
             return _db.GetCard(card.ResolvedCardId);
+        }
+
+        /// <summary>
+        /// 對指定牌堆的這幾個索引套用選卡動作。玩家手動選完與自動打出時的自動挑選都走這裡,
+        /// 兩條路徑共用同一份實作才不會各做各的。
+        /// indices 必須已排序且不重複。
+        /// </summary>
+        internal void ApplyChoiceDirect(ChoiceSource source, ChoiceAction action, int[] indices)
+        {
+            var pile = source == ChoiceSource.Discard ? State.DiscardPile : State.Hand;
+            // 由後往前處理:動作會從牌堆移除元素,由前往後會讓後面的索引整個位移
+            for (int i = indices.Length - 1; i >= 0; i--)
+            {
+                int index = indices[i];
+                if (index < 0 || index >= pile.Count) continue;
+                var card = pile[index];
+                switch (action)
+                {
+                    case ChoiceAction.UpgradeForCombat:
+                        UpgradeCardForCombat(card);   // 留在原地,只是變強
+                        break;
+                    case ChoiceAction.MoveToDrawTop:
+                        pile.RemoveAt(index);
+                        State.DrawPile.Add(card);     // 尾端即堆頂
+                        Emit(new CombatEvent(EventKind.CardAddedToPile, amount: (int)PileType.Draw,
+                            cardId: card.CardId, cardInstanceId: card.InstanceId));
+                        break;
+                    default:
+                        pile.RemoveAt(index);
+                        ExhaustCard(card);
+                        break;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 在本場戰鬥內升級一張牌(武裝)。已經升級過、或這張卡根本沒有升級版(狀態卡)就安靜跳過。
+        /// 只記在 CombatState:戰鬥用的是 run 卡組那批 CardInstance,寫進去會變成永久升級。
+        /// </summary>
+        internal void UpgradeCardForCombat(CardInstance card)
+        {
+            if (card.Upgraded || State.UpgradedInCombat.Contains(card.InstanceId)) return;
+            if (!_db.TryGetCard(card.CardId + "+", out _)) return;
+            State.UpgradedInCombat.Add(card.InstanceId);
+            Emit(new CombatEvent(EventKind.CardUpgraded, cardId: card.CardId, cardInstanceId: card.InstanceId));
+        }
+
+        /// <summary>把手上每一張能升的牌都升級(武裝+)。</summary>
+        internal void UpgradeAllInHandForCombat()
+        {
+            for (int i = 0; i < State.Hand.Count; i++)
+            {
+                UpgradeCardForCombat(State.Hand[i]);
+            }
         }
 
         /// <summary>意圖預覽(純查詢):傷害含雙方力量/虛弱/易傷即時重算。</summary>
@@ -689,7 +752,7 @@ namespace STS.Core.Combat
             int count = 0;
             for (int i = 0; i < pile.Count; i++)
             {
-                var def = _db.GetCard(pile[i].ResolvedCardId);
+                var def = GetCardDef(pile[i]);
                 if (def.Name != null && def.Name.Contains(fragment)) count++;
             }
             return count;
@@ -908,7 +971,7 @@ namespace STS.Core.Combat
             for (int i = State.Hand.Count - 1; i >= 0; i--)
             {
                 var card = State.Hand[i];
-                if (nonAttacksOnly && _db.GetCard(card.ResolvedCardId).Type == CardType.Attack) continue;
+                if (nonAttacksOnly && GetCardDef(card).Type == CardType.Attack) continue;
                 State.Hand.RemoveAt(i);
                 taken.Add(card);
             }
@@ -940,7 +1003,7 @@ namespace STS.Core.Combat
                     int top = State.DrawPile.Count - 1;
                     var card = State.DrawPile[top];
                     State.DrawPile.RemoveAt(top);
-                    var def = _db.GetCard(card.ResolvedCardId);
+                    var def = GetCardDef(card);
 
                     Emit(new CombatEvent(EventKind.CardPlayed, sourceIndex: PlayerIndex,
                         cardId: card.CardId, cardInstanceId: card.InstanceId));
@@ -1002,13 +1065,13 @@ namespace STS.Core.Combat
             var candidates = new List<int>(State.Hand.Count);
             for (int i = 0; i < State.Hand.Count; i++)
             {
-                if (_db.GetCard(State.Hand[i].ResolvedCardId).Type == CardType.Attack) candidates.Add(i);
+                if (GetCardDef(State.Hand[i]).Type == CardType.Attack) candidates.Add(i);
             }
             if (candidates.Count == 0) return 0;
 
             int handIndex = candidates[_rng.CombatMisc.NextInt(candidates.Count)];
             var eaten = State.Hand[handIndex];
-            var eatenDef = _db.GetCard(eaten.ResolvedCardId);
+            var eatenDef = GetCardDef(eaten);
             State.Hand.RemoveAt(handIndex);
             ExhaustCard(eaten);
 
@@ -1058,7 +1121,7 @@ namespace STS.Core.Combat
                 DrawCards(1);
                 if (State.Hand.Count == before) return;   // 抽不動了(牌堆空/手牌滿/禁抽)
                 var drawn = State.Hand[State.Hand.Count - 1];
-                if (_db.GetCard(drawn.ResolvedCardId).Type != CardType.Attack) return;
+                if (GetCardDef(drawn).Type != CardType.Attack) return;
             }
         }
 
@@ -1076,7 +1139,9 @@ namespace STS.Core.Combat
         }
 
         internal void RequestChoice(EffectStep[] steps, int resumeIndex, int sourceIndex, int targetIndex, int count,
-            bool ignoreModifiers = false)
+            bool ignoreModifiers = false,
+            ChoiceSource choiceSource = ChoiceSource.Hand,
+            ChoiceAction choiceAction = ChoiceAction.Exhaust)
         {
             _pendingSteps = steps;
             _pendingResumeIndex = resumeIndex;
@@ -1084,6 +1149,8 @@ namespace STS.Core.Combat
             _pendingTargetIndex = targetIndex;
             _pendingIgnoreModifiers = ignoreModifiers;
             State.PendingChoiceCount = count;
+            State.PendingChoiceSource = choiceSource;
+            State.PendingChoiceAction = choiceAction;
             State.Phase = CombatPhase.AwaitingChoice;
             Emit(new CombatEvent(EventKind.ChoiceRequired, amount: count));
         }

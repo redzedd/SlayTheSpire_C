@@ -18,6 +18,7 @@ namespace STS.Core.Tests
         public readonly Dictionary<string, PotionDef> Potions = new Dictionary<string, PotionDef>();
 
         public CardDef GetCard(string cardId) => Cards[cardId];
+        public bool TryGetCard(string cardId, out CardDef def) => Cards.TryGetValue(cardId, out def);
         public EnemyDef GetEnemy(string enemyId) => Enemies[enemyId];
         public PotionDef GetPotion(string potionId) => Potions[potionId];
     }

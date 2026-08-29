@@ -517,6 +517,28 @@
         "steps": [ { "op": "ApplyStatus", "target": "Self", "amount": 1, "status": "Corruption" } ] }
     },
     {
+      "id": "armaments", "type": "Skill", "rarity": "Common",
+      "base": { "name": "武裝", "cost": 1, "description": "獲得 {blk} 點格擋。升級手牌中的一張牌(限本場戰鬥)。",
+        "steps": [
+          { "op": "Block", "target": "Self", "amount": 5 },
+          { "op": "ChooseUpgradeInHand", "target": "Self", "amount": 1 } ] },
+      "upgrade": { "name": "武裝+", "cost": 1, "description": "獲得 {blk} 點格擋。升級手牌中的所有牌(限本場戰鬥)。",
+        "steps": [
+          { "op": "Block", "target": "Self", "amount": 5 },
+          { "op": "UpgradeAllInHand", "target": "Self" } ] }
+    },
+    {
+      "id": "headbutt", "type": "Attack", "rarity": "Common",
+      "base": { "name": "頭槌", "cost": 1, "description": "造成 {dmg} 點傷害。將棄牌堆中的一張牌放到抽牌堆頂。",
+        "steps": [
+          { "op": "Damage", "target": "TargetEnemy", "amount": 9 },
+          { "op": "ChooseFromDiscardToDrawTop", "target": "Self", "amount": 1 } ] },
+      "upgrade": { "name": "頭槌+", "cost": 1, "description": "造成 {dmg} 點傷害。將棄牌堆中的一張牌放到抽牌堆頂。",
+        "steps": [
+          { "op": "Damage", "target": "TargetEnemy", "amount": 12 },
+          { "op": "ChooseFromDiscardToDrawTop", "target": "Self", "amount": 1 } ] }
+    },
+    {
       "id": "havoc", "type": "Skill", "rarity": "Common",
       "base": { "name": "破滅", "cost": 1, "description": "打出抽牌堆頂部的牌,然後消耗它。",
         "steps": [ { "op": "PlayTopOfDraw", "target": "Self", "amount": 1, "pile": "Exhaust" } ] },

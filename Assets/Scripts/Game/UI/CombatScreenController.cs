@@ -34,6 +34,8 @@ namespace STS.Game.UI
         public bool IsChoiceMode { get; private set; }
         private readonly List<int> _choiceSelected = new List<int>();
         private int _choiceRequired;
+        /// <summary>從棄牌堆挑牌時開著的卡片網格;送出後要收掉,不然會留在畫面上。</summary>
+        private DeckViewOverlay _discardPicker;
         private TextMeshProUGUI _choiceHint;
         private Button _endTurnButton;
         private TextMeshProUGUI _drawPileLabel;
@@ -239,10 +241,59 @@ namespace STS.Game.UI
             IsChoiceMode = true;
             _choiceRequired = _engine.State.PendingChoiceCount;
             _choiceSelected.Clear();
+
+            if (_engine.State.PendingChoiceSource == ChoiceSource.Discard)
+            {
+                // 棄牌堆的牌不在畫面上,點不到——改開卡片網格讓玩家挑
+                OpenDiscardPicker();
+                return;
+            }
             _choiceHint.gameObject.SetActive(true);
             RefreshChoiceHint();
             _hand.ClearSelections();
             _hand.SetInteractable(true);   // 手牌要能點,但拖曳出牌由 CardView 擋掉
+        }
+
+        /// <summary>選卡動作的動詞,提示文字與煙霧回報都用它。</summary>
+        private string 選卡動詞
+        {
+            get
+            {
+                switch (_engine.State.PendingChoiceAction)
+                {
+                    case ChoiceAction.UpgradeForCombat: return "升級";
+                    case ChoiceAction.MoveToDrawTop: return "放到抽牌堆頂";
+                    default: return "消耗";
+                }
+            }
+        }
+
+        /// <summary>從棄牌堆挑牌(頭槌型)。挑滿張數就送出;每挑一張重開一次,已挑的會被濾掉。</summary>
+        private void OpenDiscardPicker()
+        {
+            var discard = _engine.State.DiscardPile;
+            var picked = new List<int>(_choiceRequired);
+
+            void Open()
+            {
+                _discardPicker = DeckViewOverlay.Open(_overlayRoot, $"選擇 {_choiceRequired} 張要{選卡動詞}的牌",
+                    discard, card => _engine.GetCardDef(card),
+                    card => !picked.Contains(discard.IndexOf(card)),
+                    index =>
+                    {
+                        picked.Add(index);
+                        if (picked.Count < _choiceRequired)
+                        {
+                            Open();
+                            return;
+                        }
+                        ExitChoiceMode();
+                        SubmitChoice(picked.ToArray());
+                    },
+                    _engine.State.Player);
+            }
+
+            Open();
         }
 
         public void ToggleChoiceSelection(int handIndex)
@@ -266,7 +317,7 @@ namespace STS.Game.UI
 
         private void RefreshChoiceHint()
         {
-            _choiceHint.text = $"點選 {_choiceRequired} 張要消耗的手牌({_choiceSelected.Count}/{_choiceRequired})";
+            _choiceHint.text = $"點選 {_choiceRequired} 張要{選卡動詞}的手牌({_choiceSelected.Count}/{_choiceRequired})";
         }
 
         private void ExitChoiceMode()
@@ -274,6 +325,11 @@ namespace STS.Game.UI
             IsChoiceMode = false;
             _choiceSelected.Clear();
             _choiceHint.gameObject.SetActive(false);
+            if (_discardPicker != null)
+            {
+                Destroy(_discardPicker.gameObject);
+                _discardPicker = null;
+            }
         }
 
         /// <summary>
@@ -283,6 +339,18 @@ namespace STS.Game.UI
         public string 煙霧_選滿要消耗的牌()
         {
             if (!IsChoiceMode) return "不在選卡模式";
+            if (_engine.State.PendingChoiceSource == ChoiceSource.Discard)
+            {
+                // 棄牌堆的挑選走的是卡片網格,不是點手牌:直接挑前幾張送出
+                if (_discardPicker != null) Destroy(_discardPicker.gameObject);
+                _discardPicker = null;
+                int need = Mathf.Min(_choiceRequired, _engine.State.DiscardPile.Count);
+                var picks = new int[need];
+                for (int i = 0; i < need; i++) picks[i] = i;
+                ExitChoiceMode();
+                SubmitChoice(picks);
+                return "已從棄牌堆挑滿並送出";
+            }
             int guard = 0;
             while (IsChoiceMode && guard++ <= CombatState.HandLimit)
             {

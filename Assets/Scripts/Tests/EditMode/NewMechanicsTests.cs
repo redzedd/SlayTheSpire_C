@@ -700,6 +700,117 @@ namespace STS.Core.Tests
             Assert.AreEqual(180, engine.State.Enemies[0].Hp, "失血兩次就要打三段");
         }
 
+        private static CardDef 打擊升級版()
+        {
+            return new CardDef
+            {
+                Id = "strike+", Name = "打擊+", Type = CardType.Attack, Rarity = CardRarity.Starter, Cost = 1,
+                DescriptionTemplate = "造成 {dmg} 點傷害。",
+                Steps = new[] { new EffectStep(EffectOp.Damage, EffectTarget.TargetEnemy, 9) }
+            };
+        }
+
+        private static CardDef 武裝(bool 全部 = false)
+        {
+            return new CardDef
+            {
+                Id = "arm", Name = "武裝", Type = CardType.Skill, Rarity = CardRarity.Common, Cost = 0,
+                DescriptionTemplate = "升級手牌。",
+                Steps = 全部
+                    ? new[] { new EffectStep(EffectOp.UpgradeAllInHand, EffectTarget.Self) }
+                    : new[] { new EffectStep(EffectOp.ChooseUpgradeInHand, EffectTarget.Self, 1) }
+            };
+        }
+
+        [Test]
+        public void 武裝_選一張手牌升級_該牌本場變強()
+        {
+            var engine = 標準引擎(new[] { "arm", "strike", "defend", "defend", "defend" },
+                enemyHp: 200, extraDefs: new[] { 武裝(), 打擊升級版() });
+            engine.StartCombat();
+
+            出牌(engine, "arm");
+            Assert.AreEqual(CombatPhase.AwaitingChoice, engine.State.Phase);
+            Assert.AreEqual(ChoiceSource.Hand, engine.State.PendingChoiceSource);
+            Assert.AreEqual(ChoiceAction.UpgradeForCombat, engine.State.PendingChoiceAction);
+
+            int strikeIndex = 手牌位置(engine, "strike");
+            var strikeCard = engine.State.Hand[strikeIndex];
+            engine.ResolveChoice(new[] { strikeIndex });
+
+            Assert.AreEqual("打擊+", engine.GetCardDef(strikeCard).Name, "升級後要查到 strike+ 的定義");
+            出牌(engine, "strike");
+            Assert.AreEqual(191, engine.State.Enemies[0].Hp, "升級後的打擊是 9 點,不是 6 點");
+        }
+
+        [Test]
+        public void 武裝_戰鬥內升級不會外洩到卡組()
+        {
+            var engine = 標準引擎(new[] { "arm", "strike", "defend", "defend", "defend" },
+                enemyHp: 200, extraDefs: new[] { 武裝(), 打擊升級版() });
+            engine.StartCombat();
+
+            出牌(engine, "arm");
+            int strikeIndex = 手牌位置(engine, "strike");
+            var strikeCard = engine.State.Hand[strikeIndex];
+            engine.ResolveChoice(new[] { strikeIndex });
+
+            // 戰鬥用的就是 run 卡組那批 CardInstance:升級只能記在戰鬥狀態,
+            // 寫進 CardInstance.Upgraded 會讓這張牌永久升級,下一場戰鬥還在
+            Assert.IsFalse(strikeCard.Upgraded, "CardInstance 不可以被改動");
+            Assert.IsTrue(engine.State.UpgradedInCombat.Contains(strikeCard.InstanceId));
+        }
+
+        [Test]
+        public void 武裝升級版_手上每張能升的都升()
+        {
+            var engine = 標準引擎(new[] { "arm", "strike", "strike", "defend", "defend" },
+                enemyHp: 200, extraDefs: new[] { 武裝(全部: true), 打擊升級版() });
+            engine.StartCombat();
+
+            出牌(engine, "arm");
+            Assert.AreEqual(CombatPhase.PlayerTurn, engine.State.Phase, "全體升級不需要玩家選,不該中斷");
+
+            出牌(engine, "strike");
+            Assert.AreEqual(191, engine.State.Enemies[0].Hp);
+            出牌(engine, "strike");
+            Assert.AreEqual(182, engine.State.Enemies[0].Hp, "第二張打擊也要是升級版");
+            // 防禦沒有升級版,不該讓流程炸掉
+            Assert.DoesNotThrow(() => 出牌(engine, "defend"));
+        }
+
+        [Test]
+        public void 頭槌_從棄牌堆挑一張放到抽牌堆頂()
+        {
+            var 頭槌 = new CardDef
+            {
+                Id = "headbutt", Name = "頭槌", Type = CardType.Attack, Rarity = CardRarity.Common, Cost = 0,
+                DescriptionTemplate = "造成 {dmg} 點傷害。",
+                Steps = new[]
+                {
+                    new EffectStep(EffectOp.Damage, EffectTarget.TargetEnemy, 9),
+                    new EffectStep(EffectOp.ChooseFromDiscardToDrawTop, EffectTarget.Self, 1)
+                }
+            };
+            var engine = 標準引擎(new[] { "headbutt", "strike", "defend", "defend", "defend" },
+                enemyHp: 200, extraDefs: new[] { 頭槌 });
+            engine.StartCombat();
+
+            出牌(engine, "strike");   // 先讓棄牌堆有東西可挑
+            Assert.AreEqual(1, engine.State.DiscardPile.Count);
+            var buried = engine.State.DiscardPile[0];
+
+            出牌(engine, "headbutt");
+            Assert.AreEqual(CombatPhase.AwaitingChoice, engine.State.Phase);
+            Assert.AreEqual(ChoiceSource.Discard, engine.State.PendingChoiceSource);
+
+            engine.ResolveChoice(new[] { 0 });
+            // 頭槌自己打完也會落進棄牌堆,所以不能斷言數量是 0——要看的是那張被挑走的牌走了沒
+            CollectionAssert.DoesNotContain(engine.State.DiscardPile, buried, "挑走的牌要離開棄牌堆");
+            Assert.AreSame(buried, engine.State.DrawPile[engine.State.DrawPile.Count - 1],
+                "要放在抽牌堆頂(尾端就是堆頂)");
+        }
+
         [Test]
         public void 餘燼_消耗抽牌堆最上面一張()
         {

@@ -172,17 +172,37 @@ namespace STS.Core.Combat
                         break;
                     }
 
+                    case EffectOp.UpgradeAllInHand:
+                        engine.UpgradeAllInHandForCombat();
+                        break;
+
                     case EffectOp.ChooseExhaustFromHand:
+                    case EffectOp.ChooseUpgradeInHand:
+                    case EffectOp.ChooseFromDiscardToDrawTop:
                     {
-                        if (engine.State.Hand.Count == 0) break;   // 沒得選就跳過本步,繼續後續步驟
+                        var source = step.Op == EffectOp.ChooseFromDiscardToDrawTop
+                            ? ChoiceSource.Discard
+                            : ChoiceSource.Hand;
+                        var pile = source == ChoiceSource.Discard ? engine.State.DiscardPile : engine.State.Hand;
+                        if (pile.Count == 0) break;   // 沒得選就跳過本步,繼續後續步驟
+
                         int count = step.Amount <= 0 ? 1 : step.Amount;
-                        if (count > engine.State.Hand.Count) count = engine.State.Hand.Count;
+                        if (count > pile.Count) count = pile.Count;
+
+                        var action = step.Op == EffectOp.ChooseExhaustFromHand ? ChoiceAction.Exhaust
+                            : step.Op == EffectOp.ChooseUpgradeInHand ? ChoiceAction.UpgradeForCombat
+                            : ChoiceAction.MoveToDrawTop;
+
                         if (autoPlay)
                         {
-                            engine.ExhaustRandomFromHand(count);
+                            // 自動打出的牌沒有玩家可以選:從頭挑滿張數,流程不能停在 AwaitingChoice
+                            var picks = new int[count];
+                            for (int p = 0; p < count; p++) picks[p] = p;
+                            engine.ApplyChoiceDirect(source, action, picks);
                             break;
                         }
-                        engine.RequestChoice(steps, s + 1, sourceIndex, chosenTargetIndex, count, ignoreModifiers);
+                        engine.RequestChoice(steps, s + 1, sourceIndex, chosenTargetIndex, count, ignoreModifiers,
+                            source, action);
                         return;   // 中斷:剩餘步驟由 ResolveChoice 續跑
                     }
 

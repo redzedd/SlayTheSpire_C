@@ -11,6 +11,11 @@ namespace STS.Core.Content
     public interface IContentDb
     {
         CardDef GetCard(string cardId);
+        /// <summary>
+        /// 查不到就回 false,不拋錯。用途只有一種:問「這張卡有沒有升級版」——
+        /// 狀態卡沒有 id+,武裝之類的升級效果要能安靜跳過它們。
+        /// </summary>
+        bool TryGetCard(string cardId, out CardDef def);
         EnemyDef GetEnemy(string enemyId);
         PotionDef GetPotion(string potionId);
     }

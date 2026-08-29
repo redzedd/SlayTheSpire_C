@@ -10,24 +10,35 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 864927395ecc3534e9fd9f61f33a2072, type: 3}
-  m_Name: stoke
+  m_Name: armaments
   m_EditorClassIdentifier: STS.Game::STS.Game.DataAssets.CardDataAsset
-  id: stoke
+  id: armaments
   type: 1
-  rarity: 3
+  rarity: 1
   costIsX: 0
   unplayable: 0
   exhausts: 0
   ethereal: 0
   colorless: 0
   costScaling: 0
-  baseName: "\u6DFB\u67F4"
+  baseName: "\u6B66\u88DD"
   baseCost: 1
-  baseDescription: "\u68C4\u6389\u6574\u624B\u724C,\u7136\u5F8C\u62BD\u7B49\u91CF\u7684\u724C\u3002"
+  baseDescription: "\u7372\u5F97 {blk} \u9EDE\u683C\u64CB\u3002\u5347\u7D1A\u624B\u724C\u4E2D\u7684\u4E00\u5F35\u724C(\u9650\u672C\u5834\u6230\u9B25)\u3002"
   baseSteps:
-  - op: 16
+  - op: 1
     target: 0
-    amount: 0
+    amount: 5
+    amountKind: 0
+    secondaryAmount: 0
+    repeat: 0
+    repeatKind: 0
+    status: 0
+    cardId: 
+    pile: 2
+    customId: 
+  - op: 10
+    target: 0
+    amount: 1
     amountKind: 0
     secondaryAmount: 0
     repeat: 0
@@ -38,11 +49,22 @@ MonoBehaviour:
     customId: 
   baseTurnEndSteps: []
   hasUpgrade: 1
-  upgradeName: "\u6DFB\u67F4+"
-  upgradeCost: 0
-  upgradeDescription: "\u68C4\u6389\u6574\u624B\u724C,\u7136\u5F8C\u62BD\u7B49\u91CF\u7684\u724C\u3002"
+  upgradeName: "\u6B66\u88DD+"
+  upgradeCost: 1
+  upgradeDescription: "\u7372\u5F97 {blk} \u9EDE\u683C\u64CB\u3002\u5347\u7D1A\u624B\u724C\u4E2D\u7684\u6240\u6709\u724C(\u9650\u672C\u5834\u6230\u9B25)\u3002"
   upgradeSteps:
-  - op: 16
+  - op: 1
+    target: 0
+    amount: 5
+    amountKind: 0
+    secondaryAmount: 0
+    repeat: 0
+    repeatKind: 0
+    status: 0
+    cardId: 
+    pile: 2
+    customId: 
+  - op: 11
     target: 0
     amount: 0
     amountKind: 0

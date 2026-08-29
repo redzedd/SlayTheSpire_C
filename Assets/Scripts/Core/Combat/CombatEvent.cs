@@ -21,6 +21,8 @@ namespace STS.Core.Combat
         EnemyMoveStarted,
         EnemyDied,
         CardAddedToPile,
+        /// <summary>某張牌在本場戰鬥內被臨時升級(武裝);UI 要重繪那張卡面。</summary>
+        CardUpgraded,
         ChoiceRequired,
         CombatEnded
     }

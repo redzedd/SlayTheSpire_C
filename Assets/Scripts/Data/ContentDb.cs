@@ -54,6 +54,11 @@ namespace STS.Data
             return db;
         }
 
+        public bool TryGetCard(string cardId, out CardDef def)
+        {
+            return _cards.TryGetValue(cardId, out def);
+        }
+
         public CardDef GetCard(string cardId)
         {
             if (_cards.TryGetValue(cardId, out var def)) return def;

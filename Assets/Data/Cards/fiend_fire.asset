@@ -26,7 +26,7 @@ MonoBehaviour:
   baseDescription: "\u6D88\u8017\u6574\u624B\u724C,\u6BCF\u6D88\u8017\u4E00\u5F35\u9020\u6210
     {dmg} \u9EDE\u50B7\u5BB3\u3002\u6D88\u8017\u3002"
   baseSteps:
-  - op: 11
+  - op: 14
     target: 0
     amount: 0
     amountKind: 0
@@ -55,7 +55,7 @@ MonoBehaviour:
   upgradeDescription: "\u6D88\u8017\u6574\u624B\u724C,\u6BCF\u6D88\u8017\u4E00\u5F35\u9020\u6210
     {dmg} \u9EDE\u50B7\u5BB3\u3002\u6D88\u8017\u3002"
   upgradeSteps:
-  - op: 11
+  - op: 14
     target: 0
     amount: 0
     amountKind: 0

@@ -36,7 +36,7 @@ MonoBehaviour:
     cardId: 
     pile: 2
     customId: 
-  - op: 18
+  - op: 21
     target: 1
     amount: 0
     amountKind: 0
@@ -64,7 +64,7 @@ MonoBehaviour:
     cardId: 
     pile: 2
     customId: 
-  - op: 18
+  - op: 21
     target: 1
     amount: 0
     amountKind: 0
