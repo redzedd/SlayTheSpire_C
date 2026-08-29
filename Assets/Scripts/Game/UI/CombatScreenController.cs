@@ -36,7 +36,13 @@ namespace STS.Game.UI
         private int _choiceRequired;
         /// <summary>從棄牌堆挑牌時開著的卡片網格;送出後要收掉,不然會留在畫面上。</summary>
         private DeckViewOverlay _discardPicker;
-        private TextMeshProUGUI _choiceHint;
+        /// <summary>選卡與藥水瞄準共用的模式提示(兩者互斥,不會同時開)。</summary>
+        private TextMeshProUGUI _modeHint;
+        private AimOverlay _aimOverlay;
+        /// <summary>正在瞄準的藥水格;-1 = 沒在瞄準。</summary>
+        private int _aimingPotionSlot = -1;
+        /// <summary>藥水瞄準模式:點敵人施放,點別處取消。期間手牌不能拖曳。</summary>
+        public bool IsPotionAiming => _aimingPotionSlot >= 0;
         private Button _endTurnButton;
         private TextMeshProUGUI _drawPileLabel;
         private TextMeshProUGUI _discardPileLabel;
@@ -87,10 +93,10 @@ namespace STS.Game.UI
             controller._exhaustPileLabel = controller.BuildPileButton(root, "消耗堆", new Vector2(-120f, 145f),
                 new Vector2(1f, 0f), () => controller.ShowPile("消耗堆", engine.State.ExhaustPile, false));
 
-            // 選卡模式的持續提示(消耗手牌時)
-            controller._choiceHint = UiKit.CreateText("選卡提示", root, "", 34f, new Color(1f, 0.85f, 0.4f));
-            UiKit.Place(controller._choiceHint.rectTransform, new Vector2(0f, 430f), new Vector2(900f, 48f));
-            controller._choiceHint.gameObject.SetActive(false);
+            // 模式提示(選卡消耗手牌 / 藥水瞄準)
+            controller._modeHint = UiKit.CreateText("模式提示", root, "", 34f, new Color(1f, 0.85f, 0.4f));
+            UiKit.Place(controller._modeHint.rectTransform, new Vector2(0f, 430f), new Vector2(900f, 48f));
+            controller._modeHint.gameObject.SetActive(false);
 
             // 提示文字(出牌失敗原因)
             controller._hintText = UiKit.CreateText("提示", root, "", 30f, new Color(1f, 0.55f, 0.45f));
@@ -104,6 +110,9 @@ namespace STS.Game.UI
             UiKit.Stretch(controller._overlayRoot);
             controller._overlayRoot.gameObject.AddComponent<CanvasGroup>().blocksRaycasts = true;
             controller._damagePool = DamageNumberPool.Build(controller._overlayRoot);
+            // 遮罩要比箭頭早建:兩者都會 SetAsLastSibling,箭頭後顯示才會蓋在遮罩上面
+            controller._aimOverlay = AimOverlay.Build(controller._overlayRoot,
+                controller.OnAimMove, controller.OnAimClick);
             controller._arrow = TargetArrowView.Build(controller._overlayRoot);
             controller._pileOverlay = PileListOverlay.Build(controller._overlayRoot);
             controller._tooltip = game.Tooltip;   // 全域提示框(所有畫面共用)
@@ -248,7 +257,7 @@ namespace STS.Game.UI
                 OpenDiscardPicker();
                 return;
             }
-            _choiceHint.gameObject.SetActive(true);
+            _modeHint.gameObject.SetActive(true);
             RefreshChoiceHint();
             _hand.ClearSelections();
             _hand.SetInteractable(true);   // 手牌要能點,但拖曳出牌由 CardView 擋掉
@@ -317,14 +326,14 @@ namespace STS.Game.UI
 
         private void RefreshChoiceHint()
         {
-            _choiceHint.text = $"點選 {_choiceRequired} 張要{選卡動詞}的手牌({_choiceSelected.Count}/{_choiceRequired})";
+            _modeHint.text = $"點選 {_choiceRequired} 張要{選卡動詞}的手牌({_choiceSelected.Count}/{_choiceRequired})";
         }
 
         private void ExitChoiceMode()
         {
             IsChoiceMode = false;
             _choiceSelected.Clear();
-            _choiceHint.gameObject.SetActive(false);
+            _modeHint.gameObject.SetActive(false);
             if (_discardPicker != null)
             {
                 Destroy(_discardPicker.gameObject);
@@ -372,24 +381,109 @@ namespace STS.Game.UI
             StartPlayback();
         }
 
+        // ---- 藥水:需要目標的先進瞄準模式,點敵人才丟出去 ----
+
         private void OnPotionClicked(int slot)
         {
-            if (!InputEnabled) return;
+            // 瞄準中整個畫面被遮罩蓋住,藥水鈕收不到點擊——這裡只是防禦
+            if (!InputEnabled || IsChoiceMode || IsPotionAiming) return;
             var potionId = _engine.State.PotionSlots[slot];
             if (potionId == null) return;
-            int target = -1;
-            var def = _game.Db.GetPotion(potionId);
-            if (def.NeedsTarget)
+            if (_game.Db.GetPotion(potionId).NeedsTarget)
             {
-                // 佔位 UX:需目標藥水直接丟第一個活敵;M6 之後換成點選目標
-                for (int i = 0; i < _engine.State.Enemies.Count; i++)
-                {
-                    if (_engine.State.Enemies[i].IsAlive) { target = i; break; }
-                }
-                if (target < 0) return;
+                BeginPotionAim(slot);
+                return;
             }
-            _engine.UsePotion(slot, target);
+            _engine.UsePotion(slot, -1);
             StartPlayback();
+        }
+
+        /// <summary>開始瞄準:箭頭從那格藥水拉出來,點到敵人才真的使用。</summary>
+        public void BeginPotionAim(int slot)
+        {
+            if (!InputEnabled || IsChoiceMode) return;
+            var potionId = _engine.State.PotionSlots[slot];
+            if (potionId == null) return;
+            if (!AnyLivingEnemy())
+            {
+                Flash("沒有可以指定的敵人");
+                return;
+            }
+            _aimingPotionSlot = slot;
+            _topBar.SetPotionAiming(slot, true);
+            _modeHint.gameObject.SetActive(true);
+            _modeHint.text = $"選擇「{_game.Db.GetPotion(potionId).Name}」的目標(點別處取消)";
+            _aimOverlay.Show();
+            _arrow.Show();
+            // 一開就把箭頭拉到游標,不要先閃一團堆在藥水格上的節點
+            bool hasCursor = AimOverlay.TryGetCursor(out var cursor);
+            UpdateAimArrow(cursor, hasCursor);
+        }
+
+        /// <summary>
+        /// 確認瞄準:對指定的敵人使用。
+        /// 與點擊路徑分開,是為了讓自動化(煙霧/驗證)能走同一條指令路徑而不必偽造滑鼠事件。
+        /// </summary>
+        public string ConfirmPotionAim(int enemyIndex)
+        {
+            if (!IsPotionAiming) return "不在藥水瞄準模式";
+            if (enemyIndex < 0 || enemyIndex >= _engine.State.Enemies.Count
+                || !_engine.State.Enemies[enemyIndex].IsAlive)
+            {
+                return "目標無效";
+            }
+            int slot = _aimingPotionSlot;
+            string potionName = _game.Db.GetPotion(_engine.State.PotionSlots[slot]).Name;
+            CancelPotionAim();
+            _engine.UsePotion(slot, enemyIndex);
+            StartPlayback();
+            return $"已使用 {potionName}(目標敵{enemyIndex})";
+        }
+
+        public void CancelPotionAim()
+        {
+            if (!IsPotionAiming) return;
+            _topBar.SetPotionAiming(_aimingPotionSlot, false);
+            _aimingPotionSlot = -1;
+            _modeHint.gameObject.SetActive(false);
+            _aimOverlay.Hide();
+            _arrow.Hide();
+        }
+
+        private void OnAimMove(Vector2 cursorScreen)
+        {
+            if (!IsPotionAiming) return;
+            UpdateAimArrow(cursorScreen, true);
+        }
+
+        private void OnAimClick(PointerEventData eventData)
+        {
+            if (!IsPotionAiming) return;
+            int enemyIndex = RaycastEnemyIndex(eventData);
+            if (enemyIndex < 0 || !_engine.State.Enemies[enemyIndex].IsAlive)
+            {
+                CancelPotionAim();   // 沒點在活著的敵人身上 = 取消,不當錯誤
+                return;
+            }
+            ConfirmPotionAim(enemyIndex);
+        }
+
+        /// <summary>箭頭從藥水格拉到游標;還沒收到指標位置時先指向自己,避免出現一條指到畫面角落的線。</summary>
+        private void UpdateAimArrow(Vector2 cursorScreen, bool hasCursor)
+        {
+            var chip = _topBar.GetPotionChip(_aimingPotionSlot);
+            if (chip == null) return;
+            var origin = chip.TransformPoint(new Vector3(0f, -chip.rect.height * 0.5f, 0f));
+            _arrow.UpdateCurve(origin, hasCursor ? cursorScreen : (Vector2)origin);
+        }
+
+        private bool AnyLivingEnemy()
+        {
+            for (int i = 0; i < _engine.State.Enemies.Count; i++)
+            {
+                if (_engine.State.Enemies[i].IsAlive) return true;
+            }
+            return false;
         }
 
         /// <summary>verify 煙霧測試入口:走與拖曳出牌相同的指令路徑,出第一張可出的牌。</summary>
@@ -423,6 +517,7 @@ namespace STS.Game.UI
 
         private void StartPlayback()
         {
+            CancelPotionAim();   // 任何路徑開始播放都先收掉瞄準,箭頭不會留在畫面上
             StartCoroutine(PlaybackRoutine());
         }
 

@@ -196,7 +196,9 @@ namespace STS.Game.UI
 
         public void OnBeginDrag(PointerEventData eventData)
         {
-            if (_leaving || !_controller.InputEnabled || _controller.IsChoiceMode) return;   // 選卡模式只接受點擊
+            // 選卡模式只接受點擊;藥水瞄準中整個畫面被遮罩接管,手牌不該同時被拖走
+            if (_leaving || !_controller.InputEnabled || _controller.IsChoiceMode
+                || _controller.IsPotionAiming) return;
             _dragging = true;
             _background.raycastTarget = false;   // 拖曳中讓射線穿過卡,才能點到敵人
             _rect.DOKill();

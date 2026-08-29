@@ -13,7 +13,12 @@ namespace STS.Game.UI
     public sealed class TopBarView : MonoBehaviour
     {
         private const float 高度 = 76f;
+        private static readonly Color 有藥水色 = new Color(0.42f, 0.28f, 0.6f);
+        private static readonly Color 瞄準中色 = new Color(0.78f, 0.6f, 0.95f);
 
+        /// <summary>每一格的色塊(瞄準時當箭頭起點、也要標亮);空格與超出範圍都是 null。</summary>
+        private readonly System.Collections.Generic.List<Image> _potionChips =
+            new System.Collections.Generic.List<Image>();
         private GameController _game;
         private CombatEngine _engine;
         private TextMeshProUGUI _hpText;
@@ -79,12 +84,27 @@ namespace STS.Game.UI
             RebuildPotions();
         }
 
+        /// <summary>該格的色塊;空格或超出範圍回 null(瞄準箭頭的起點與高亮都靠它)。</summary>
+        public RectTransform GetPotionChip(int slot)
+        {
+            if (slot < 0 || slot >= _potionChips.Count || _potionChips[slot] == null) return null;
+            return _potionChips[slot].rectTransform;
+        }
+
+        /// <summary>把正在瞄準的那瓶標亮,讓玩家知道等一下丟出去的是哪一瓶。</summary>
+        public void SetPotionAiming(int slot, bool aiming)
+        {
+            if (slot < 0 || slot >= _potionChips.Count || _potionChips[slot] == null) return;
+            _potionChips[slot].color = aiming ? 瞄準中色 : 有藥水色;
+        }
+
         private void RebuildPotions()
         {
             foreach (Transform child in _potionRow)
             {
                 Destroy(child.gameObject);
             }
+            _potionChips.Clear();
             var slots = _engine.State.PotionSlots;
             int shown = Mathf.Max(slots.Count, 3);
             for (int i = 0; i < shown; i++)
@@ -93,9 +113,10 @@ namespace STS.Game.UI
                 string potionId = i < slots.Count ? slots[i] : null;
                 bool filled = potionId != null;
                 var chip = UiKit.CreatePanel($"藥水格{i}", _potionRow,
-                    filled ? new Color(0.42f, 0.28f, 0.6f) : new Color(0.2f, 0.2f, 0.24f, 0.8f));
+                    filled ? 有藥水色 : new Color(0.2f, 0.2f, 0.24f, 0.8f));
                 UiKit.Place(chip.rectTransform, new Vector2(i * 128f, 0f), new Vector2(120f, 50f),
                     new Vector2(0f, 0.5f), new Vector2(0f, 0.5f));
+                _potionChips.Add(filled ? chip : null);
                 if (!filled) continue;
 
                 var def = _game.Db.GetPotion(potionId);
