@@ -57,9 +57,9 @@ namespace STS.Core.Combat.Statuses
         /// 覆甲不跳。
         /// </summary>
         Plating,
-        /// <summary>岿然不動:本回合第一次獲得格擋時,該次格擋翻倍。</summary>
+        /// <summary>堅定不移:每回合第一次「由卡牌」獲得格擋時,該次格擋翻倍。</summary>
         Unmovable,
-        /// <summary>擒拿:本回合每當你獲得格擋,對隨機敵人造成等同層數的傷害(回合結束移除)。</summary>
+        /// <summary>擒拿:掛在被擒的敵人身上,玩家每獲得一次格擋就對牠造成等同層數的傷害(該敵回合開始時移除)。</summary>
         Grapple,
         /// <summary>兇惡:每當你對敵人施加易傷,抽等同層數的牌。</summary>
         Vicious,

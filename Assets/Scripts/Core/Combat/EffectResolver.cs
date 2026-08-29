@@ -20,14 +20,18 @@ namespace STS.Core.Combat
         /// 選卡型步驟改成隨機消耗,不能把流程停在 AwaitingChoice——自動打出的迴圈還在跑,
         /// 停下來會讓剩下的牌永遠打不完。
         /// </param>
+        /// <param name="blockSource">
+        /// 這批步驟給的格擋算誰給的。同一條結算路上跑著卡牌、藥水和敵招,
+        /// 而堅定不移只翻倍卡牌來源,所以來源必須由呼叫端講明,不能在這裡猜。
+        /// </param>
         internal static void Resolve(CombatEngine engine, EffectStep[] steps, int sourceIndex, int chosenTargetIndex,
-            bool ignoreModifiers = false, bool autoPlay = false)
+            BlockSource blockSource, bool ignoreModifiers = false, bool autoPlay = false)
         {
-            ResolveFrom(engine, steps, 0, sourceIndex, chosenTargetIndex, ignoreModifiers, autoPlay);
+            ResolveFrom(engine, steps, 0, sourceIndex, chosenTargetIndex, blockSource, ignoreModifiers, autoPlay);
         }
 
         internal static void ResolveFrom(CombatEngine engine, EffectStep[] steps, int startIndex, int sourceIndex,
-            int chosenTargetIndex, bool ignoreModifiers = false, bool autoPlay = false)
+            int chosenTargetIndex, BlockSource blockSource, bool ignoreModifiers = false, bool autoPlay = false)
         {
             if (steps == null) return;
             for (int s = startIndex; s < steps.Length; s++)
@@ -57,7 +61,7 @@ namespace STS.Core.Combat
                                 }
                                 else
                                 {
-                                    engine.GainBlock(targets[t], amount);
+                                    engine.GainBlock(targets[t], amount, blockSource);
                                 }
                             }
                         }
@@ -220,8 +224,8 @@ namespace STS.Core.Combat
                             engine.ApplyChoiceDirect(source, action, picks);
                             break;
                         }
-                        engine.RequestChoice(steps, s + 1, sourceIndex, chosenTargetIndex, count, ignoreModifiers,
-                            source, action);
+                        engine.RequestChoice(steps, s + 1, sourceIndex, chosenTargetIndex, count, blockSource,
+                            ignoreModifiers, source, action);
                         return;   // 中斷:剩餘步驟由 ResolveChoice 續跑
                     }
 

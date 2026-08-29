@@ -24,7 +24,7 @@ namespace STS.Core.Relics
                 case RelicIds.Anchor:
                     if (ctx.Point == HookPoint.CombatStart)
                     {
-                        engine.GainBlock(CombatEngine.PlayerIndex, 10);
+                        engine.GainBlock(CombatEngine.PlayerIndex, 10, BlockSource.Other);
                     }
                     break;
 
@@ -72,7 +72,7 @@ namespace STS.Core.Relics
                 case RelicIds.Orichalcum:
                     if (ctx.Point == HookPoint.PlayerTurnEnd && engine.State.Player.Block == 0)
                     {
-                        engine.GainBlock(CombatEngine.PlayerIndex, 6);
+                        engine.GainBlock(CombatEngine.PlayerIndex, 6, BlockSource.Other);
                     }
                     break;
 

@@ -59,7 +59,7 @@ namespace STS.Core.Combat.Statuses
                     // 金屬化:擁有者回合結束獲得等同層數的格擋(活過對方回合,因為清除在自己回合開始)
                     if (IsOwnersTurnEnd(ctx, ownerIndex))
                     {
-                        engine.GainBlock(ownerIndex, status.Stacks);
+                        engine.GainBlock(ownerIndex, status.Stacks, BlockSource.Other);
                     }
                     break;
 
@@ -120,7 +120,7 @@ namespace STS.Core.Combat.Statuses
                     // 無懼疼痛:每有一張牌被消耗就補盾
                     if (ctx.Point == HookPoint.CardExhausted && ownerIndex == CombatEngine.PlayerIndex)
                     {
-                        engine.GainBlock(ownerIndex, status.Stacks);
+                        engine.GainBlock(ownerIndex, status.Stacks, BlockSource.Other);
                     }
                     break;
 
@@ -197,7 +197,7 @@ namespace STS.Core.Combat.Statuses
                     if (IsOwnersTurnStart(ctx, ownerIndex))
                     {
                         engine.LoseHpDirect(ownerIndex, 1);
-                        engine.GainBlock(ownerIndex, status.Stacks);
+                        engine.GainBlock(ownerIndex, status.Stacks, BlockSource.Other);
                     }
                     break;
 
@@ -207,7 +207,7 @@ namespace STS.Core.Combat.Statuses
                         && ctx.SourceIndex == ownerIndex
                         && ctx.CardType == Cards.CardType.Attack)
                     {
-                        engine.GainBlock(ownerIndex, status.Stacks);
+                        engine.GainBlock(ownerIndex, status.Stacks, BlockSource.Other);
                     }
                     break;
 
@@ -254,7 +254,7 @@ namespace STS.Core.Combat.Statuses
                     if (IsOwnersTurnEnd(ctx, ownerIndex))
                     {
                         int armor = status.Stacks;
-                        engine.GainBlock(ownerIndex, armor);
+                        engine.GainBlock(ownerIndex, armor, BlockSource.Other);
                         engine.ApplyStatusTo(ownerIndex, StatusId.Plating, -1);
                     }
                     break;

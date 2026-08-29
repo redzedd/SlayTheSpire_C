@@ -531,9 +531,9 @@
     },
     {
       "id": "unmovable", "type": "Power", "rarity": "Rare",
-      "base": { "name": "堅定不移", "cost": 2, "description": "本回合第一次獲得的格擋翻倍。",
+      "base": { "name": "堅定不移", "cost": 2, "description": "每回合第一次由卡牌獲得的格擋翻倍。",
         "steps": [ { "op": "ApplyStatus", "target": "Self", "amount": 1, "status": "Unmovable" } ] },
-      "upgrade": { "name": "堅定不移+", "cost": 1, "description": "本回合第一次獲得的格擋翻倍。",
+      "upgrade": { "name": "堅定不移+", "cost": 1, "description": "每回合第一次由卡牌獲得的格擋翻倍。",
         "steps": [ { "op": "ApplyStatus", "target": "Self", "amount": 1, "status": "Unmovable" } ] }
     },
     {

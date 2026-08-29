@@ -44,6 +44,7 @@ namespace STS.Core.Combat
         private int _autoPlayDepth;
         private const int 自動打出上限 = 4;
         private bool _pendingIgnoreModifiers;
+        private BlockSource _pendingBlockSource;
 
         /// <summary>延後到「整個效果來源結算完」才生效的格擋(捲曲用)。</summary>
         private readonly struct DeferredBlock
@@ -227,7 +228,7 @@ namespace STS.Core.Combat
             _pendingPlayedDef = def;
             _pendingTargetIndex = targetEnemyIndex;
             State.LastAttackKilled = false;   // 每張牌重新起算,問的是「這張牌打死的」
-            EffectResolver.Resolve(this, def.Steps, PlayerIndex, targetEnemyIndex);
+            EffectResolver.Resolve(this, def.Steps, PlayerIndex, targetEnemyIndex, BlockSource.Card);
             if (State.Phase == CombatPhase.AwaitingChoice) return;   // 等 ResolveChoice 收尾
 
             FinishCardPlay();
@@ -270,7 +271,8 @@ namespace STS.Core.Combat
             int target = _pendingTargetIndex;
             _pendingSteps = null;
 
-            EffectResolver.ResolveFrom(this, steps, resumeIndex, source, target, _pendingIgnoreModifiers);
+            EffectResolver.ResolveFrom(this, steps, resumeIndex, source, target, _pendingBlockSource,
+                _pendingIgnoreModifiers);
             if (State.Phase == CombatPhase.AwaitingChoice) return;   // 防衛:再次中斷(切片不會發生)
 
             FinishCardPlay();
@@ -297,7 +299,8 @@ namespace STS.Core.Combat
             }
             State.PotionSlots[slot] = null;
             // 藥水不吃力量/虛弱/易傷/敏捷/脆弱:瓶裝效果是固定的
-            EffectResolver.Resolve(this, def.Steps, PlayerIndex, targetEnemyIndex, ignoreModifiers: true);
+            EffectResolver.Resolve(this, def.Steps, PlayerIndex, targetEnemyIndex, BlockSource.Other,
+                ignoreModifiers: true);
             if (State.Phase == CombatPhase.AwaitingChoice)
             {
                 throw new NotSupportedException("切片藥水不支援中斷選擇型效果");
@@ -321,7 +324,7 @@ namespace STS.Core.Combat
                 var def = GetCardDef(handSnapshot[i]);
                 if (def.TurnEndInHandSteps.Length > 0)
                 {
-                    EffectResolver.Resolve(this, def.TurnEndInHandSteps, PlayerIndex, -1);
+                    EffectResolver.Resolve(this, def.TurnEndInHandSteps, PlayerIndex, -1, BlockSource.Card);
                     FlushDeferredBlocks();
                 }
             }
@@ -462,7 +465,7 @@ namespace STS.Core.Combat
             State.AttacksPlayedThisTurn = 0;
             State.LostHpThisTurn = false;
             State.ExhaustedThisTurn = false;
-            State.PlayerBlockGainsThisTurn = 0;
+            State.PlayerCardBlockGainsThisTurn = 0;
             State.FreeThisTurn.Clear();
             // 格擋在「自己回合開始」清除,不是回合結束——回合末獲得的格擋要活過敵方回合(R5)
             // 壁壘:整條清除規則失效,格擋累積不掉
@@ -504,7 +507,7 @@ namespace STS.Core.Combat
                 var runtime = _enemyRuntimes[i];
                 string moveId = runtime.NextMoveId;
                 Emit(new CombatEvent(EventKind.EnemyMoveStarted, sourceIndex: i, cardId: moveId));
-                EffectResolver.Resolve(this, runtime.Def.GetMove(moveId).Steps, i, PlayerIndex);
+                EffectResolver.Resolve(this, runtime.Def.GetMove(moveId).Steps, i, PlayerIndex, BlockSource.EnemyMove);
                 FlushDeferredBlocks();   // 整個敵招結算完才結清延後格擋
 
                 if (!State.Player.IsAlive)
@@ -619,7 +622,8 @@ namespace STS.Core.Combat
                 ApplyStatusTo(PlayerIndex, StatusId.NextAttackDoubled, -1);
                 if (State.Player.IsAlive)
                 {
-                    EffectResolver.Resolve(this, def.Steps, PlayerIndex, targetIndex, autoPlay: true);
+                    EffectResolver.Resolve(this, def.Steps, PlayerIndex, targetIndex, BlockSource.Card,
+                        autoPlay: true);
                     FlushDeferredBlocks();
                 }
             }
@@ -759,7 +763,7 @@ namespace STS.Core.Combat
             }
         }
 
-        internal void GainBlock(int index, int baseAmount)
+        internal void GainBlock(int index, int baseAmount, BlockSource source)
         {
             var combatant = GetCombatant(index);
             if (!combatant.IsAlive) return;
@@ -767,15 +771,15 @@ namespace STS.Core.Combat
                 baseAmount,
                 combatant.GetStatus(StatusId.Dexterity),
                 combatant.GetStatus(StatusId.Frail) > 0);
-            // 岿然不動:本回合第一次獲得格擋翻倍([近似] 原作限「來自卡牌」的格擋,
-            // 這裡不分來源——引擎沒有把「這次格擋是誰給的」帶進來)
-            if (index == PlayerIndex)
+            // 堅定不移:本回合第一次「由卡牌」獲得的格擋翻倍。金屬化/遺物/捲曲那類非卡牌來源
+            // 既不翻倍,也不消耗這次機會——所以計數器只在卡牌來源時前進
+            if (index == PlayerIndex && source == BlockSource.Card)
             {
-                if (State.PlayerBlockGainsThisTurn == 0 && combatant.GetStatus(StatusId.Unmovable) > 0)
+                if (State.PlayerCardBlockGainsThisTurn == 0 && combatant.GetStatus(StatusId.Unmovable) > 0)
                 {
                     gain *= 2;
                 }
-                State.PlayerBlockGainsThisTurn++;
+                State.PlayerCardBlockGainsThisTurn++;
             }
             combatant.Block += gain;
             Emit(new CombatEvent(EventKind.BlockGained, sourceIndex: index, amount: gain, remainingBlock: combatant.Block));
@@ -907,7 +911,8 @@ namespace STS.Core.Combat
             {
                 if (GetCombatant(entry.Index).IsAlive)
                 {
-                    GainBlock(entry.Index, entry.Amount);
+                    // 延後格擋目前只有捲曲(狀態)會登記,一律不是卡牌來源
+                    GainBlock(entry.Index, entry.Amount, BlockSource.Other);
                 }
             }
         }
@@ -1096,7 +1101,7 @@ namespace STS.Core.Combat
                         if (def.Type == CardType.Attack) State.AttacksPlayedThisTurn++;
                         FireHook(new HookContext(HookPoint.CardPlayed, sourceIndex: PlayerIndex, cardType: def.Type));
                         EffectResolver.Resolve(this, def.Steps, PlayerIndex, PickRandomLivingEnemy(),
-                            autoPlay: true);
+                            BlockSource.Card, autoPlay: true);
                     }
 
                     if (def.Type == CardType.Power)
@@ -1201,7 +1206,8 @@ namespace STS.Core.Combat
                     if (def.Type == CardType.Attack) State.AttacksPlayedThisTurn++;
                     FireHook(new HookContext(HookPoint.CardPlayed, sourceIndex: PlayerIndex,
                         cardType: def.Type, cardId: card.CardId));
-                    EffectResolver.Resolve(this, def.Steps, PlayerIndex, PickRandomLivingEnemy(), autoPlay: true);
+                    EffectResolver.Resolve(this, def.Steps, PlayerIndex, PickRandomLivingEnemy(), BlockSource.Card,
+                        autoPlay: true);
                 }
             }
             finally
@@ -1344,6 +1350,7 @@ namespace STS.Core.Combat
         }
 
         internal void RequestChoice(EffectStep[] steps, int resumeIndex, int sourceIndex, int targetIndex, int count,
+            BlockSource blockSource,
             bool ignoreModifiers = false,
             ChoiceSource choiceSource = ChoiceSource.Hand,
             ChoiceAction choiceAction = ChoiceAction.Exhaust)
@@ -1353,6 +1360,7 @@ namespace STS.Core.Combat
             _pendingSourceIndex = sourceIndex;
             _pendingTargetIndex = targetIndex;
             _pendingIgnoreModifiers = ignoreModifiers;
+            _pendingBlockSource = blockSource;
             State.PendingChoiceCount = count;
             State.PendingChoiceSource = choiceSource;
             State.PendingChoiceAction = choiceAction;

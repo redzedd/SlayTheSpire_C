@@ -61,7 +61,7 @@
     { "id": "Plating", "name": "覆甲",
       "description": "回合結束時獲得 {n} 點格擋,然後覆甲減 1。" },
     { "id": "Unmovable", "name": "堅定不移",
-      "description": "本回合第一次獲得的格擋翻倍。" },
+      "description": "每回合第一次由卡牌獲得的格擋翻倍。" },
     { "id": "Grapple", "name": "擒拿",
       "description": "每當玩家獲得格擋,這名敵人受到 {n} 點傷害。" },
     { "id": "Vicious", "name": "兇惡",

@@ -62,8 +62,11 @@ namespace STS.Core.Combat
         public bool LostHpThisTurn;
         /// <summary>本回合有牌被消耗過(邪眼/被遺忘的儀式);回合開始歸零。</summary>
         public bool ExhaustedThisTurn;
-        /// <summary>本回合玩家獲得格擋的次數(岿然不動只翻倍第一次);回合開始歸零。</summary>
-        public int PlayerBlockGainsThisTurn;
+        /// <summary>
+        /// 本回合玩家「由卡牌」獲得格擋的次數(堅定不移只翻倍第一次);回合開始歸零。
+        /// 金屬化那類非卡牌來源不計入,所以它們不會白白吃掉翻倍機會。
+        /// </summary>
+        public int PlayerCardBlockGainsThisTurn;
         /// <summary>
         /// 這張牌前一段攻擊是否剛好打死目標(狂宴)。每次出牌開始時歸零,
         /// 所以它問的一定是「這張牌自己打死的」,不是上一張牌留下的。

@@ -14,4 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: STS.Game::STS.Game.DataAssets.StatusDataAsset
   id: 31
   statusName: "\u5805\u5B9A\u4E0D\u79FB"
-  description: "\u672C\u56DE\u5408\u7B2C\u4E00\u6B21\u7372\u5F97\u7684\u683C\u64CB\u7FFB\u500D\u3002"
+  description: "\u6BCF\u56DE\u5408\u7B2C\u4E00\u6B21\u7531\u5361\u724C\u7372\u5F97\u7684\u683C\u64CB\u7FFB\u500D\u3002"

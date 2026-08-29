@@ -2,6 +2,7 @@ using NUnit.Framework;
 using STS.Core.Cards;
 using STS.Core.Combat;
 using STS.Core.Combat.Statuses;
+using STS.Core.Relics;
 using static STS.Core.Tests.TestContent;
 
 namespace STS.Core.Tests
@@ -1035,11 +1036,11 @@ namespace STS.Core.Tests
         }
 
         [Test]
-        public void 岿然不動_只翻倍本回合第一次格擋()
+        public void 堅定不移_只翻倍每回合第一張牌的格擋()
         {
-            var 岿然 = 能力("unmov", "岿然不動", StatusId.Unmovable, 1);
+            var 堅定 = 能力("unmov", "堅定不移", StatusId.Unmovable, 1);
             var engine = 標準引擎(new[] { "unmov", "defend", "defend", "defend", "defend" },
-                enemyHp: 200, enemyAttack: 0, extraDefs: new[] { 岿然 });
+                enemyHp: 200, enemyAttack: 0, extraDefs: new[] { 堅定 });
             engine.StartCombat();
 
             出牌(engine, "unmov");
@@ -1047,6 +1048,21 @@ namespace STS.Core.Tests
             Assert.AreEqual(10, engine.State.Player.Block, "第一次格擋要翻倍");
             出牌(engine, "defend");
             Assert.AreEqual(15, engine.State.Player.Block, "第二次就不翻倍了");
+        }
+
+        [Test]
+        public void 堅定不移_非卡牌來源的格擋不吃掉翻倍機會()
+        {
+            // 船錨在開戰時給 10 點格擋(遺物來源),翻倍機會必須留給之後真正打出的第一張牌
+            var 堅定 = 能力("unmov", "堅定不移", StatusId.Unmovable, 1);
+            var engine = 標準引擎(new[] { "unmov", "defend", "defend", "defend", "defend" },
+                enemyHp: 200, enemyAttack: 0, relicIds: new[] { RelicIds.Anchor }, extraDefs: new[] { 堅定 });
+            engine.StartCombat();
+            Assert.AreEqual(10, engine.State.Player.Block, "船錨的開戰格擋");
+
+            出牌(engine, "unmov");
+            出牌(engine, "defend");
+            Assert.AreEqual(20, engine.State.Player.Block, "10(船錨)+ 5×2(翻倍的防禦)");
         }
 
         [Test]
