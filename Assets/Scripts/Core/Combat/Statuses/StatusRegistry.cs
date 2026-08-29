@@ -31,10 +31,12 @@ namespace STS.Core.Combat.Statuses
                     return DecayRule.DecrementAtOwnerTurnEnd;
                 case StatusId.NoDraw:
                 case StatusId.Rage:
-                case StatusId.Grapple:
                 case StatusId.NoEnergyGain:
                     return DecayRule.RemoveAtOwnerTurnEnd;
                 case StatusId.Colossus:
+                // 擒拿現在掛在敵人身上,「本回合」對牠而言就是撐到牠自己動起來為止:
+                // 玩家回合結束後、敵人行動前移除
+                case StatusId.Grapple:
                     return DecayRule.RemoveAtOwnerTurnStart;
                 default:
                     return DecayRule.None;
@@ -258,16 +260,14 @@ namespace STS.Core.Combat.Statuses
                     break;
 
                 case StatusId.Grapple:
-                    // 擒拿:本回合獲得格擋就追打。走非攻擊傷害,避免與尖刺皮互相觸發
+                    // 擒拿掛在「被擒住的那隻敵人」身上:擁有者本身就是追打目標,
+                    // 不需要在狀態裡另外記一個目標欄位。
+                    // 走非攻擊傷害,避免與尖刺皮互相觸發成迴圈。
                     if (ctx.Point == HookPoint.BlockGained
-                        && ctx.SourceIndex == ownerIndex
-                        && ownerIndex == CombatEngine.PlayerIndex)
+                        && ctx.SourceIndex == CombatEngine.PlayerIndex
+                        && ownerIndex != CombatEngine.PlayerIndex)
                     {
-                        int enemyIndex = engine.PickRandomLivingEnemy();
-                        if (enemyIndex >= 0)
-                        {
-                            engine.DealNonAttackDamage(ownerIndex, enemyIndex, status.Stacks);
-                        }
+                        engine.DealNonAttackDamage(CombatEngine.PlayerIndex, ownerIndex, status.Stacks);
                     }
                     break;
 

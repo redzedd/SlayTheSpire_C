@@ -25,7 +25,7 @@ MonoBehaviour:
   playConditionAmount: 0
   baseName: "\u64D2\u62FF"
   baseCost: 1
-  baseDescription: "\u9020\u6210 {dmg} \u9EDE\u50B7\u5BB3\u3002\u672C\u56DE\u5408\u6BCF\u7576\u4F60\u7372\u5F97\u683C\u64CB,\u5C0D\u4E00\u540D\u6575\u4EBA\u9020\u6210
+  baseDescription: "\u9020\u6210 {dmg} \u9EDE\u50B7\u5BB3\u3002\u672C\u56DE\u5408\u6BCF\u7576\u4F60\u7372\u5F97\u683C\u64CB,\u5C0D\u8A72\u6575\u4EBA\u9020\u6210
     5 \u9EDE\u50B7\u5BB3\u3002"
   baseSteps:
   - op: 0
@@ -41,7 +41,7 @@ MonoBehaviour:
     pile: 2
     customId: 
   - op: 2
-    target: 0
+    target: 1
     amount: 5
     amountKind: 0
     secondaryAmount: 0
@@ -56,7 +56,7 @@ MonoBehaviour:
   hasUpgrade: 1
   upgradeName: "\u64D2\u62FF+"
   upgradeCost: 1
-  upgradeDescription: "\u9020\u6210 {dmg} \u9EDE\u50B7\u5BB3\u3002\u672C\u56DE\u5408\u6BCF\u7576\u4F60\u7372\u5F97\u683C\u64CB,\u5C0D\u4E00\u540D\u6575\u4EBA\u9020\u6210
+  upgradeDescription: "\u9020\u6210 {dmg} \u9EDE\u50B7\u5BB3\u3002\u672C\u56DE\u5408\u6BCF\u7576\u4F60\u7372\u5F97\u683C\u64CB,\u5C0D\u8A72\u6575\u4EBA\u9020\u6210
     7 \u9EDE\u50B7\u5BB3\u3002"
   upgradeSteps:
   - op: 0
@@ -72,7 +72,7 @@ MonoBehaviour:
     pile: 2
     customId: 
   - op: 2
-    target: 0
+    target: 1
     amount: 7
     amountKind: 0
     secondaryAmount: 0

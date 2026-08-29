@@ -531,21 +531,21 @@
     },
     {
       "id": "unmovable", "type": "Power", "rarity": "Rare",
-      "base": { "name": "岿然不動", "cost": 2, "description": "本回合第一次獲得的格擋翻倍。",
+      "base": { "name": "堅定不移", "cost": 2, "description": "本回合第一次獲得的格擋翻倍。",
         "steps": [ { "op": "ApplyStatus", "target": "Self", "amount": 1, "status": "Unmovable" } ] },
-      "upgrade": { "name": "岿然不動+", "cost": 1, "description": "本回合第一次獲得的格擋翻倍。",
+      "upgrade": { "name": "堅定不移+", "cost": 1, "description": "本回合第一次獲得的格擋翻倍。",
         "steps": [ { "op": "ApplyStatus", "target": "Self", "amount": 1, "status": "Unmovable" } ] }
     },
     {
       "id": "grapple", "type": "Attack", "rarity": "Uncommon",
-      "base": { "name": "擒拿", "cost": 1, "description": "造成 {dmg} 點傷害。本回合每當你獲得格擋,對一名敵人造成 5 點傷害。",
+      "base": { "name": "擒拿", "cost": 1, "description": "造成 {dmg} 點傷害。本回合每當你獲得格擋,對該敵人造成 5 點傷害。",
         "steps": [
           { "op": "Damage", "target": "TargetEnemy", "amount": 7 },
-          { "op": "ApplyStatus", "target": "Self", "amount": 5, "status": "Grapple" } ] },
-      "upgrade": { "name": "擒拿+", "cost": 1, "description": "造成 {dmg} 點傷害。本回合每當你獲得格擋,對一名敵人造成 7 點傷害。",
+          { "op": "ApplyStatus", "target": "TargetEnemy", "amount": 5, "status": "Grapple" } ] },
+      "upgrade": { "name": "擒拿+", "cost": 1, "description": "造成 {dmg} 點傷害。本回合每當你獲得格擋,對該敵人造成 7 點傷害。",
         "steps": [
           { "op": "Damage", "target": "TargetEnemy", "amount": 9 },
-          { "op": "ApplyStatus", "target": "Self", "amount": 7, "status": "Grapple" } ] }
+          { "op": "ApplyStatus", "target": "TargetEnemy", "amount": 7, "status": "Grapple" } ] }
     },
     {
       "id": "vicious", "type": "Power", "rarity": "Uncommon",

@@ -1050,7 +1050,7 @@ namespace STS.Core.Tests
         }
 
         [Test]
-        public void 擒拿_本回合獲得格擋就追打()
+        public void 擒拿_只追打被擒住的那隻敵人()
         {
             var 擒拿 = new CardDef
             {
@@ -1059,17 +1059,28 @@ namespace STS.Core.Tests
                 Steps = new[]
                 {
                     new EffectStep(EffectOp.Damage, EffectTarget.TargetEnemy, 7),
-                    new EffectStep(EffectOp.ApplyStatus, EffectTarget.Self, 5, status: StatusId.Grapple)
+                    // 狀態掛在目標敵人身上,擁有者就是追打對象
+                    new EffectStep(EffectOp.ApplyStatus, EffectTarget.TargetEnemy, 5, status: StatusId.Grapple)
                 }
             };
-            var engine = 標準引擎(new[] { "grapple", "defend", "defend", "defend", "defend" },
-                enemyHp: 200, enemyAttack: 0, extraDefs: new[] { 擒拿 });
+            // 兩隻敵人才驗得出「只打被擒的那隻」——單敵時隨機與指定看起來一樣
+            var db = 基礎DB(擒拿);
+            db.Enemies["dummy"] = 木樁(hp: 200);
+            var setup = 基礎Setup(new[] { "grapple", "defend", "defend", "defend", "defend" });
+            setup.EnemyIds.Add("dummy");
+            setup.EnemyIds.Add("dummy");
+            var engine = 引擎(db, setup);
             engine.StartCombat();
 
-            出牌(engine, "grapple");
+            出牌(engine, "grapple", target: 0);
             Assert.AreEqual(193, engine.State.Enemies[0].Hp);
+            Assert.AreEqual(200, engine.State.Enemies[1].Hp);
+            Assert.AreEqual(5, engine.State.Enemies[0].GetStatus(StatusId.Grapple), "狀態要掛在敵人身上");
+            Assert.AreEqual(0, engine.State.Player.GetStatus(StatusId.Grapple), "不該掛在玩家身上");
+
             出牌(engine, "defend");
-            Assert.AreEqual(188, engine.State.Enemies[0].Hp, "獲得格擋要追打 5 點");
+            Assert.AreEqual(188, engine.State.Enemies[0].Hp, "被擒的那隻要挨 5 點");
+            Assert.AreEqual(200, engine.State.Enemies[1].Hp, "另一隻不該被波及");
         }
 
         [Test]
