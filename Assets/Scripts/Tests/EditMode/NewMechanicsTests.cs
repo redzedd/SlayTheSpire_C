@@ -1036,6 +1036,92 @@ namespace STS.Core.Tests
         }
 
         [Test]
+        public void 斬殺後的剩餘步驟不再跑_但斬殺條件的步驟保留()
+        {
+            // 一張「打死牠 → 加最大生命(斬殺才給)→ 抽牌」的牌:
+            // 中間那步是靠擊殺換來的獎勵,必須發;最後那步在贏了之後跑就只是干擾。
+            var 狂宴式 = new CardDef
+            {
+                Id = "feedlike", Name = "狂宴式", Type = CardType.Attack, Rarity = CardRarity.Rare, Cost = 0,
+                DescriptionTemplate = "斬殺加最大生命,然後抽牌。",
+                Steps = new[]
+                {
+                    new EffectStep(EffectOp.Damage, EffectTarget.TargetEnemy, 50),
+                    new EffectStep(EffectOp.GainMaxHp, EffectTarget.Self, 3,
+                        condition: StepCondition.LastAttackKilled),
+                    new EffectStep(EffectOp.Draw, EffectTarget.Self, 3)
+                }
+            };
+            var engine = 標準引擎(new[] { "feedlike", "defend", "defend", "defend", "defend" },
+                enemyHp: 10, enemyAttack: 0, extraDefs: new[] { 狂宴式 });
+            engine.StartCombat();
+            // 開場 5 張全抽進手,抽牌堆是空的——不補幾張進去,「有沒有抽牌」根本看不出差別
+            engine.State.DrawPile.Add(new CardInstance(101, "defend"));
+            engine.State.DrawPile.Add(new CardInstance(102, "defend"));
+            engine.State.DrawPile.Add(new CardInstance(103, "defend"));
+            int maxHpBefore = engine.State.Player.MaxHp;
+            int handBefore = engine.State.Hand.Count;
+
+            出牌(engine, "feedlike", target: 0);
+
+            Assert.AreEqual(CombatPhase.Victory, engine.State.Phase, "打死最後一隻就該結束");
+            Assert.AreEqual(maxHpBefore + 3, engine.State.Player.MaxHp, "斬殺獎勵一定要發");
+            Assert.AreEqual(handBefore - 1, engine.State.Hand.Count, "贏了之後不該再抽牌(只少了打出去的那張)");
+        }
+
+        [Test]
+        public void 斬殺後不會被要求選卡消耗()
+        {
+            // 這種牌最惱人:戰鬥已經贏了,畫面卻停在「選一張牌消耗」等玩家點
+            var 打完選卡 = new CardDef
+            {
+                Id = "killthenchoose", Name = "打完選卡", Type = CardType.Attack, Rarity = CardRarity.Rare, Cost = 0,
+                DescriptionTemplate = "造成傷害,然後消耗一張手牌。",
+                Steps = new[]
+                {
+                    new EffectStep(EffectOp.Damage, EffectTarget.TargetEnemy, 50),
+                    new EffectStep(EffectOp.ChooseExhaustFromHand, EffectTarget.Self, 1)
+                }
+            };
+            var engine = 標準引擎(new[] { "killthenchoose", "defend", "defend", "defend", "defend" },
+                enemyHp: 10, enemyAttack: 0, extraDefs: new[] { 打完選卡 });
+            engine.StartCombat();
+
+            出牌(engine, "killthenchoose", target: 0);
+
+            Assert.AreEqual(CombatPhase.Victory, engine.State.Phase, "不該停在 AwaitingChoice");
+        }
+
+        [Test]
+        public void 還有敵人活著時_剩餘步驟照常跑()
+        {
+            // 防呆:上面那條規則只在「全部倒下」時生效,殺掉其中一隻不算
+            var 殺一隻再抽 = new CardDef
+            {
+                Id = "killonedraw", Name = "殺一隻再抽", Type = CardType.Attack, Rarity = CardRarity.Rare, Cost = 0,
+                DescriptionTemplate = "造成傷害,然後抽牌。",
+                Steps = new[]
+                {
+                    new EffectStep(EffectOp.Damage, EffectTarget.TargetEnemy, 50),
+                    new EffectStep(EffectOp.Draw, EffectTarget.Self, 2)
+                }
+            };
+            var db = 基礎DB(殺一隻再抽);
+            db.Enemies["dummy"] = 木樁(hp: 10);
+            var setup = 基礎Setup(new[] { "killonedraw", "defend", "defend", "defend", "defend", "defend", "defend" });
+            setup.EnemyIds.Add("dummy");
+            setup.EnemyIds.Add("dummy");
+            var engine = 引擎(db, setup);
+            engine.StartCombat();
+            int handBefore = engine.State.Hand.Count;
+
+            出牌(engine, "killonedraw", target: 0);
+
+            Assert.AreEqual(CombatPhase.PlayerTurn, engine.State.Phase, "還有一隻活著,戰鬥沒結束");
+            Assert.AreEqual(handBefore - 1 + 2, engine.State.Hand.Count, "抽牌照跑");
+        }
+
+        [Test]
         public void 回合開始的傷害殺光敵人_當場判勝()
         {
             // 獄火在玩家回合開始自傷 1 點,那一下的反擊可能直接清場——

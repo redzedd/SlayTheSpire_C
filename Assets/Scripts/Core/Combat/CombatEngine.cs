@@ -682,6 +682,16 @@ namespace STS.Core.Combat
             return index == PlayerIndex ? State.Player : State.Enemies[index];
         }
 
+        /// <summary>場上還有沒有站著的敵人。全倒下就代表這場已經打完了。</summary>
+        internal bool AnyLivingEnemy()
+        {
+            for (int i = 0; i < State.Enemies.Count; i++)
+            {
+                if (State.Enemies[i].IsAlive) return true;
+            }
+            return false;
+        }
+
         internal void CollectLivingEnemies(List<int> buffer)
         {
             buffer.Clear();

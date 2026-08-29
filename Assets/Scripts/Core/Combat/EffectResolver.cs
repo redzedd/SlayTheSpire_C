@@ -39,6 +39,10 @@ namespace STS.Core.Combat
                 if (!engine.GetCombatant(sourceIndex).IsAlive) return;   // 施放者已死(尖刺皮/反傷情境)即中止
 
                 var step = steps[s];
+                // 敵人全倒下 = 這場已經打完:剩下的步驟不再跑,玩家不該在贏了之後
+                // 還被要求抽牌或選卡消耗。唯一的例外是「斬殺才觸發」的步驟(狂宴的最大生命)——
+                // 那正是靠擊殺換來的獎勵,跳過它等於把獎勵吃掉。
+                if (step.Condition != StepCondition.LastAttackKilled && !engine.AnyLivingEnemy()) continue;
                 if (!ConditionHolds(engine, step, chosenTargetIndex)) continue;   // 條件不成立就跳這一步,後面照跑
                 int repeat = ResolveRepeat(engine, step);
 
