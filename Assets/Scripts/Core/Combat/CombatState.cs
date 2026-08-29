@@ -58,6 +58,13 @@ namespace STS.Core.Combat
         public int LastExhaustedCount;
         /// <summary>本場戰鬥玩家失去生命的「次數」(不是點數);扯碎的段數靠它成長。</summary>
         public int HpLossEventsThisCombat;
+        /// <summary>本回合玩家失去過生命(怨恨);回合開始歸零。</summary>
+        public bool LostHpThisTurn;
+        /// <summary>
+        /// 這張牌前一段攻擊是否剛好打死目標(狂宴)。每次出牌開始時歸零,
+        /// 所以它問的一定是「這張牌自己打死的」,不是上一張牌留下的。
+        /// </summary>
+        public bool LastAttackKilled;
         /// <summary>
         /// 單張卡在本場戰鬥中累積的額外傷害,key = CardInstance.InstanceId(暴走/痛毆)。
         /// 刻意放在戰鬥狀態而不是 CardInstance 上——CardInstance 是跨戰鬥的 run 資料,

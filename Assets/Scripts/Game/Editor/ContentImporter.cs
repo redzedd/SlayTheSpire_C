@@ -156,6 +156,8 @@ namespace STS.Game.Editor
             asset.ethereal = dto.ethereal;
             asset.colorless = dto.colorless;
             asset.costScaling = ParseEnum<Core.Cards.CostScaling>(dto.costScaling);
+            asset.playCondition = ParseEnum<Core.Cards.PlayCondition>(dto.playCondition);
+            asset.playConditionAmount = dto.playConditionAmount;
             asset.baseName = dto.@base.name;
             asset.baseCost = dto.@base.cost;
             asset.baseDescription = dto.@base.description;
@@ -276,6 +278,7 @@ namespace STS.Game.Editor
                     secondaryAmount = s.secondaryAmount,
                     repeat = s.repeat,
                     repeatKind = ParseEnum<Core.Cards.RepeatKind>(s.repeatKind),
+                    condition = ParseEnum<Core.Cards.StepCondition>(s.condition),
                     status = ParseEnum<Core.Combat.Statuses.StatusId>(s.status),
                     cardId = s.cardId,
                     pile = ParseEnum<Core.Cards.PileType>(s.pile),

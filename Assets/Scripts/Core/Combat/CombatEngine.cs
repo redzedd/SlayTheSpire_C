@@ -159,6 +159,12 @@ namespace STS.Core.Combat
                 reason = "能量不足";
                 return false;
             }
+            if (def.PlayCondition == PlayCondition.ExhaustPileAtLeast
+                && State.ExhaustPile.Count < def.PlayConditionAmount)
+            {
+                reason = $"消耗堆需要至少 {def.PlayConditionAmount} 張牌";
+                return false;
+            }
             if (RequiresEnemyTarget(def))
             {
                 if (targetEnemyIndex < 0 || targetEnemyIndex >= State.Enemies.Count)
@@ -210,6 +216,7 @@ namespace STS.Core.Combat
             _pendingPlayedCard = card;
             _pendingPlayedDef = def;
             _pendingTargetIndex = targetEnemyIndex;
+            State.LastAttackKilled = false;   // 每張牌重新起算,問的是「這張牌打死的」
             EffectResolver.Resolve(this, def.Steps, PlayerIndex, targetEnemyIndex);
             if (State.Phase == CombatPhase.AwaitingChoice) return;   // 等 ResolveChoice 收尾
 
@@ -440,6 +447,7 @@ namespace STS.Core.Combat
             State.TurnNumber++;
             State.Phase = CombatPhase.PlayerTurn;
             State.AttacksPlayedThisTurn = 0;
+            State.LostHpThisTurn = false;
             // 格擋在「自己回合開始」清除,不是回合結束——回合末獲得的格擋要活過敵方回合(R5)
             // 壁壘:整條清除規則失效,格擋累積不掉
             if (State.Player.Block != 0 && State.Player.GetStatus(StatusId.Barricade) <= 0)
@@ -633,8 +641,11 @@ namespace STS.Core.Combat
                 source.GetStatus(StatusId.Weak) > 0,
                 target.GetStatus(StatusId.Vulnerable) > 0);
             var result = CombatMath.ResolveAttack(final, target.Block, target.Hp);
+            bool wasAlive = target.IsAlive;
             target.Block = result.RemainingBlock;
             target.Hp = result.RemainingHp;
+            // 斬殺旗標:只有「這一擊把還活著的目標打死」才算(狂宴)
+            if (wasAlive && !target.IsAlive) State.LastAttackKilled = true;
 
             Emit(new CombatEvent(EventKind.DamageDealt, sourceIndex: sourceIndex, targetIndex: targetIndex,
                 amount: final, amount2: result.BlockConsumed, hpLost: result.HpLost,
@@ -688,7 +699,11 @@ namespace STS.Core.Combat
         {
             if (hpLost <= 0) return;
             // 數的是「次數」不是點數:扯碎每失血一次多打一段
-            if (index == PlayerIndex) State.HpLossEventsThisCombat++;
+            if (index == PlayerIndex)
+            {
+                State.HpLossEventsThisCombat++;
+                State.LostHpThisTurn = true;
+            }
             // 掉血 hook 對玩家與敵人都要觸發(撕裂/獄火靠它);敵人專屬的死亡與換模式邏輯在下面
             FireHook(new HookContext(HookPoint.HpLost, targetIndex: index, amount: hpLost));
             if (index == PlayerIndex) return;
@@ -1082,6 +1097,16 @@ namespace STS.Core.Combat
             }
             GrowCurrentCardDamage(absorbed);
             return absorbed;
+        }
+
+        /// <summary>永久提高最大生命,並同步補上同等的當前生命(狂宴)。</summary>
+        internal void GainMaxHp(int amount)
+        {
+            if (amount <= 0) return;
+            State.Player.MaxHp += amount;
+            State.Player.Hp += amount;
+            Emit(new CombatEvent(EventKind.HpHealed, targetIndex: PlayerIndex,
+                amount: amount, remainingHp: State.Player.Hp));
         }
 
         /// <summary>對所有活著的敵人造成一次真正的攻擊傷害(彼岸咆哮的回合起始重擊)。</summary>

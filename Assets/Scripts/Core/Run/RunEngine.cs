@@ -193,12 +193,18 @@ namespace STS.Core.Run
         /// 戰鬥結束回寫。usedPotionIds:戰鬥中用掉的藥水(從欄位移除)。
         /// 勝利:Boss → 通關;其餘 → 產生獎勵進 ChoosingReward。敗北 → GameOver。
         /// </summary>
-        public void ApplyCombatResult(bool victory, int remainingHp, IReadOnlyList<string> usedPotionIds = null)
+        /// <param name="newMaxHp">
+        /// 戰鬥結束時的最大生命;0 = 沒變。狂宴之類「永久 +最大生命」的效果在戰鬥中發生,
+        /// 不回寫的話一離開戰鬥就消失。
+        /// </param>
+        public void ApplyCombatResult(bool victory, int remainingHp, IReadOnlyList<string> usedPotionIds = null,
+            int newMaxHp = 0)
         {
             if (State.Phase != RunPhase.InCombat)
             {
                 throw new InvalidOperationException("現在不在戰鬥中,無法回寫戰果");
             }
+            if (newMaxHp > 0) State.MaxHp = newMaxHp;
             State.Hp = remainingHp < 0 ? 0 : remainingHp;
             if (usedPotionIds != null)
             {

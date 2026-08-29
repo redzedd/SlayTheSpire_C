@@ -456,6 +456,48 @@
     },
 
     {
+      "id": "dismantle", "type": "Attack", "rarity": "Uncommon",
+      "base": { "name": "拆卸", "cost": 1, "description": "造成 {dmg} 點傷害。若目標有易傷,則再打一次。",
+        "steps": [
+          { "op": "Damage", "target": "TargetEnemy", "amount": 8 },
+          { "op": "Damage", "target": "TargetEnemy", "amount": 8, "condition": "TargetIsVulnerable" } ] },
+      "upgrade": { "name": "拆卸+", "cost": 1, "description": "造成 {dmg} 點傷害。若目標有易傷,則再打一次。",
+        "steps": [
+          { "op": "Damage", "target": "TargetEnemy", "amount": 10 },
+          { "op": "Damage", "target": "TargetEnemy", "amount": 10, "condition": "TargetIsVulnerable" } ] }
+    },
+    {
+      "id": "spite", "type": "Attack", "rarity": "Uncommon",
+      "base": { "name": "怨恨", "cost": 0, "description": "造成 {dmg} 點傷害。若你本回合失去過生命,抽 1 張牌。",
+        "steps": [
+          { "op": "Damage", "target": "TargetEnemy", "amount": 6 },
+          { "op": "Draw", "target": "Self", "amount": 1, "condition": "LostHpThisTurn" } ] },
+      "upgrade": { "name": "怨恨+", "cost": 0, "description": "造成 {dmg} 點傷害。若你本回合失去過生命,總共打三次。",
+        "steps": [
+          { "op": "Damage", "target": "TargetEnemy", "amount": 5 },
+          { "op": "Damage", "target": "TargetEnemy", "amount": 5, "condition": "LostHpThisTurn" },
+          { "op": "Damage", "target": "TargetEnemy", "amount": 5, "condition": "LostHpThisTurn" } ] }
+    },
+    {
+      "id": "feed", "type": "Attack", "rarity": "Rare", "exhausts": true,
+      "base": { "name": "狂宴", "cost": 1, "description": "造成 {dmg} 點傷害。若因此擊殺目標,永久獲得 3 點最大生命。消耗。",
+        "steps": [
+          { "op": "Damage", "target": "TargetEnemy", "amount": 10 },
+          { "op": "GainMaxHp", "target": "Self", "amount": 3, "condition": "LastAttackKilled" } ] },
+      "upgrade": { "name": "狂宴+", "cost": 1, "description": "造成 {dmg} 點傷害。若因此擊殺目標,永久獲得 4 點最大生命。消耗。",
+        "steps": [
+          { "op": "Damage", "target": "TargetEnemy", "amount": 12 },
+          { "op": "GainMaxHp", "target": "Self", "amount": 4, "condition": "LastAttackKilled" } ] }
+    },
+    {
+      "id": "pacts_end", "type": "Attack", "rarity": "Rare",
+      "playCondition": "ExhaustPileAtLeast", "playConditionAmount": 3,
+      "base": { "name": "契約終結", "cost": 0, "description": "消耗堆中至少要有 3 張牌才能打出。對所有敵人造成 {dmg} 點傷害。",
+        "steps": [ { "op": "Damage", "target": "AllEnemies", "amount": 17 } ] },
+      "upgrade": { "name": "契約終結+", "cost": 0, "description": "消耗堆中至少要有 3 張牌才能打出。對所有敵人造成 {dmg} 點傷害。",
+        "steps": [ { "op": "Damage", "target": "AllEnemies", "amount": 23 } ] }
+    },
+    {
       "id": "rampage", "type": "Attack", "rarity": "Uncommon",
       "base": { "name": "暴走", "cost": 1, "description": "造成 {dmg} 點傷害。本場戰鬥中,這張牌的傷害增加 5。",
         "steps": [

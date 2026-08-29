@@ -36,6 +36,8 @@ namespace STS.Core.Cards
         /// Pile 決定打完後去哪:Exhaust = 打完消耗,其餘 = 進棄牌堆。
         /// </summary>
         PlayTopOfDraw,
+        /// <summary>永久提高最大生命並回滿同等點數(狂宴型);會寫回 run 狀態。</summary>
+        GainMaxHp,
         /// <summary>把 Amount 點傷害永久加到「正在打出的這張牌」上,只在本場戰鬥有效(暴走型)。</summary>
         GrowThisCardDamage,
         /// <summary>消耗手上一張隨機攻擊牌,把它的傷害加到正在打出的這張牌上(痛毆型)。</summary>
@@ -77,6 +79,29 @@ namespace STS.Core.Cards
         PerLastExhausted
     }
 
+    /// <summary>
+    /// 單一步驟的執行條件。不成立就整步跳過,後續步驟照跑——
+    /// 「有條件才多打一段」用兩個 Damage 步驟表達,不需要另一套條件式段數機制。
+    /// </summary>
+    public enum StepCondition
+    {
+        None,
+        /// <summary>目標身上有易傷(拆卸)。</summary>
+        TargetIsVulnerable,
+        /// <summary>你本回合失去過生命(怨恨)。</summary>
+        LostHpThisTurn,
+        /// <summary>這張牌前一段攻擊剛好把目標打死(狂宴)。</summary>
+        LastAttackKilled
+    }
+
+    /// <summary>卡片能不能打出的額外條件(能量與目標之外的)。</summary>
+    public enum PlayCondition
+    {
+        None,
+        /// <summary>消耗堆至少有 N 張牌(契約終結)。</summary>
+        ExhaustPileAtLeast
+    }
+
     /// <summary>Repeat(段數)的解讀方式。</summary>
     public enum RepeatKind
     {
@@ -109,6 +134,7 @@ namespace STS.Core.Cards
         /// <summary>段數;0 或 1 = 單次。</summary>
         public readonly int Repeat;
         public readonly RepeatKind RepeatKind;
+        public readonly StepCondition Condition;
         public readonly StatusId Status;
         public readonly string CardId;
         public readonly PileType Pile;
@@ -125,8 +151,10 @@ namespace STS.Core.Cards
             StatusId status = StatusId.None,
             string cardId = null,
             PileType pile = PileType.Discard,
-            string customId = null)
+            string customId = null,
+            StepCondition condition = StepCondition.None)
         {
+            Condition = condition;
             Op = op;
             Target = target;
             Amount = amount;

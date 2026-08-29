@@ -21,6 +21,8 @@ MonoBehaviour:
   ethereal: 1
   colorless: 0
   costScaling: 0
+  playCondition: 0
+  playConditionAmount: 0
   baseName: "\u6688\u7729"
   baseCost: 0
   baseDescription: "\u4E0D\u53EF\u6253\u51FA\u3002\u865B\u7121\u3002"

@@ -21,6 +21,8 @@ MonoBehaviour:
   ethereal: 0
   colorless: 0
   costScaling: 0
+  playCondition: 0
+  playConditionAmount: 0
   baseName: "\u75DB\u6BC6"
   baseCost: 1
   baseDescription: "\u9020\u6210 {dmg} \u9EDE\u50B7\u5BB3\u5169\u6B21\u3002\u6D88\u8017\u624B\u4E0A\u4E00\u5F35\u96A8\u6A5F\u653B\u64CA\u724C,\u628A\u5B83\u7684\u50B7\u5BB3\u52A0\u5230\u9019\u5F35\u724C\u4E0A\u3002"
@@ -32,17 +34,19 @@ MonoBehaviour:
     secondaryAmount: 0
     repeat: 2
     repeatKind: 0
+    condition: 0
     status: 0
     cardId: 
     pile: 2
     customId: 
-  - op: 20
+  - op: 21
     target: 0
     amount: 0
     amountKind: 0
     secondaryAmount: 0
     repeat: 0
     repeatKind: 0
+    condition: 0
     status: 0
     cardId: 
     pile: 2
@@ -60,17 +64,19 @@ MonoBehaviour:
     secondaryAmount: 0
     repeat: 2
     repeatKind: 0
+    condition: 0
     status: 0
     cardId: 
     pile: 2
     customId: 
-  - op: 20
+  - op: 21
     target: 0
     amount: 0
     amountKind: 0
     secondaryAmount: 0
     repeat: 0
     repeatKind: 0
+    condition: 0
     status: 0
     cardId: 
     pile: 2

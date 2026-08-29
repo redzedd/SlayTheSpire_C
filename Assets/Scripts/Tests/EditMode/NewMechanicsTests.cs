@@ -812,6 +812,121 @@ namespace STS.Core.Tests
         }
 
         [Test]
+        public void 拆卸_目標有易傷才打第二下()
+        {
+            var 拆卸 = new CardDef
+            {
+                Id = "dismantle", Name = "拆卸", Type = CardType.Attack, Rarity = CardRarity.Uncommon, Cost = 0,
+                DescriptionTemplate = "造成 {dmg} 點傷害。",
+                Steps = new[]
+                {
+                    new EffectStep(EffectOp.Damage, EffectTarget.TargetEnemy, 8),
+                    new EffectStep(EffectOp.Damage, EffectTarget.TargetEnemy, 8,
+                        condition: StepCondition.TargetIsVulnerable)
+                }
+            };
+            var engine = 標準引擎(new[] { "dismantle", "dismantle", "bash", "defend", "defend" },
+                enemyHp: 200, extraDefs: new[] { 拆卸 });
+            engine.StartCombat();
+
+            出牌(engine, "dismantle");   // 沒有易傷 → 只打一下 8
+            Assert.AreEqual(192, engine.State.Enemies[0].Hp);
+
+            出牌(engine, "bash");        // 8 傷 + 2 層易傷 → 184
+            Assert.AreEqual(184, engine.State.Enemies[0].Hp);
+
+            出牌(engine, "dismantle");   // 有易傷 → 兩下,各 8×1.5=12 → 共 24
+            Assert.AreEqual(160, engine.State.Enemies[0].Hp, "有易傷時要打兩下");
+        }
+
+        [Test]
+        public void 怨恨_本回合失過血才觸發條件步驟()
+        {
+            // 條件效果用格擋而不是抽牌:抽牌要靠抽牌堆有料,5 張牌全在手上時抽不到,
+            // 那樣測到的會是牌堆狀態而不是條件本身
+            var 怨恨 = new CardDef
+            {
+                Id = "spite", Name = "怨恨", Type = CardType.Attack, Rarity = CardRarity.Uncommon, Cost = 0,
+                DescriptionTemplate = "造成 {dmg} 點傷害。",
+                Steps = new[]
+                {
+                    new EffectStep(EffectOp.Damage, EffectTarget.TargetEnemy, 6),
+                    new EffectStep(EffectOp.Block, EffectTarget.Self, 5, condition: StepCondition.LostHpThisTurn)
+                }
+            };
+            var engine = 標準引擎(new[] { "spite", "spite", "bleed", "defend", "defend" },
+                enemyHp: 200, enemyAttack: 0, extraDefs: new[] { 怨恨, 放血(3) });
+            engine.StartCombat();
+
+            出牌(engine, "spite");
+            Assert.AreEqual(194, engine.State.Enemies[0].Hp);
+            Assert.AreEqual(0, engine.State.Player.Block, "沒失過血,條件步驟不該執行");
+
+            出牌(engine, "bleed");
+            Assert.IsTrue(engine.State.LostHpThisTurn);
+
+            出牌(engine, "spite");
+            Assert.AreEqual(188, engine.State.Enemies[0].Hp);
+            Assert.AreEqual(5, engine.State.Player.Block, "失過血就要執行條件步驟");
+        }
+
+        [Test]
+        public void 狂宴_斬殺才加最大生命()
+        {
+            var 狂宴 = new CardDef
+            {
+                Id = "feed", Name = "狂宴", Type = CardType.Attack, Rarity = CardRarity.Rare, Cost = 0,
+                DescriptionTemplate = "造成 {dmg} 點傷害。", Exhausts = true,
+                Steps = new[]
+                {
+                    new EffectStep(EffectOp.Damage, EffectTarget.TargetEnemy, 10),
+                    new EffectStep(EffectOp.GainMaxHp, EffectTarget.Self, 3,
+                        condition: StepCondition.LastAttackKilled)
+                }
+            };
+            // 敵人 30 血:第一刀打不死,第二刀也打不死,第三刀才斬殺
+            var engine = 標準引擎(重複("feed", 5), enemyHp: 30, playerHp: 80, extraDefs: new[] { 狂宴 });
+            engine.StartCombat();
+
+            出牌(engine, "feed");
+            Assert.AreEqual(80, engine.State.Player.MaxHp, "沒斬殺就不加最大生命");
+            出牌(engine, "feed");
+            Assert.AreEqual(80, engine.State.Player.MaxHp);
+            出牌(engine, "feed");   // 30 → 0,斬殺
+            Assert.IsFalse(engine.State.Enemies[0].IsAlive);
+            Assert.AreEqual(83, engine.State.Player.MaxHp, "斬殺要永久 +3 最大生命");
+        }
+
+        [Test]
+        public void 契約終結_消耗堆不夠就不能打出()
+        {
+            var 契約終結 = new CardDef
+            {
+                Id = "pacts", Name = "契約終結", Type = CardType.Attack, Rarity = CardRarity.Rare, Cost = 0,
+                PlayCondition = PlayCondition.ExhaustPileAtLeast, PlayConditionAmount = 3,
+                DescriptionTemplate = "對所有敵人造成 {dmg} 點傷害。",
+                Steps = new[] { new EffectStep(EffectOp.Damage, EffectTarget.AllEnemies, 17) }
+            };
+            var engine = 標準引擎(new[] { "pacts", "selfexhaust", "selfexhaust", "selfexhaust", "defend" },
+                enemyHp: 200, extraDefs: new[] { 契約終結, 自消耗() });
+            engine.StartCombat();
+
+            int pactsIndex = 手牌位置(engine, "pacts");
+            Assert.IsFalse(engine.CanPlayCard(pactsIndex, 0, out string reason), "消耗堆是空的,不該能打");
+            StringAssert.Contains("消耗堆", reason);
+
+            出牌(engine, "selfexhaust");
+            出牌(engine, "selfexhaust");
+            出牌(engine, "selfexhaust");
+            Assert.AreEqual(3, engine.State.ExhaustPile.Count);
+
+            pactsIndex = 手牌位置(engine, "pacts");
+            Assert.IsTrue(engine.CanPlayCard(pactsIndex, 0, out _), "湊滿 3 張就該能打");
+            engine.PlayCard(pactsIndex, 0);
+            Assert.AreEqual(183, engine.State.Enemies[0].Hp);
+        }
+
+        [Test]
         public void 餘燼_消耗抽牌堆最上面一張()
         {
             var 餘燼 = new CardDef

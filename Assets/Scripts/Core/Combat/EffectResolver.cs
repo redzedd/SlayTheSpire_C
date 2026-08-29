@@ -35,6 +35,7 @@ namespace STS.Core.Combat
                 if (!engine.GetCombatant(sourceIndex).IsAlive) return;   // 施放者已死(尖刺皮/反傷情境)即中止
 
                 var step = steps[s];
+                if (!ConditionHolds(engine, step, chosenTargetIndex)) continue;   // 條件不成立就跳這一步,後面照跑
                 int repeat = ResolveRepeat(engine, step);
 
                 switch (step.Op)
@@ -93,6 +94,10 @@ namespace STS.Core.Combat
 
                     case EffectOp.DrawUntilNonAttack:
                         engine.DrawUntilNonAttack();
+                        break;
+
+                    case EffectOp.GainMaxHp:
+                        engine.GainMaxHp(step.Amount);
                         break;
 
                     case EffectOp.GrowThisCardDamage:
@@ -255,6 +260,22 @@ namespace STS.Core.Combat
                     return engine.GetCombatant(sourceIndex).Block;
                 default:
                     throw new NotSupportedException($"AmountKind {step.AmountKind} 不適用於 {step.Op}");
+            }
+        }
+
+        /// <summary>步驟條件。不成立就跳過那一步,不影響其餘步驟。</summary>
+        private static bool ConditionHolds(CombatEngine engine, EffectStep step, int targetIndex)
+        {
+            switch (step.Condition)
+            {
+                case StepCondition.TargetIsVulnerable:
+                    return TargetVulnerable(engine, targetIndex) > 0;
+                case StepCondition.LostHpThisTurn:
+                    return engine.State.LostHpThisTurn;
+                case StepCondition.LastAttackKilled:
+                    return engine.State.LastAttackKilled;
+                default:
+                    return true;
             }
         }
 

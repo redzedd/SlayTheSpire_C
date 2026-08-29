@@ -187,7 +187,8 @@ namespace STS.Game
 
         private void OnCombatFinished(CombatEngine engine, bool victory)
         {
-            Run.ApplyCombatResult(victory, engine.State.Player.Hp, ComputeUsedPotions(engine));
+            Run.ApplyCombatResult(victory, engine.State.Player.Hp, ComputeUsedPotions(engine),
+                engine.State.Player.MaxHp);
             switch (Run.State.Phase)
             {
                 case RunPhase.ChoosingReward:

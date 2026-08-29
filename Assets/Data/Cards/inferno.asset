@@ -21,6 +21,8 @@ MonoBehaviour:
   ethereal: 0
   colorless: 0
   costScaling: 0
+  playCondition: 0
+  playConditionAmount: 0
   baseName: "\u7344\u706B"
   baseCost: 1
   baseDescription: "\u56DE\u5408\u958B\u59CB\u6642\u5931\u53BB 1 \u9EDE\u751F\u547D;\u4F60\u5728\u81EA\u5DF1\u56DE\u5408\u5167\u5931\u53BB\u751F\u547D\u6642,\u5C0D\u6240\u6709\u6575\u4EBA\u9020\u6210
@@ -33,6 +35,7 @@ MonoBehaviour:
     secondaryAmount: 0
     repeat: 0
     repeatKind: 0
+    condition: 0
     status: 19
     cardId: 
     pile: 2
@@ -51,6 +54,7 @@ MonoBehaviour:
     secondaryAmount: 0
     repeat: 0
     repeatKind: 0
+    condition: 0
     status: 19
     cardId: 
     pile: 2

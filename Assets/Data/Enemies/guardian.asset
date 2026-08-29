@@ -31,6 +31,7 @@ MonoBehaviour:
       secondaryAmount: 0
       repeat: 0
       repeatKind: 0
+      condition: 0
       status: 0
       cardId: 
       pile: 2
@@ -48,6 +49,7 @@ MonoBehaviour:
       secondaryAmount: 0
       repeat: 0
       repeatKind: 0
+      condition: 0
       status: 0
       cardId: 
       pile: 2
@@ -65,6 +67,7 @@ MonoBehaviour:
       secondaryAmount: 0
       repeat: 0
       repeatKind: 0
+      condition: 0
       status: 3
       cardId: 
       pile: 2
@@ -76,6 +79,7 @@ MonoBehaviour:
       secondaryAmount: 0
       repeat: 0
       repeatKind: 0
+      condition: 0
       status: 4
       cardId: 
       pile: 2
@@ -93,6 +97,7 @@ MonoBehaviour:
       secondaryAmount: 0
       repeat: 4
       repeatKind: 0
+      condition: 0
       status: 0
       cardId: 
       pile: 2
@@ -110,6 +115,7 @@ MonoBehaviour:
       secondaryAmount: 0
       repeat: 0
       repeatKind: 0
+      condition: 0
       status: 0
       cardId: 
       pile: 2
@@ -127,6 +133,7 @@ MonoBehaviour:
       secondaryAmount: 0
       repeat: 2
       repeatKind: 0
+      condition: 0
       status: 0
       cardId: 
       pile: 2

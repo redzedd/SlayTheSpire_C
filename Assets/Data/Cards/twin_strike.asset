@@ -21,6 +21,8 @@ MonoBehaviour:
   ethereal: 0
   colorless: 0
   costScaling: 0
+  playCondition: 0
+  playConditionAmount: 0
   baseName: "\u96D9\u91CD\u6253\u64CA"
   baseCost: 1
   baseDescription: "\u9020\u6210 {dmg} \u9EDE\u50B7\u5BB3\u5169\u6B21\u3002"
@@ -32,6 +34,7 @@ MonoBehaviour:
     secondaryAmount: 0
     repeat: 2
     repeatKind: 0
+    condition: 0
     status: 0
     cardId: 
     pile: 2
@@ -49,6 +52,7 @@ MonoBehaviour:
     secondaryAmount: 0
     repeat: 2
     repeatKind: 0
+    condition: 0
     status: 0
     cardId: 
     pile: 2

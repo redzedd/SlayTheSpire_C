@@ -39,6 +39,10 @@ namespace STS.Core.Cards
         public int Cost;
         public bool CostIsX;
         public CostScaling CostScaling;
+        /// <summary>能量與目標之外的可打出條件(契約終結)。</summary>
+        public PlayCondition PlayCondition;
+        /// <summary>PlayCondition 的門檻值。</summary>
+        public int PlayConditionAmount;
         public bool Unplayable;
         public bool Exhausts;
         public bool Ethereal;

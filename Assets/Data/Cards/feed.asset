@@ -10,27 +10,27 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 864927395ecc3534e9fd9f61f33a2072, type: 3}
-  m_Name: second_wind
+  m_Name: feed
   m_EditorClassIdentifier: STS.Game::STS.Game.DataAssets.CardDataAsset
-  id: second_wind
-  type: 1
-  rarity: 2
+  id: feed
+  type: 0
+  rarity: 3
   costIsX: 0
   unplayable: 0
-  exhausts: 0
+  exhausts: 1
   ethereal: 0
   colorless: 0
   costScaling: 0
   playCondition: 0
   playConditionAmount: 0
-  baseName: "\u91CD\u632F\u7CBE\u795E"
+  baseName: "\u72C2\u5BB4"
   baseCost: 1
-  baseDescription: "\u6D88\u8017\u624B\u724C\u4E2D\u6240\u6709\u975E\u653B\u64CA\u724C,\u6BCF\u6D88\u8017\u4E00\u5F35\u7372\u5F97
-    5 \u9EDE\u683C\u64CB\u3002"
+  baseDescription: "\u9020\u6210 {dmg} \u9EDE\u50B7\u5BB3\u3002\u82E5\u56E0\u6B64\u64CA\u6BBA\u76EE\u6A19,\u6C38\u4E45\u7372\u5F97
+    3 \u9EDE\u6700\u5927\u751F\u547D\u3002\u6D88\u8017\u3002"
   baseSteps:
-  - op: 15
-    target: 0
-    amount: 0
+  - op: 0
+    target: 1
+    amount: 10
     amountKind: 0
     secondaryAmount: 0
     repeat: 0
@@ -40,28 +40,28 @@ MonoBehaviour:
     cardId: 
     pile: 2
     customId: 
-  - op: 1
+  - op: 19
     target: 0
-    amount: 0
-    amountKind: 8
-    secondaryAmount: 5
+    amount: 3
+    amountKind: 0
+    secondaryAmount: 0
     repeat: 0
     repeatKind: 0
-    condition: 0
+    condition: 3
     status: 0
     cardId: 
     pile: 2
     customId: 
   baseTurnEndSteps: []
   hasUpgrade: 1
-  upgradeName: "\u91CD\u632F\u7CBE\u795E+"
+  upgradeName: "\u72C2\u5BB4+"
   upgradeCost: 1
-  upgradeDescription: "\u6D88\u8017\u624B\u724C\u4E2D\u6240\u6709\u975E\u653B\u64CA\u724C,\u6BCF\u6D88\u8017\u4E00\u5F35\u7372\u5F97
-    7 \u9EDE\u683C\u64CB\u3002"
+  upgradeDescription: "\u9020\u6210 {dmg} \u9EDE\u50B7\u5BB3\u3002\u82E5\u56E0\u6B64\u64CA\u6BBA\u76EE\u6A19,\u6C38\u4E45\u7372\u5F97
+    4 \u9EDE\u6700\u5927\u751F\u547D\u3002\u6D88\u8017\u3002"
   upgradeSteps:
-  - op: 15
-    target: 0
-    amount: 0
+  - op: 0
+    target: 1
+    amount: 12
     amountKind: 0
     secondaryAmount: 0
     repeat: 0
@@ -71,14 +71,14 @@ MonoBehaviour:
     cardId: 
     pile: 2
     customId: 
-  - op: 1
+  - op: 19
     target: 0
-    amount: 0
-    amountKind: 8
-    secondaryAmount: 7
+    amount: 4
+    amountKind: 0
+    secondaryAmount: 0
     repeat: 0
     repeatKind: 0
-    condition: 0
+    condition: 3
     status: 0
     cardId: 
     pile: 2

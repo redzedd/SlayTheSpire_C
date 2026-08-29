@@ -108,6 +108,10 @@ namespace STS.Content.Tests
                     continue;
                 }
 
+                // 宣告了打出條件的卡(契約終結)在條件未滿足時拒絕打出是正確行為,不是當機。
+                // 只放行這一種拒絕;其他任何理由的拒絕仍然算失敗。效果路徑由該卡的專屬測試覆蓋。
+                if (card.PlayCondition != PlayCondition.None && !engine.CanPlayCard(0, 0, out _)) continue;
+
                 Assert.DoesNotThrow(() =>
                 {
                     engine.PlayCard(0, 0);
@@ -135,6 +139,8 @@ namespace STS.Content.Tests
                 setup.EnemyIds.Add("cultist");
                 var engine = new CombatEngine(_db, RunRng.FromSeed(7UL), setup);
                 engine.StartCombat();
+
+                if (card.PlayCondition != PlayCondition.None && !engine.CanPlayCard(0, 0, out _)) continue;
 
                 Assert.DoesNotThrow(() =>
                 {

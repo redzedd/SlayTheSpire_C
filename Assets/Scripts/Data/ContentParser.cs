@@ -298,6 +298,8 @@ namespace STS.Data
                 Ethereal = dto.ethereal,
                 Colorless = dto.colorless,
                 CostScaling = ParseEnum<CostScaling>(dto.costScaling, $"cards.json:{dto.id}.costScaling"),
+                PlayCondition = ParseEnum<PlayCondition>(dto.playCondition, $"cards.json:{dto.id}.playCondition"),
+                PlayConditionAmount = dto.playConditionAmount,
                 Steps = BuildSteps(variant.steps, $"cards.json:{defId}"),
                 TurnEndInHandSteps = BuildSteps(variant.turnEndInHandSteps, $"cards.json:{defId}(turnEnd)")
             };
@@ -322,7 +324,8 @@ namespace STS.Data
                     ParseEnum<StatusId>(s.status, $"{context}.status"),
                     s.cardId,
                     ParseEnum<PileType>(s.pile, $"{context}.pile"),
-                    s.customId);
+                    s.customId,
+                    ParseEnum<StepCondition>(s.condition, $"{context}.condition"));
             }
             return steps;
         }

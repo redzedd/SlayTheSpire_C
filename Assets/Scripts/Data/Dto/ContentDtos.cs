@@ -14,6 +14,7 @@ namespace STS.Data.Dto
         public int secondaryAmount;
         public int repeat;
         public string repeatKind = "Fixed";
+        public string condition = "None";
         public string status = "None";
         public string cardId;
         public string pile = "Discard";
@@ -40,6 +41,8 @@ namespace STS.Data.Dto
         public bool ethereal;
         public bool colorless;
         public string costScaling = "None";
+        public string playCondition = "None";
+        public int playConditionAmount;
         public CardVariantDto @base;
         /// <summary>null = 此卡無升級版(狀態卡)。</summary>
         public CardVariantDto upgrade;
