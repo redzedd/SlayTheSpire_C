@@ -181,13 +181,20 @@ namespace STS.Data
                 {
                     Require(step.Op != EffectOp.ChooseExhaustFromHand,
                         $"potions.json:{dto.id} 使用了藥水不支援的 ChooseExhaustFromHand");
+                    // 戰鬥外由 Run 層執行,那裡沒有戰場——標了旗標卻放戰鬥用的步驟一定是資料寫錯
+                    Require(!dto.usableOutOfCombat
+                        || step.Op == EffectOp.Heal || step.Op == EffectOp.GainMaxHp,
+                        $"potions.json:{dto.id} 標了 usableOutOfCombat,但用了戰鬥外做不到的 {step.Op}");
                 }
+                Require(!dto.usableOutOfCombat || !dto.needsTarget,
+                    $"potions.json:{dto.id} 標了 usableOutOfCombat 就不能同時 needsTarget(戰鬥外沒有敵人可指)");
                 content.Potions.Add(new PotionDef
                 {
                     Id = dto.id,
                     Name = dto.name,
                     Description = dto.description,
                     NeedsTarget = dto.needsTarget,
+                    UsableOutOfCombat = dto.usableOutOfCombat,
                     Steps = steps
                 });
             }

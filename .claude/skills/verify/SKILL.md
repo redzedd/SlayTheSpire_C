@@ -42,6 +42,14 @@ internal class CommandScript : IRunCommand
 ```
 
 3. `Unity_GetConsoleLogs`(LogTypes=["Error","Exception"])→ **必須零筆,這步不可省**。isCompiling=True 就等一輪再查,不要在編譯中下結論。
+   **`Unity_GetConsoleLogs`/`Unity_ReadConsole` 用 `Types=["Error"]` 查會漏掉編譯錯誤(2026-08-29 付過代價)**——實測有一次 `error CS1061` 是以 **`Type: Log`** 進 console 的,只查 Error 完全看不到,於是「零錯誤」通過、測試照跑,但跑的是**沒更新的舊 dll**(測試數不變是唯一的線索)。
+   **正確做法:改測試/加測試後,不要只看 console,要直接問組件裡有沒有那個方法**——
+   ```csharp
+   foreach (var asm in System.AppDomain.CurrentDomain.GetAssemblies())
+       if (asm.GetName().Name == "STS.Content.Tests")
+           result.Log("{0}", asm.GetType("STS.Content.Tests.RunEngineTests").GetMethods().Length);
+   ```
+   或用 `Types=["All"]` 掃 console 找 `error CS`。**測試總數沒有跟著新增的測試增加 = 那個組件根本沒編過,不是測試被跳過。**
    **`File.Exists("Library/ScriptAssemblies/*.dll")` 不是編譯成功的證據(2026-08-29 付過代價)**——編譯失敗時舊的 DLL 還留在磁碟上,檔案照樣存在,檢查會一路綠燈放行,直到匯入器噴「找不到欄位」才發現根本沒編過。判斷編譯成功只認 console 零 Error。
 
 ## 管道 2:EditMode 測試(邏輯變更後必跑;改到 STS.Core 一律跑)
@@ -88,7 +96,7 @@ internal class CommandScript : IRunCommand
 }
 ```
 
-回收結果:輪詢 `Temp/STS_TestResult.txt`(bash,約 2 秒間隔,30 秒上限),必須看到 `Passed | pass=N fail=0`;失敗時讀 `Temp/STS_TestFails.txt` 或 console 掃 `STS_TEST_FAIL`。基線:2026-08-29 為 175 tests(引擎/地圖/新機制 143 + 內容/Run 32)/約 1.3s。七份 JSON(含 statuses.json)。改到 STS.Core 或 STS.Data 或 `Assets/Data/Source/*.json` 都必跑;改了 JSON 記得先跑匯入器選單 `STS/重新匯入資料(JSON→SO)`。三個已付代價的陷阱:(a) 編輯器重啟會丟掉進行中的測試回呼;(b) **同一個 RunCommand 裡 Refresh+啟動測試,domain reload 會把回呼吃掉**——正確做法:先 Refresh 等編譯完,再用「另一個」RunCommand 單獨啟動測試;(c) **在 play mode 中 EditMode 測試根本跑不起來**(console 噴 `This cannot be used during play mode`,結果檔永遠不出現)——**啟動測試前先斷言 `EditorApplication.isPlaying == false`**,腳本裡就擋掉,別靠記得手動退出。結果檔 30 秒不出現先查這三項,不要盲目重試。
+回收結果:輪詢 `Temp/STS_TestResult.txt`(bash,約 2 秒間隔,30 秒上限),必須看到 `Passed | pass=N fail=0`;失敗時讀 `Temp/STS_TestFails.txt` 或 console 掃 `STS_TEST_FAIL`。基線:2026-08-29 為 178 tests(引擎/地圖/新機制 143 + 內容/Run 35)/約 1.3s。七份 JSON(含 statuses.json)。改到 STS.Core 或 STS.Data 或 `Assets/Data/Source/*.json` 都必跑;改了 JSON 記得先跑匯入器選單 `STS/重新匯入資料(JSON→SO)`。三個已付代價的陷阱:(a) 編輯器重啟會丟掉進行中的測試回呼;(b) **同一個 RunCommand 裡 Refresh+啟動測試,domain reload 會把回呼吃掉**——正確做法:先 Refresh 等編譯完,再用「另一個」RunCommand 單獨啟動測試;(c) **在 play mode 中 EditMode 測試根本跑不起來**(console 噴 `This cannot be used during play mode`,結果檔永遠不出現)——**啟動測試前先斷言 `EditorApplication.isPlaying == false`**,腳本裡就擋掉,別靠記得手動退出。結果檔 30 秒不出現先查這三項,不要盲目重試。
 
 ## 管道 3:play 煙霧(行為/場景變更後跑;M4 起有具體流程)
 

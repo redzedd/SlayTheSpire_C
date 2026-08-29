@@ -12,8 +12,13 @@ namespace STS.Game.UI
     /// </summary>
     public sealed class PotionMenuView : MonoBehaviour
     {
+        /// <param name="canUse">
+        /// false = 這瓶現在不能喝(戰鬥外的戰鬥用藥水),「使用」壓暗且不可按,只剩丟棄。
+        /// 能不能喝由資料上的旗標決定,不是在這裡判斷情境。
+        /// </param>
+        /// <param name="cannotUseReason">壓暗時顯示的一行說明。</param>
         public static PotionMenuView Open(RectTransform overlayLayer, Vector2 anchorScreen, string potionName,
-            Action onUse, Action onDiscard)
+            Action onUse, Action onDiscard, bool canUse = true, string cannotUseReason = null)
         {
             var backdrop = UiKit.CreatePanel("藥水選單", overlayLayer, new Color(0f, 0f, 0f, 0.4f));
             UiKit.Stretch(backdrop.rectTransform);
@@ -27,25 +32,38 @@ namespace STS.Game.UI
             RectTransformUtility.ScreenPointToLocalPointInRectangle(overlayLayer, anchorScreen, null, out var local);
             var panel = UiKit.CreatePanel("選單", backdrop.transform, new Color(0.16f, 0.14f, 0.22f, 0.98f));
             // 掛在藥水格正下方;選單自己不接受「點外面取消」,所以要蓋掉背板的點擊
-            UiKit.Place(panel.rectTransform, local + new Vector2(0f, -150f), new Vector2(300f, 230f));
+            float height = canUse ? 230f : 268f;
+            UiKit.Place(panel.rectTransform, local + new Vector2(0f, -height * 0.65f), new Vector2(300f, height));
             panel.gameObject.AddComponent<Button>();   // 吃掉點擊,免得點在選單上也關掉
 
             UiKit.Place(UiKit.CreateText("瓶名", panel.transform, potionName, 26f,
-                new Color(0.85f, 0.75f, 1f)).rectTransform, new Vector2(0f, 78f), new Vector2(280f, 40f));
+                new Color(0.85f, 0.75f, 1f)).rectTransform, new Vector2(0f, height * 0.5f - 37f), new Vector2(280f, 40f));
 
-            UiKit.Place((RectTransform)UiKit.CreateButton("使用", panel.transform, "使用", 28f,
-                new Color(0.3f, 0.5f, 0.35f), () =>
+            var useButton = UiKit.CreateButton("使用", panel.transform, "使用", 28f,
+                canUse ? new Color(0.3f, 0.5f, 0.35f) : new Color(0.22f, 0.24f, 0.26f), () =>
                 {
                     Destroy(backdrop.gameObject);
                     onUse();
-                }).transform, new Vector2(0f, 16f), new Vector2(250f, 62f));
+                });
+            UiKit.Place((RectTransform)useButton.transform, new Vector2(0f, 16f), new Vector2(250f, 62f));
+            if (!canUse)
+            {
+                useButton.interactable = false;
+                var label = useButton.GetComponentInChildren<TMPro.TextMeshProUGUI>();
+                if (label != null) label.color = new Color(0.55f, 0.55f, 0.58f);
+                if (!string.IsNullOrEmpty(cannotUseReason))
+                {
+                    UiKit.Place(UiKit.CreateText("不可用原因", panel.transform, cannotUseReason, 20f,
+                        new Color(0.7f, 0.7f, 0.74f)).rectTransform, new Vector2(0f, -26f), new Vector2(280f, 34f));
+                }
+            }
 
             UiKit.Place((RectTransform)UiKit.CreateButton("丟棄", panel.transform, "丟棄", 28f,
                 new Color(0.5f, 0.27f, 0.27f), () =>
                 {
                     Destroy(backdrop.gameObject);
                     onDiscard();
-                }).transform, new Vector2(0f, -62f), new Vector2(250f, 62f));
+                }).transform, new Vector2(0f, canUse ? -62f : -96f), new Vector2(250f, 62f));
 
             return view;
         }

@@ -73,6 +73,7 @@ namespace STS.Game.Editor
                     asset.potionName = dto.name;
                     asset.description = dto.description;
                     asset.needsTarget = dto.needsTarget;
+                    asset.usableOutOfCombat = dto.usableOutOfCombat;
                     asset.steps = ToStepData(dto.steps);
                     EditorUtility.SetDirty(asset);
                     db.potions.Add(asset);

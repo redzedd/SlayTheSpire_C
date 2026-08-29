@@ -11,5 +11,11 @@ namespace STS.Core.Potions
         public string Description;
         public EffectStep[] Steps = System.Array.Empty<EffectStep>();
         public bool NeedsTarget;
+        /// <summary>
+        /// 戰鬥外(地圖/商店/燈火)也能喝。回血、加最大生命這類效果不需要戰場,
+        /// 治療藥水擺著不能用是很怪的事;不能在戰鬥外用的藥水,那時只剩「丟棄」。
+        /// 由 Run 層執行,所以步驟只能用 Heal / GainMaxHp(匯入時檢查)。
+        /// </summary>
+        public bool UsableOutOfCombat;
     }
 }

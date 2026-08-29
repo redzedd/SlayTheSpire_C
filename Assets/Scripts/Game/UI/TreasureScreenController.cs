@@ -20,6 +20,8 @@ namespace STS.Game.UI
         private GameController _game;
         private RectTransform _root;
         private bool _opened;
+        /// <summary>已收下的寶物名;非 null 代表拿過了(和「箱子本來就是空的」要分得開)。</summary>
+        private string _claimedRelicName;
 
         public static TreasureScreenController Build(Transform parent, GameController game)
         {
@@ -114,10 +116,15 @@ namespace STS.Game.UI
 
         private void RenderOpened()
         {
-            UiKit.CreateBanner(_root, "裡面有什麼?", new Vector2(0f, 320f));
+            UiKit.CreateBanner(_root, _claimedRelicName != null ? "收下了!" : "裡面有什麼?", new Vector2(0f, 320f));
 
             string relicId = _game.Run.PendingTreasureRelicId;
-            if (relicId == null)
+            if (_claimedRelicName != null)
+            {
+                UiKit.Place(UiKit.CreateText("已收下", _root, $"「{_claimedRelicName}」已放進行囊", 30f,
+                    new Color(1f, 0.92f, 0.7f)).rectTransform, new Vector2(0f, 20f), new Vector2(800f, 46f));
+            }
+            else if (relicId == null)
             {
                 UiKit.Place(UiKit.CreateText("空箱", _root, "箱子是空的…", 32f,
                     new Color(0.75f, 0.75f, 0.78f)).rectTransform, new Vector2(0f, 20f), new Vector2(600f, 46f));
@@ -142,8 +149,8 @@ namespace STS.Game.UI
                     new Color(0.8f, 0.8f, 0.85f)).rectTransform, new Vector2(0f, -118f), new Vector2(600f, 34f));
             }
 
-            ShopRoomScreenController.BuildForwardArrow(_root, new Vector2(640f, -400f), "跳過",
-                () => _game.TreasureLeave());
+            ShopRoomScreenController.BuildForwardArrow(_root, new Vector2(640f, -400f),
+                _claimedRelicName != null ? "離開" : "跳過", () => _game.TreasureLeave());
         }
 
         /// <summary>開箱(玩家點箱子或煙霧呼叫);只是切畫面階段,遺物還沒入包。</summary>
@@ -151,6 +158,13 @@ namespace STS.Game.UI
         {
             if (_opened) return;
             _opened = true;
+            Render();
+        }
+
+        /// <summary>寶物已入包:改成「收下了!」的樣子,留在原地等玩家自己按離開。</summary>
+        public void OnClaimed(string relicName)
+        {
+            _claimedRelicName = relicName;
             Render();
         }
     }

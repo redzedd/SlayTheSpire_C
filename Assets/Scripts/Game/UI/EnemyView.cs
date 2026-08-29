@@ -22,6 +22,7 @@ namespace STS.Game.UI
         private TextMeshProUGUI _statusText;
         private TextMeshProUGUI _hpText;
         private RectTransform _hpFill;
+        private HpDisplay _hp;
         private Image _body;
 
         public static EnemyView Build(Transform parent, int enemyIndex, Vector2 anchoredPos)
@@ -42,6 +43,8 @@ namespace STS.Game.UI
                 new Vector2(0.5f, 0.5f), new Color(0.2f, 0.05f, 0.05f), new Color(0.85f, 0.2f, 0.2f));
             view._hpText = UiKit.CreateText("血量", body.transform, "", 20f);
             UiKit.Place(view._hpText.rectTransform, new Vector2(0f, -158f), new Vector2(200f, 26f));
+
+            view._hp = new HpDisplay(view._hpFill, view._hpText, body.gameObject);
 
             view._blockText = UiKit.CreateText("格擋", body.transform, "", 26f, new Color(0.55f, 0.8f, 1f));
             UiKit.Place(view._blockText.rectTransform, new Vector2(-110f, -132f), new Vector2(70f, 32f));
@@ -80,8 +83,7 @@ namespace STS.Game.UI
         {
             var enemy = engine.State.Enemies[EnemyIndex];
             _nameText.text = enemy.Name;
-            _hpText.text = $"{enemy.Hp}/{enemy.MaxHp}";
-            UiKit.TweenBarFill(_hpFill, enemy.MaxHp > 0 ? (float)enemy.Hp / enemy.MaxHp : 0f);
+            _hp.Set(enemy.Hp, enemy.MaxHp);
             _blockText.text = enemy.Block > 0 ? $"盾{enemy.Block}" : "";
             _statusText.text = StatusRowText.Build(enemy);
 

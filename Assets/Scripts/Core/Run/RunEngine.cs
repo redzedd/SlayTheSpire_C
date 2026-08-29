@@ -308,6 +308,55 @@ namespace STS.Core.Run
             State.Phase = RunPhase.ChoosingNode;
         }
 
+        // ---- 藥水(戰鬥外) ----
+
+        /// <summary>
+        /// 這一格的藥水現在能不能喝。戰鬥外只有標了 UsableOutOfCombat 的能喝——
+        /// 「戰鬥外一律不能用」是資料決定的,不寫死在 UI。
+        /// </summary>
+        public bool CanUsePotionOutOfCombat(int slot)
+        {
+            if (slot < 0 || slot >= State.PotionSlots.Length) return false;
+            string id = State.PotionSlots[slot];
+            return id != null && _catalog.GetPotion(id).UsableOutOfCombat;
+        }
+
+        /// <summary>
+        /// 戰鬥外喝掉一瓶。步驟由這裡執行(不經 CombatEngine,那時沒有戰場),
+        /// 匯入器已保證這種藥水只會有 Heal / GainMaxHp。
+        /// </summary>
+        public bool UsePotionOutOfCombat(int slot)
+        {
+            if (!CanUsePotionOutOfCombat(slot)) return false;
+            var def = _catalog.GetPotion(State.PotionSlots[slot]);
+            foreach (var step in def.Steps)
+            {
+                switch (step.Op)
+                {
+                    case EffectOp.Heal:
+                        State.Hp = State.Hp + step.Amount > State.MaxHp ? State.MaxHp : State.Hp + step.Amount;
+                        break;
+                    case EffectOp.GainMaxHp:
+                        State.MaxHp += step.Amount;
+                        State.Hp += step.Amount;   // 與戰鬥內一致:加上限同時補等量現值
+                        break;
+                    default:
+                        throw new InvalidOperationException(
+                            $"藥水 {def.Id} 標了可在戰鬥外使用,卻含有戰鬥外做不到的步驟 {step.Op}");
+                }
+            }
+            State.PotionSlots[slot] = null;
+            return true;
+        }
+
+        /// <summary>戰鬥外倒掉一瓶:效果完全不觸發,只是把格子空出來。</summary>
+        public bool DiscardPotionOutOfCombat(int slot)
+        {
+            if (slot < 0 || slot >= State.PotionSlots.Length || State.PotionSlots[slot] == null) return false;
+            State.PotionSlots[slot] = null;
+            return true;
+        }
+
         // ---- 寶箱 ----
 
         /// <summary>收下箱子裡的遺物。空箱子回 false,讓 UI 不要畫出一個按不動的東西。</summary>

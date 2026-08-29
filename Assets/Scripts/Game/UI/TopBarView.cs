@@ -1,35 +1,33 @@
-using System;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using STS.Core.Combat;
 
 namespace STS.Game.UI
 {
     /// <summary>
     /// 頂部資訊列(參考原作版面):生命、金幣、藥水欄、樓層、牌組。
+    /// **整輪常駐**,不隨畫面切換重建——原作在地圖、商店、戰鬥都看得到它。
+    /// 資料來源跟著情境走:戰鬥中讀戰鬥狀態(血量會變、藥水會用掉),戰鬥外讀 RunState。
     /// 藥水欄固定三格——空格也畫出來,玩家才知道自己有幾個位子。
     /// </summary>
     public sealed class TopBarView : MonoBehaviour
     {
         private const float 高度 = 76f;
+        private const int 藥水格數 = 3;
         private static readonly Color 有藥水色 = new Color(0.42f, 0.28f, 0.6f);
         private static readonly Color 瞄準中色 = new Color(0.78f, 0.6f, 0.95f);
 
         /// <summary>每一格的色塊(瞄準時當箭頭起點、也要標亮);空格與超出範圍都是 null。</summary>
-        private readonly System.Collections.Generic.List<Image> _potionChips =
-            new System.Collections.Generic.List<Image>();
+        private readonly List<Image> _potionChips = new List<Image>();
         private GameController _game;
-        private CombatEngine _engine;
         private TextMeshProUGUI _hpText;
         private TextMeshProUGUI _goldText;
         private TextMeshProUGUI _floorText;
         private TextMeshProUGUI _deckText;
         private RectTransform _potionRow;
-        private Action<int> _onPotionClicked;
 
-        public static TopBarView Build(Transform parent, GameController game, CombatEngine engine,
-            Action<int> onPotionClicked)
+        public static TopBarView Build(Transform parent, GameController game)
         {
             var bar = UiKit.CreatePanel("頂部資訊列", parent, new Color(0.09f, 0.09f, 0.12f, 0.96f));
             bar.rectTransform.anchorMin = new Vector2(0f, 1f);
@@ -40,8 +38,6 @@ namespace STS.Game.UI
 
             var view = bar.gameObject.AddComponent<TopBarView>();
             view._game = game;
-            view._engine = engine;
-            view._onPotionClicked = onPotionClicked;
 
             // 生命(紅心)
             var heart = UiKit.CreatePanel("心", bar.transform, new Color(0.85f, 0.2f, 0.22f));
@@ -75,13 +71,35 @@ namespace STS.Game.UI
 
         public void Refresh()
         {
-            var player = _engine.State.Player;
-            _hpText.text = $"{player.Hp}/{player.MaxHp}";
             var run = _game.Run != null ? _game.Run.State : null;
+            var engine = _game.CombatEngine;
+
+            if (engine != null)
+            {
+                var player = engine.State.Player;
+                _hpText.text = $"{player.Hp}/{player.MaxHp}";
+            }
+            else
+            {
+                _hpText.text = run != null ? $"{run.Hp}/{run.MaxHp}" : "-";
+            }
             _goldText.text = run != null ? run.Gold.ToString() : "-";
-            _floorText.text = run != null ? $"樓層 {run.Floor}" : "";
+            _floorText.text = run != null ? $"樓層 {run.Floor}   遺物 {run.Relics.Count}" : "";
             _deckText.text = run != null ? $"牌組 {run.Deck.Count}" : "牌組";
             RebuildPotions();
+        }
+
+        /// <summary>該格現在裝的是什麼;戰鬥中看戰鬥狀態,戰鬥外看 RunState。</summary>
+        private string PotionAt(int slot)
+        {
+            var engine = _game.CombatEngine;
+            if (engine != null)
+            {
+                return slot < engine.State.PotionSlots.Count ? engine.State.PotionSlots[slot] : null;
+            }
+            var run = _game.Run != null ? _game.Run.State : null;
+            if (run == null) return null;
+            return slot < run.PotionSlots.Length ? run.PotionSlots[slot] : null;
         }
 
         /// <summary>該格的色塊;空格或超出範圍回 null(瞄準箭頭的起點與高亮都靠它)。</summary>
@@ -105,12 +123,10 @@ namespace STS.Game.UI
                 Destroy(child.gameObject);
             }
             _potionChips.Clear();
-            var slots = _engine.State.PotionSlots;
-            int shown = Mathf.Max(slots.Count, 3);
-            for (int i = 0; i < shown; i++)
+            for (int i = 0; i < 藥水格數; i++)
             {
                 int slot = i;
-                string potionId = i < slots.Count ? slots[i] : null;
+                string potionId = PotionAt(i);
                 bool filled = potionId != null;
                 var chip = UiKit.CreatePanel($"藥水格{i}", _potionRow,
                     filled ? 有藥水色 : new Color(0.2f, 0.2f, 0.24f, 0.8f));
@@ -123,8 +139,9 @@ namespace STS.Game.UI
                 var label = UiKit.CreateText("名", chip.transform, def.Name, 20f);
                 UiKit.Stretch(label.rectTransform);
                 var button = chip.gameObject.AddComponent<Button>();
-                button.onClick.AddListener(() => _onPotionClicked(slot));
-                TooltipTrigger.Attach(chip.gameObject, _game.Tooltip, () => TooltipText.藥水(def));
+                button.onClick.AddListener(() => _game.PotionClicked(slot));
+                TooltipTrigger.Attach(chip.gameObject, _game.Tooltip,
+                    () => TooltipText.藥水(def, _game.CombatEngine != null));
             }
         }
     }

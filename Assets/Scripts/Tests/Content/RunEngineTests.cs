@@ -280,6 +280,51 @@ namespace STS.Content.Tests
         }
 
         [Test]
+        public void 戰鬥外藥水_目前全部只能在戰鬥中喝()
+        {
+            // 這條同時是內容檢查:哪天有藥水標了 usableOutOfCombat,這裡會提醒要一起看 UI 與 Run 層路徑
+            var engine = 手作引擎(11UL, MapNodeType.Treasure);
+            engine.State.PotionSlots[0] = "fire_potion";
+            Assert.IsFalse(engine.CanUsePotionOutOfCombat(0), "戰鬥用藥水在戰鬥外不能喝");
+            Assert.IsFalse(engine.UsePotionOutOfCombat(0), "拒絕之後藥水要留著");
+            Assert.AreEqual("fire_potion", engine.State.PotionSlots[0]);
+        }
+
+        [Test]
+        public void 戰鬥外藥水_可用的喝下去會回血且清空欄位()
+        {
+            // 現有內容沒有戰鬥外可用的藥水,所以這裡自備一瓶:驗的是路徑,不是某一瓶的數值
+            var content = ContentLoader.Load();
+            content.Potions.Add(new STS.Core.Potions.PotionDef
+            {
+                Id = "test_heal", Name = "測試治療藥水", UsableOutOfCombat = true,
+                Steps = new[] { new STS.Core.Cards.EffectStep(STS.Core.Cards.EffectOp.Heal,
+                    STS.Core.Cards.EffectTarget.Self, 12) }
+            });
+            var healEngine = RunEngine.NewRun(ContentDb.From(content), 12UL);
+            healEngine.State.Hp = 40;
+            healEngine.State.PotionSlots[0] = "test_heal";
+
+            Assert.IsTrue(healEngine.CanUsePotionOutOfCombat(0));
+            Assert.IsTrue(healEngine.UsePotionOutOfCombat(0));
+            Assert.AreEqual(52, healEngine.State.Hp);
+            Assert.IsNull(healEngine.State.PotionSlots[0], "喝掉就要空出格子");
+        }
+
+        [Test]
+        public void 戰鬥外藥水_丟棄不觸發效果()
+        {
+            var engine = 手作引擎(13UL, MapNodeType.Treasure);
+            engine.State.PotionSlots[1] = "fire_potion";
+            int hpBefore = engine.State.Hp;
+
+            Assert.IsTrue(engine.DiscardPotionOutOfCombat(1));
+            Assert.IsNull(engine.State.PotionSlots[1]);
+            Assert.AreEqual(hpBefore, engine.State.Hp);
+            Assert.IsFalse(engine.DiscardPotionOutOfCombat(1), "空格不能再丟");
+        }
+
+        [Test]
         public void 寶箱_內容先擲定但不入包_收下才進包()
         {
             var engine = 手作引擎(23UL, MapNodeType.Treasure);

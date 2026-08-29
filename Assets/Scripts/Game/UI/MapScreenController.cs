@@ -112,28 +112,8 @@ namespace STS.Game.UI
             int focusRow = run.CurrentNodeId >= 0 ? map.NodeById(run.CurrentNodeId).Row : 0;
             scroll.verticalNormalizedPosition = Mathf.Clamp01(focusRow / (float)(map.NodeById(map.BossNodeId).Row));
 
-            controller.BuildHud(root, game);
+            // 地圖不自己畫狀態列:生命/金幣/樓層/牌組都在常駐的頂部資訊列上,再畫一條會疊在它下面
             return controller;
-        }
-
-        private void BuildHud(RectTransform root, GameController game)
-        {
-            var bar = UiKit.CreatePanel("狀態列", root, new Color(0.1f, 0.1f, 0.13f, 0.95f));
-            bar.rectTransform.anchorMin = new Vector2(0f, 1f);
-            bar.rectTransform.anchorMax = new Vector2(1f, 1f);
-            bar.rectTransform.pivot = new Vector2(0.5f, 1f);
-            bar.rectTransform.anchoredPosition = Vector2.zero;
-            bar.rectTransform.sizeDelta = new Vector2(0f, 64f);
-
-            var run = game.Run.State;
-            var info = UiKit.CreateText("資訊", bar.transform,
-                $"生命 {run.Hp}/{run.MaxHp}   金幣 {run.Gold}   樓層 {run.Floor}   遺物 {run.Relics.Count}",
-                26f, null, TextAlignmentOptions.Left);
-            UiKit.Place(info.rectTransform, new Vector2(30f, 0f), new Vector2(900f, 50f), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f));
-
-            UiKit.Place((RectTransform)UiKit.CreateButton("牌組", bar.transform, $"牌組 {run.Deck.Count}", 24f,
-                new Color(0.25f, 0.25f, 0.32f), () => game.OpenDeckView()).transform,
-                new Vector2(-110f, 0f), new Vector2(160f, 48f), new Vector2(1f, 0.5f));
         }
 
         private static string 節點字(MapNodeType type)

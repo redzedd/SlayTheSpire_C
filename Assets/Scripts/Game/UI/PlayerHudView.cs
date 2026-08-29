@@ -16,6 +16,7 @@ namespace STS.Game.UI
         private TextMeshProUGUI _blockText;
         private TextMeshProUGUI _statusText;
         private RectTransform _hpFill;
+        private HpDisplay _hp;
         private Image _body;
 
         public static PlayerHudView Build(Transform parent)
@@ -32,6 +33,8 @@ namespace STS.Game.UI
                 new Vector2(0.5f, 0.5f), new Color(0.2f, 0.05f, 0.05f), new Color(0.2f, 0.8f, 0.3f));
             view._hpText = UiKit.CreateText("血量", body.transform, "", 24f);
             UiKit.Place(view._hpText.rectTransform, new Vector2(0f, -200f), new Vector2(220f, 30f));
+
+            view._hp = new HpDisplay(view._hpFill, view._hpText, body.gameObject);
 
             view._blockText = UiKit.CreateText("格擋", body.transform, "", 28f, new Color(0.55f, 0.8f, 1f));
             UiKit.Place(view._blockText.rectTransform, new Vector2(-120f, -172f), new Vector2(80f, 34f));
@@ -57,8 +60,7 @@ namespace STS.Game.UI
         public void RefreshFrom(CombatEngine engine)
         {
             var player = engine.State.Player;
-            _hpText.text = $"{player.Hp}/{player.MaxHp}";
-            UiKit.TweenBarFill(_hpFill, player.MaxHp > 0 ? (float)player.Hp / player.MaxHp : 0f);
+            _hp.Set(player.Hp, player.MaxHp);
             _blockText.text = player.Block > 0 ? $"盾{player.Block}" : "";
             _statusText.text = StatusRowText.Build(player);
         }

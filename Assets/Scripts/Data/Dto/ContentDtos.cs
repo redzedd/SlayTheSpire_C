@@ -91,6 +91,8 @@ namespace STS.Data.Dto
         public string name;
         public string description;
         public bool needsTarget;
+        /// <summary>戰鬥外也能喝(只允許 Heal / GainMaxHp 步驟)。</summary>
+        public bool usableOutOfCombat;
         public List<StepDto> steps = new List<StepDto>();
     }
 

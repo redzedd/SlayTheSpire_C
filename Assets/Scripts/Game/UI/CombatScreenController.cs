@@ -48,7 +48,8 @@ namespace STS.Game.UI
         private TextMeshProUGUI _discardPileLabel;
         private TextMeshProUGUI _exhaustPileLabel;
         private EnergyOrbView _energyOrb;
-        private TopBarView _topBar;
+        /// <summary>常駐的頂部資訊列(GameController 持有);戰鬥畫面只借來重繪與標亮瞄準中的藥水。</summary>
+        private TopBarView _topBar => _game.TopBar;
         private TextMeshProUGUI _hintText;
         private CanvasGroup _hintGroup;
 
@@ -78,7 +79,7 @@ namespace STS.Game.UI
 
             controller._hand = HandView.Build(root, controller);
             controller._energyOrb = EnergyOrbView.Build(root);
-            controller._topBar = TopBarView.Build(root, game, engine, controller.OnPotionClicked);
+            // 頂部資訊列由 GameController 常駐持有,戰鬥畫面只是借來重繪與標亮
 
             controller._endTurnButton = UiKit.CreateButton("結束回合", root, "結束回合", 28f,
                 new Color(0.7f, 0.5f, 0.15f), controller.OnEndTurnClicked);
@@ -383,10 +384,12 @@ namespace STS.Game.UI
 
         // ---- 藥水:需要目標的先進瞄準模式,點敵人才丟出去 ----
 
-        private void OnPotionClicked(int slot)
+        /// <summary>戰鬥中點藥水格的入口(由常駐資訊列經 GameController 轉進來)。</summary>
+        public void OpenPotionMenu(int slot)
         {
             // 瞄準中整個畫面被遮罩蓋住,藥水鈕收不到點擊——這裡只是防禦
             if (!InputEnabled || IsChoiceMode || IsPotionAiming) return;
+            if (slot < 0 || slot >= _engine.State.PotionSlots.Count) return;
             var potionId = _engine.State.PotionSlots[slot];
             if (potionId == null) return;
 
