@@ -280,13 +280,31 @@ namespace STS.Content.Tests
         }
 
         [Test]
-        public void 寶箱_遺物自動入包_直接回選節點()
+        public void 寶箱_內容先擲定但不入包_收下才進包()
         {
             var engine = 手作引擎(23UL, MapNodeType.Treasure);
             int relicsBefore = engine.State.Relics.Count;
             var entry = engine.EnterNode(0);
+
             Assert.IsNotNull(entry.TreasureRelicId);
+            Assert.AreEqual(RunPhase.AtTreasure, engine.State.Phase, "要停在寶箱畫面等玩家決定");
+            Assert.AreEqual(relicsBefore, engine.State.Relics.Count, "還沒收下就不該入包");
+
+            Assert.IsTrue(engine.ClaimTreasure());
             Assert.AreEqual(relicsBefore + 1, engine.State.Relics.Count);
+            engine.LeaveTreasure();
+            Assert.AreEqual(RunPhase.ChoosingNode, engine.State.Phase);
+        }
+
+        [Test]
+        public void 寶箱_不收下就離開_遺物不會入包()
+        {
+            var engine = 手作引擎(23UL, MapNodeType.Treasure);
+            int relicsBefore = engine.State.Relics.Count;
+            engine.EnterNode(0);
+
+            engine.LeaveTreasure();
+            Assert.AreEqual(relicsBefore, engine.State.Relics.Count, "跳過的寶物留在箱子裡");
             Assert.AreEqual(RunPhase.ChoosingNode, engine.State.Phase);
         }
 

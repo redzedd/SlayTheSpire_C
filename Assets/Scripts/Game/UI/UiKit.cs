@@ -115,6 +115,20 @@ namespace STS.Game.UI
         }
 
         /// <summary>錨定四邊撐滿父物件。</summary>
+        /// <summary>米色布條標題(獎勵與寶箱共用):一塊長條 + 兩端下垂的小方塊,佔位期夠用。</summary>
+        public static Image CreateBanner(Transform parent, string title, Vector2 pos)
+        {
+            var banner = CreatePanel("布條", parent, new Color(0.85f, 0.76f, 0.56f));
+            Place(banner.rectTransform, pos, new Vector2(640f, 92f));
+            var left = CreatePanel("左緣", banner.transform, new Color(0.72f, 0.63f, 0.45f));
+            Place(left.rectTransform, new Vector2(-330f, -14f), new Vector2(40f, 64f));
+            var right = CreatePanel("右緣", banner.transform, new Color(0.72f, 0.63f, 0.45f));
+            Place(right.rectTransform, new Vector2(330f, -14f), new Vector2(40f, 64f));
+            Place(CreateText("標題", banner.transform, title, 40f, new Color(0.16f, 0.12f, 0.08f)).rectTransform,
+                Vector2.zero, new Vector2(600f, 60f));
+            return banner;
+        }
+
         public static void Stretch(RectTransform rect, float margin = 0f)
         {
             rect.anchorMin = Vector2.zero;

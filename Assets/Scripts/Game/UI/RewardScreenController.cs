@@ -68,14 +68,15 @@ namespace STS.Game.UI
             if (rewards.HasPotion)
             {
                 var potion = _game.Db.GetPotion(rewards.PotionId);
+                // 指上去先看清楚效果再決定要不要占掉一個藥水格
                 rows.Add(new RewardRow(potion.Name, new Color(0.55f, 0.4f, 0.8f),
-                    () => _game.RewardClaimPotion()));
+                    () => _game.RewardClaimPotion(), () => TooltipText.藥水(potion, inCombat: false)));
             }
             if (rewards.HasRelic)
             {
                 var relic = _game.Db.GetRelicDef(rewards.RelicId);
                 rows.Add(new RewardRow(relic.Name, new Color(0.7f, 0.5f, 0.25f),
-                    () => _game.RewardClaimRelic()));
+                    () => _game.RewardClaimRelic(), () => TooltipText.遺物(relic, 0)));
             }
             if (rewards.HasCard)
             {
@@ -104,6 +105,10 @@ namespace STS.Game.UI
                 var icon = UiKit.CreatePanel("圖示", button.transform, row.IconColor);
                 UiKit.Place(icon.rectTransform, new Vector2(-200f, 0f), new Vector2(48f, 48f));
                 icon.raycastTarget = false;
+                if (row.Tooltip != null)
+                {
+                    TooltipTrigger.Attach(button.gameObject, _game.Tooltip, row.Tooltip);
+                }
             }
 
             ShopRoomScreenController.BuildForwardArrow(_root, new Vector2(640f, -280f), "跳過",
@@ -129,24 +134,17 @@ namespace STS.Game.UI
                 face.gameObject.AddComponent<CardHoverLift>().Setup(face);
             }
 
-            UiKit.Place((RectTransform)UiKit.CreateButton("跳過", _root, "跳過", 30f,
-                new Color(0.24f, 0.5f, 0.58f), () => _game.RewardSkipCard()).transform,
+            // 「先不拿」只是退回清單,那一項仍在——真的不要就從清單按「跳過」離開整個獎勵畫面
+            UiKit.Place((RectTransform)UiKit.CreateButton("返回", _root, "先不拿", 30f,
+                new Color(0.24f, 0.5f, 0.58f), () => _game.RewardBackToCardList()).transform,
                 new Vector2(0f, -330f), new Vector2(320f, 76f));
         }
 
         // ---- 共用 ----
 
-        /// <summary>米色布條標題:一塊長條 + 兩端下垂的小方塊,佔位期夠用。</summary>
         private void BuildBanner(string title, Vector2 pos)
         {
-            var banner = UiKit.CreatePanel("布條", _root, new Color(0.85f, 0.76f, 0.56f));
-            UiKit.Place(banner.rectTransform, pos, new Vector2(640f, 92f));
-            var left = UiKit.CreatePanel("左緣", banner.transform, new Color(0.72f, 0.63f, 0.45f));
-            UiKit.Place(left.rectTransform, new Vector2(-330f, -14f), new Vector2(40f, 64f));
-            var right = UiKit.CreatePanel("右緣", banner.transform, new Color(0.72f, 0.63f, 0.45f));
-            UiKit.Place(right.rectTransform, new Vector2(330f, -14f), new Vector2(40f, 64f));
-            UiKit.Place(UiKit.CreateText("標題", banner.transform, title, 40f, new Color(0.16f, 0.12f, 0.08f)).rectTransform,
-                Vector2.zero, new Vector2(600f, 60f));
+            UiKit.CreateBanner(_root, title, pos);
         }
 
         private readonly struct RewardRow
@@ -154,12 +152,16 @@ namespace STS.Game.UI
             internal readonly string Label;
             internal readonly Color IconColor;
             internal readonly System.Action OnClick;
+            /// <summary>指上去顯示什麼;null = 這一項沒有可預覽的內容(金幣、卡牌那一列)。</summary>
+            internal readonly System.Func<string> Tooltip;
 
-            internal RewardRow(string label, Color iconColor, System.Action onClick)
+            internal RewardRow(string label, Color iconColor, System.Action onClick,
+                System.Func<string> tooltip = null)
             {
                 Label = label;
                 IconColor = iconColor;
                 OnClick = onClick;
+                Tooltip = tooltip;
             }
         }
     }

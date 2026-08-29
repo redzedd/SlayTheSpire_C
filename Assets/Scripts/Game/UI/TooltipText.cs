@@ -49,12 +49,16 @@ namespace STS.Game.UI
             return sb.ToString();
         }
 
-        internal static string 藥水(PotionDef def)
+        /// <param name="inCombat">
+        /// false = 在獎勵/商店等戰鬥外的畫面看,只講效果;「怎麼使用」那句在那裡是錯的提示。
+        /// </param>
+        internal static string 藥水(PotionDef def, bool inCombat = true)
         {
             var sb = new StringBuilder(160);
             sb.Append("<b>").Append(def.Name).Append("</b>\n");
             sb.Append(string.IsNullOrEmpty(def.Description) ? "(尚無說明)" : def.Description);
-            sb.Append(def.NeedsTarget ? "\n\n需要指定敵人目標。" : "\n\n點擊即可使用。");
+            if (inCombat) sb.Append(def.NeedsTarget ? "\n\n需要指定敵人目標。" : "\n\n點擊即可使用。");
+            else if (def.NeedsTarget) sb.Append("\n\n使用時需要指定敵人目標。");
             return sb.ToString();
         }
 

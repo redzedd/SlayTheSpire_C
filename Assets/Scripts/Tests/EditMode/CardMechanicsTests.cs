@@ -247,6 +247,27 @@ namespace STS.Core.Tests
         }
 
         [Test]
+        public void 藥水_丟棄只清空欄位_效果完全不觸發()
+        {
+            var db = 基礎DB();
+            db.Enemies["dummy"] = 木樁(hp: 50);
+            db.Potions["fire"] = new PotionDef
+            {
+                Id = "fire", Name = "火焰藥水", NeedsTarget = true,
+                Steps = new[] { new EffectStep(EffectOp.Damage, EffectTarget.TargetEnemy, 20) }
+            };
+            var setup = 基礎Setup(重複("strike", 10), potionIds: new[] { "fire" });
+            setup.EnemyIds.Add("dummy");
+            var engine = 引擎(db, setup);
+            engine.StartCombat();
+
+            engine.DiscardPotion(0);
+            Assert.IsNull(engine.State.PotionSlots[0], "欄位要空出來");
+            Assert.AreEqual(50, engine.State.Enemies[0].Hp, "倒掉的藥水不該造成任何傷害");
+            Assert.Throws<System.InvalidOperationException>(() => engine.DiscardPotion(0), "空欄位不能再丟");
+        }
+
+        [Test]
         public void 藥水傷害_不吃力量虛弱與目標易傷()
         {
             var db = 基礎DB();

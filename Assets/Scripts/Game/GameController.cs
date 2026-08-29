@@ -156,12 +156,8 @@ namespace STS.Game
                 case RunPhase.AtRest:
                     RestScreenController.Build(NewScreenRoot("燈火畫面根"), this);
                     break;
-                case RunPhase.ChoosingNode:
-                    // 寶箱:已自動開箱回到地圖
-                    string relicName = entry.TreasureRelicId != null
-                        ? Db.GetRelicDef(entry.TreasureRelicId).Name
-                        : null;
-                    ShowMap(relicName != null ? $"開啟寶箱:獲得「{relicName}」!" : "寶箱是空的…");
+                case RunPhase.AtTreasure:
+                    TreasureScreenController.Build(NewScreenRoot("寶箱畫面根"), this);
                     break;
             }
         }
@@ -256,9 +252,12 @@ namespace STS.Game
             BackToRewardList();
         }
 
-        public void RewardSkipCard()
+        /// <summary>
+        /// 從選卡畫面退回獎勵清單,卡牌那一項「不」結案——玩家可以再點進來重選。
+        /// 真的放棄是從清單按「跳過」離開整個獎勵畫面(RewardLeave)。
+        /// </summary>
+        public void RewardBackToCardList()
         {
-            Run.SkipCardReward();
             BackToRewardList();
         }
 
@@ -284,6 +283,37 @@ namespace STS.Game
         private RewardScreenController FindRewardScreen()
         {
             return _currentScreen != null ? _currentScreen.GetComponentInChildren<RewardScreenController>() : null;
+        }
+
+        // ---- 寶箱動作(畫面按鈕與煙霧共用) ----
+
+        /// <summary>掀開箱蓋(還沒收東西)。</summary>
+        public void TreasureOpen()
+        {
+            var screen = FindTreasureScreen();
+            if (screen != null) screen.Open();
+        }
+
+        /// <summary>收下寶物,直接回地圖——箱子裡只有一件,拿了就沒事了。</summary>
+        public void TreasureClaim()
+        {
+            string relicName = Run.PendingTreasureRelicId != null
+                ? Db.GetRelicDef(Run.PendingTreasureRelicId).Name
+                : null;
+            bool claimed = Run.ClaimTreasure();
+            Run.LeaveTreasure();
+            ShowMap(claimed ? $"獲得遺物「{relicName}」!" : null);
+        }
+
+        public void TreasureLeave()
+        {
+            Run.LeaveTreasure();
+            ShowMap(null);
+        }
+
+        private TreasureScreenController FindTreasureScreen()
+        {
+            return _currentScreen != null ? _currentScreen.GetComponentInChildren<TreasureScreenController>() : null;
         }
 
         /// <summary>從商人房間進貨架。</summary>
@@ -315,12 +345,14 @@ namespace STS.Game
 
         public void ShopOpenRemovePicker()
         {
+            // 移除是不可逆又要花錢的,點下去先跳確認頁
             DeckViewOverlay.Open(_overlayLayer, "選擇要移除的卡", Run.State.Deck,
                 card => Db.GetCard(card.ResolvedCardId), null,
                 deckIndex =>
                 {
                     if (Run.BuyRemoveCard(deckIndex)) RerenderShop();
-                });
+                },
+                confirmVerb: "移除");
         }
 
         public void ShopLeave()
@@ -427,6 +459,14 @@ namespace STS.Game
                         break;
                     case RunPhase.AtRest:
                         RestHealAction();
+                        yield return new WaitForSeconds(0.25f);
+                        break;
+                    case RunPhase.AtTreasure:
+                        // 開箱是純畫面動作,還是走玩家那條路徑;有東西就收下,空箱直接走
+                        TreasureOpen();
+                        yield return new WaitForSeconds(0.15f);
+                        if (Run.PendingTreasureRelicId != null) TreasureClaim();
+                        else TreasureLeave();
                         yield return new WaitForSeconds(0.25f);
                         break;
                 }

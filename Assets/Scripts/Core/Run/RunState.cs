@@ -16,6 +16,8 @@ namespace STS.Core.Run
         ChoosingReward,
         InShop,
         AtRest,
+        /// <summary>寶箱前:箱子已開但東西還沒入包,等玩家收下或跳過。</summary>
+        AtTreasure,
         GameOver,
         /// <summary>擊敗 Boss,一輪通關。</summary>
         RunClear

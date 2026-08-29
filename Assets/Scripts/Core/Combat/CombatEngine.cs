@@ -309,6 +309,23 @@ namespace STS.Core.Combat
             CheckOutcome();
         }
 
+        /// <summary>
+        /// 倒掉一瓶藥水:清空欄位,效果完全不觸發。
+        /// 藥水欄只有三格,滿了就領不到新藥水——玩家要有辦法騰位子。
+        /// </summary>
+        public void DiscardPotion(int slot)
+        {
+            if (State.Phase != CombatPhase.PlayerTurn)
+            {
+                throw new InvalidOperationException("現在不是玩家回合,無法丟棄藥水");
+            }
+            if (slot < 0 || slot >= State.PotionSlots.Count || State.PotionSlots[slot] == null)
+            {
+                throw new InvalidOperationException("藥水欄位無效或已空");
+            }
+            State.PotionSlots[slot] = null;
+        }
+
         public void EndPlayerTurn()
         {
             if (State.Phase != CombatPhase.PlayerTurn)

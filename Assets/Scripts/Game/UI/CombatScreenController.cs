@@ -389,6 +389,20 @@ namespace STS.Game.UI
             if (!InputEnabled || IsChoiceMode || IsPotionAiming) return;
             var potionId = _engine.State.PotionSlots[slot];
             if (potionId == null) return;
+
+            var chip = _topBar.GetPotionChip(slot);
+            var anchor = chip != null
+                ? (Vector2)chip.TransformPoint(new Vector3(0f, -chip.rect.height * 0.5f, 0f))
+                : new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
+            PotionMenuView.Open(_overlayRoot, anchor, _game.Db.GetPotion(potionId).Name,
+                () => UsePotionFromMenu(slot), () => DiscardPotionFromMenu(slot));
+        }
+
+        private void UsePotionFromMenu(int slot)
+        {
+            if (!InputEnabled) return;
+            var potionId = _engine.State.PotionSlots[slot];
+            if (potionId == null) return;
             if (_game.Db.GetPotion(potionId).NeedsTarget)
             {
                 BeginPotionAim(slot);
@@ -396,6 +410,14 @@ namespace STS.Game.UI
             }
             _engine.UsePotion(slot, -1);
             StartPlayback();
+        }
+
+        private void DiscardPotionFromMenu(int slot)
+        {
+            if (!InputEnabled) return;
+            if (_engine.State.PotionSlots[slot] == null) return;
+            _engine.DiscardPotion(slot);   // 效果完全不觸發,只是把格子空出來
+            RefreshAll();
         }
 
         /// <summary>開始瞄準:箭頭從那格藥水拉出來,點到敵人才真的使用。</summary>
@@ -412,7 +434,7 @@ namespace STS.Game.UI
             _aimingPotionSlot = slot;
             _topBar.SetPotionAiming(slot, true);
             _modeHint.gameObject.SetActive(true);
-            _modeHint.text = $"選擇「{_game.Db.GetPotion(potionId).Name}」的目標(點別處取消)";
+            _modeHint.text = $"選擇「{_game.Db.GetPotion(potionId).Name}」的目標(右鍵或點別處取消)";
             _aimOverlay.Show();
             _arrow.Show();
             // 一開就把箭頭拉到游標,不要先閃一團堆在藥水格上的節點
@@ -459,6 +481,11 @@ namespace STS.Game.UI
         private void OnAimClick(PointerEventData eventData)
         {
             if (!IsPotionAiming) return;
+            if (eventData.button != PointerEventData.InputButton.Left)
+            {
+                CancelPotionAim();   // 右鍵 = 取消,不必特地點到空白處
+                return;
+            }
             int enemyIndex = RaycastEnemyIndex(eventData);
             if (enemyIndex < 0 || !_engine.State.Enemies[enemyIndex].IsAlive)
             {

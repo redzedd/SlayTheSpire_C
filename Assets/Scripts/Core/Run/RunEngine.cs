@@ -78,6 +78,8 @@ namespace STS.Core.Run
         public CombatRewards PendingRewards { get; private set; }
         /// <summary>商店庫存(InShop 階段有效)。</summary>
         public ShopInventory Shop { get; private set; }
+        /// <summary>寶箱裡等著被收下的遺物(AtTreasure 階段有效);null = 這個箱子是空的。</summary>
+        public string PendingTreasureRelicId { get; private set; }
 
         private readonly IContentCatalog _catalog;
 
@@ -156,14 +158,10 @@ namespace STS.Core.Run
                     return new NodeEntry(node.Type, null, null);
                 case MapNodeType.Treasure:
                 {
-                    // 寶箱:直接開,遺物入包,回到選節點
-                    string relicId = PickUnownedRelic(State.Rng.RelicReward);
-                    if (relicId != null)
-                    {
-                        State.Relics.Add(new RelicInstance(relicId));
-                    }
-                    State.Phase = RunPhase.ChoosingNode;
-                    return new NodeEntry(node.Type, null, relicId);
+                    // 內容此刻擲定,但先不入包:玩家要能看清楚是什麼再決定收不收
+                    PendingTreasureRelicId = PickUnownedRelic(State.Rng.RelicReward);
+                    State.Phase = RunPhase.AtTreasure;
+                    return new NodeEntry(node.Type, null, PendingTreasureRelicId);
                 }
                 default:
                     throw new InvalidOperationException($"未支援的節點型別 {node.Type}");
@@ -307,6 +305,26 @@ namespace STS.Core.Run
         {
             RequirePhase(RunPhase.ChoosingReward, "獎勵");
             PendingRewards = null;
+            State.Phase = RunPhase.ChoosingNode;
+        }
+
+        // ---- 寶箱 ----
+
+        /// <summary>收下箱子裡的遺物。空箱子回 false,讓 UI 不要畫出一個按不動的東西。</summary>
+        public bool ClaimTreasure()
+        {
+            RequirePhase(RunPhase.AtTreasure, "寶箱");
+            if (PendingTreasureRelicId == null) return false;
+            State.Relics.Add(new RelicInstance(PendingTreasureRelicId));
+            PendingTreasureRelicId = null;
+            return true;
+        }
+
+        /// <summary>離開寶箱回地圖——沒收下的就留在箱子裡不要了。</summary>
+        public void LeaveTreasure()
+        {
+            RequirePhase(RunPhase.AtTreasure, "寶箱");
+            PendingTreasureRelicId = null;
             State.Phase = RunPhase.ChoosingNode;
         }
 

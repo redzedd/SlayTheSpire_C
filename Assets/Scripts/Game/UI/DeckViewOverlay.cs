@@ -21,10 +21,14 @@ namespace STS.Game.UI
         /// <param name="upgradedLookup">
         /// 非 null 時進入「升級預覽」模式:點卡不直接執行,先顯示升級前後對照再確認。
         /// </param>
+        /// <param name="confirmVerb">
+        /// 非 null 時點卡先跳單張確認頁(商店移除卡牌用),按鈕寫「確認{動詞}」。
+        /// 移除是不可逆的,不該點一下就生效。與 upgradedLookup 互斥。
+        /// </param>
         public static DeckViewOverlay Open(Transform overlayLayer, string title,
             IReadOnlyList<CardInstance> deck, Func<CardInstance, CardDef> defLookup,
             Func<CardInstance, bool> filter, Action<int> onPick, CombatantState previewPlayer = null,
-            Func<CardInstance, CardDef> upgradedLookup = null)
+            Func<CardInstance, CardDef> upgradedLookup = null, string confirmVerb = null)
         {
             var panel = UiKit.CreatePanel("牌組檢視", overlayLayer, UiKit.面板色);
             UiKit.Place(panel.rectTransform, Vector2.zero, new Vector2(1500f, 860f));
@@ -89,17 +93,23 @@ namespace STS.Game.UI
                     var previewPlayerRef = previewPlayer;
                     button.onClick.AddListener(() =>
                     {
+                        void Commit()
+                        {
+                            Destroy(view.gameObject);
+                            onPick(index);
+                        }
+
                         if (upgradedLookup != null)
                         {
-                            view.ShowUpgradePreview(def, upgradedLookup(card), previewPlayerRef, () =>
-                            {
-                                Destroy(view.gameObject);
-                                onPick(index);
-                            });
+                            view.ShowConfirm(def, upgradedLookup(card), previewPlayerRef, "升級", Commit);
                             return;
                         }
-                        Destroy(view.gameObject);
-                        onPick(index);
+                        if (confirmVerb != null)
+                        {
+                            view.ShowConfirm(def, null, previewPlayerRef, confirmVerb, Commit);
+                            return;
+                        }
+                        Commit();
                     });
                     // 指到時微微浮起,讓「這張可以選」看得出來
                     var hover = face.gameObject.AddComponent<CardHoverLift>();
@@ -120,10 +130,14 @@ namespace STS.Game.UI
             return view;
         }
 
-        /// <summary>升級前後對照:左邊現在的卡、中間箭頭、右邊升級後,確認才真的升級。</summary>
-        private void ShowUpgradePreview(CardDef current, CardDef upgraded, CombatantState previewPlayer, Action onConfirm)
+        /// <summary>
+        /// 動手前的確認頁。upgraded 非 null 時是升級用的前後對照(左現在、中箭頭、右升級後);
+        /// 為 null 時只放一張大卡(商店移除卡牌)——兩種都是不可逆操作,確認才執行。
+        /// </summary>
+        private void ShowConfirm(CardDef current, CardDef upgraded, CombatantState previewPlayer,
+            string verb, Action onConfirm)
         {
-            var backdrop = UiKit.CreatePanel("升級預覽", transform, new Color(0.04f, 0.04f, 0.06f, 0.97f));
+            var backdrop = UiKit.CreatePanel("確認頁", transform, new Color(0.04f, 0.04f, 0.06f, 0.97f));
             // 刻意開超過面板尺寸:遮罩要蓋掉整個螢幕,不然背後的燈火畫面會透出來
             UiKit.Place(backdrop.rectTransform, Vector2.zero, new Vector2(2400f, 1400f));
             backdrop.transform.SetAsLastSibling();
@@ -133,26 +147,38 @@ namespace STS.Game.UI
             group.DOFade(1f, 0.15f).SetLink(backdrop.gameObject);
 
             var player = previewPlayer ?? 空玩家;
+            bool comparing = upgraded != null;
+            // 只有一張卡時置中放大;兩張要對照就一左一右
+            float beforeX = comparing ? -260f : 0f;
             var before = UiKit.MakeCardFace(backdrop.transform, current,
-                CardTextFormatter.FormatDescription(current, player), 1.35f);
-            UiKit.Place(before, new Vector2(-260f, 40f), before.sizeDelta);
+                CardTextFormatter.FormatDescription(current, player), comparing ? 1.35f : 1.6f);
+            UiKit.Place(before, new Vector2(beforeX, 40f), before.sizeDelta);
 
-            // 箭頭只用 ASCII:繁中字型沒有 ➤ 這類符號的字形,會變成豆腐方塊
-            for (int i = 0; i < 3; i++)
+            if (comparing)
             {
-                var arrow = UiKit.CreateText($"箭頭{i}", backdrop.transform, ">", 56f, new Color(1f, 0.82f, 0.3f));
-                UiKit.Place(arrow.rectTransform, new Vector2(-46f + i * 46f, 40f), new Vector2(60f, 70f));
+                // 箭頭只用 ASCII:繁中字型沒有 ➤ 這類符號的字形,會變成豆腐方塊
+                for (int i = 0; i < 3; i++)
+                {
+                    var arrow = UiKit.CreateText($"箭頭{i}", backdrop.transform, ">", 56f, new Color(1f, 0.82f, 0.3f));
+                    UiKit.Place(arrow.rectTransform, new Vector2(-46f + i * 46f, 40f), new Vector2(60f, 70f));
+                }
+
+                var after = UiKit.MakeCardFace(backdrop.transform, upgraded,
+                    CardTextFormatter.FormatDescription(upgraded, player), 1.35f);
+                UiKit.Place(after, new Vector2(260f, 40f), after.sizeDelta);
+                var afterName = UiKit.CreateText("升級標記", backdrop.transform, "升級後", 28f, new Color(0.5f, 1f, 0.5f));
+                UiKit.Place(afterName.rectTransform, new Vector2(260f, -145f), new Vector2(200f, 36f));
+                var beforeName = UiKit.CreateText("目前標記", backdrop.transform, "目前", 28f, new Color(0.8f, 0.8f, 0.8f));
+                UiKit.Place(beforeName.rectTransform, new Vector2(-260f, -145f), new Vector2(200f, 36f));
+            }
+            else
+            {
+                var question = UiKit.CreateText("確認問句", backdrop.transform,
+                    $"確定要{verb}「{current.Name}」嗎?", 34f, new Color(1f, 0.85f, 0.5f));
+                UiKit.Place(question.rectTransform, new Vector2(0f, 250f), new Vector2(900f, 48f));
             }
 
-            var after = UiKit.MakeCardFace(backdrop.transform, upgraded,
-                CardTextFormatter.FormatDescription(upgraded, player), 1.35f);
-            UiKit.Place(after, new Vector2(260f, 40f), after.sizeDelta);
-            var afterName = UiKit.CreateText("升級標記", backdrop.transform, "升級後", 28f, new Color(0.5f, 1f, 0.5f));
-            UiKit.Place(afterName.rectTransform, new Vector2(260f, -145f), new Vector2(200f, 36f));
-            var beforeName = UiKit.CreateText("目前標記", backdrop.transform, "目前", 28f, new Color(0.8f, 0.8f, 0.8f));
-            UiKit.Place(beforeName.rectTransform, new Vector2(-260f, -145f), new Vector2(200f, 36f));
-
-            UiKit.Place((RectTransform)UiKit.CreateButton("確認", backdrop.transform, "確認升級", 28f,
+            UiKit.Place((RectTransform)UiKit.CreateButton("確認", backdrop.transform, $"確認{verb}", 28f,
                 new Color(0.3f, 0.55f, 0.35f), () => onConfirm()).transform,
                 new Vector2(-160f, -280f), new Vector2(240f, 62f));
             UiKit.Place((RectTransform)UiKit.CreateButton("取消", backdrop.transform, "再看看", 28f,
