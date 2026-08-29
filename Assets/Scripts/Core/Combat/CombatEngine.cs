@@ -501,6 +501,10 @@ namespace STS.Core.Combat
             }
             Emit(new CombatEvent(EventKind.TurnStarted, sourceIndex: PlayerIndex, amount: State.TurnNumber));
             FireHook(new HookContext(HookPoint.PlayerTurnStart, sourceIndex: PlayerIndex));
+            // 回合開始的 hook 會造成傷害(獄火自傷再反擊全場、緋紅披風、薪火),那一下就可能分出勝負。
+            // 少了這次結算,清光的場面要拖到玩家出牌或按結束回合才被發現。
+            CheckOutcome();
+            if (State.Phase != CombatPhase.PlayerTurn) return;   // 已經結束就不必再抽牌
             DrawCards(CardsPerTurn);
         }
 

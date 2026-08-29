@@ -1036,6 +1036,36 @@ namespace STS.Core.Tests
         }
 
         [Test]
+        public void 回合開始的傷害殺光敵人_當場判勝()
+        {
+            // 獄火在玩家回合開始自傷 1 點,那一下的反擊可能直接清場——
+            // 勝負必須當場結算,不能拖到玩家出牌或按結束回合才發現
+            var engine = 標準引擎(new[] { "defend", "defend", "defend", "defend", "defend" },
+                enemyHp: 2, enemyAttack: 0);
+            engine.StartCombat();
+            engine.State.Player.ModifyStatus(StatusId.Inferno, 5);
+
+            engine.EndPlayerTurn();   // 敵人回合空過 → 回到玩家回合開始 → 獄火觸發
+
+            Assert.AreEqual(0, engine.State.Enemies[0].Hp, "敵人該被獄火打死");
+            Assert.AreEqual(CombatPhase.Victory, engine.State.Phase, "戰鬥要立刻結束");
+        }
+
+        [Test]
+        public void 回合開始的自傷致死_當場判負()
+        {
+            var engine = 標準引擎(new[] { "defend", "defend", "defend", "defend", "defend" },
+                enemyHp: 200, enemyAttack: 0, playerHp: 1);
+            engine.StartCombat();
+            engine.State.Player.ModifyStatus(StatusId.Inferno, 5);
+
+            engine.EndPlayerTurn();
+
+            Assert.AreEqual(0, engine.State.Player.Hp);
+            Assert.AreEqual(CombatPhase.Defeat, engine.State.Phase, "自傷把自己燒死也要當場結算");
+        }
+
+        [Test]
         public void 堅定不移_只翻倍每回合第一張牌的格擋()
         {
             var 堅定 = 能力("unmov", "堅定不移", StatusId.Unmovable, 1);
