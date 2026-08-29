@@ -23,6 +23,7 @@ namespace STS.Game.UI
         private TextMeshProUGUI _hpText;
         private RectTransform _hpFill;
         private HpDisplay _hp;
+        private int _maxHp;
         private Image _body;
 
         public static EnemyView Build(Transform parent, int enemyIndex, Vector2 anchoredPos)
@@ -72,24 +73,51 @@ namespace STS.Game.UI
             transform.DOPunchPosition(new Vector3(-40f, -25f, 0f), 0.3f, 1, 0.5f).SetLink(gameObject);
         }
 
-        /// <summary>死亡:縮小(灰化由 RefreshFrom 處理)。</summary>
+        /// <summary>死亡:縮小並灰化。由 EnemyDied 事件觸發,所以時機跟著播放走。</summary>
         public void PlayDeath()
         {
             transform.DOKill(true);
             transform.DOScale(0.85f, 0.3f).SetEase(Ease.OutQuad).SetLink(gameObject);
+            ApplyDeadLook();
+        }
+
+        /// <summary>
+        /// 用事件快照更新血量。**血量不能從引擎讀**——引擎是瞬時結算的,
+        /// 播放第一個事件時傷害就全算完了,回查引擎會讓血條一口氣衝到最終值,
+        /// 傷害數字卻還在一段一段跳。
+        /// </summary>
+        public void ApplyHpSnapshot(int hp)
+        {
+            _hp.Set(hp, _maxHp);
+        }
+
+        /// <summary>把血量與死活外觀對齊引擎現況(建立時與播放結束時用)。</summary>
+        public void SyncHp(CombatEngine engine)
+        {
+            var enemy = engine.State.Enemies[EnemyIndex];
+            _maxHp = enemy.MaxHp;
+            _hp.Set(enemy.Hp, enemy.MaxHp);
+            if (!enemy.IsAlive) ApplyDeadLook();
+        }
+
+        private void ApplyDeadLook()
+        {
+            _body.color = new Color(0.2f, 0.2f, 0.2f, 0.4f);
+            _intentText.text = "";
+            _statusText.text = "";
+            _lastIntentText = "";
         }
 
         public void RefreshFrom(CombatEngine engine)
         {
             var enemy = engine.State.Enemies[EnemyIndex];
             _nameText.text = enemy.Name;
-            _hp.Set(enemy.Hp, enemy.MaxHp);
+            _maxHp = enemy.MaxHp;   // 上限幾乎不變,但事件快照沒帶它
             _blockText.text = enemy.Block > 0 ? $"盾{enemy.Block}" : "";
             _statusText.text = StatusRowText.Build(enemy);
 
             if (!enemy.IsAlive)
             {
-                _body.color = new Color(0.2f, 0.2f, 0.2f, 0.4f);
                 _intentText.text = "";
                 _statusText.text = "";
                 return;

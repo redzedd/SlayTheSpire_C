@@ -11,7 +11,9 @@ namespace STS.Game.UI
     /// </summary>
     public sealed class HpDisplay
     {
-        private const float 補間秒數 = 0.35f;
+        // 要短於傷害事件的節拍(0.22s),多段攻擊的每一段才會在自己的節拍內走完,
+        // 而不是第一段還在掉、第二段的數字就跳出來了
+        private const float 補間秒數 = 0.18f;
 
         private readonly RectTransform _fill;
         private readonly TextMeshProUGUI _label;
@@ -46,10 +48,9 @@ namespace STS.Game.UI
 
         private void Apply()
         {
-            // 四捨五入:數字要跟著長條一格一格走。無條件進位會讓它一步跳到終值附近再卡住,
-            // 看起來就還是「數字先到、長條在追」。只有 0 特別處理:還沒真的歸零就不顯示 0。
+            // 四捨五入:數字跟著長條一格一格走。不做「還沒歸零就顯示 1」那種特例——
+            // 那會讓致死的那一下卡在 1 停留一段時間才變 0。
             int shown = Mathf.RoundToInt(_shownHp);
-            if (shown <= 0 && _shownHp > 0f) shown = 1;
             _label.text = $"{shown}/{_maxHp}";
             UiKit.SetBarFill(_fill, _maxHp > 0 ? _shownHp / _maxHp : 0f);
         }

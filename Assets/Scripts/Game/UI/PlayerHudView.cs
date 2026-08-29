@@ -17,6 +17,7 @@ namespace STS.Game.UI
         private TextMeshProUGUI _statusText;
         private RectTransform _hpFill;
         private HpDisplay _hp;
+        private int _maxHp;
         private Image _body;
 
         public static PlayerHudView Build(Transform parent)
@@ -57,10 +58,27 @@ namespace STS.Game.UI
             }
         }
 
+        /// <summary>
+        /// 用事件快照更新血量。理由同 EnemyView:引擎瞬時結算,回查引擎會讓血條
+        /// 一口氣衝到最終值,傷害數字卻還在一段一段跳。
+        /// </summary>
+        public void ApplyHpSnapshot(int hp)
+        {
+            _hp.Set(hp, _maxHp);
+        }
+
+        /// <summary>把血量對齊引擎現況(建立時與播放結束時用)。</summary>
+        public void SyncHp(CombatEngine engine)
+        {
+            var player = engine.State.Player;
+            _maxHp = player.MaxHp;
+            _hp.Set(player.Hp, player.MaxHp);
+        }
+
         public void RefreshFrom(CombatEngine engine)
         {
             var player = engine.State.Player;
-            _hp.Set(player.Hp, player.MaxHp);
+            _maxHp = player.MaxHp;   // 上限會被加最大生命改動,事件快照沒帶它
             _blockText.text = player.Block > 0 ? $"盾{player.Block}" : "";
             _statusText.text = StatusRowText.Build(player);
         }

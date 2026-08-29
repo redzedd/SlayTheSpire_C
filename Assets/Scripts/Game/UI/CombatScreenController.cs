@@ -604,8 +604,10 @@ namespace STS.Game.UI
             switch (e.Kind)
             {
                 case EventKind.DamageDealt:
+                    // 數字與血條在同一行動裡發生:兩者都吃這個事件的快照,不回查引擎
                     SpawnNumber(e.TargetIndex, e.HpLost > 0 ? $"-{e.HpLost}" : "格擋",
                         e.HpLost > 0 ? new Color(1f, 0.35f, 0.3f) : new Color(0.6f, 0.8f, 1f));
+                    ApplyHpSnapshot(e.TargetIndex, e.RemainingHp);
                     if (e.TargetIndex == CombatEngine.PlayerIndex)
                     {
                         if (e.HpLost > 0) _hud.PlayHitShake();
@@ -617,10 +619,12 @@ namespace STS.Game.UI
                     return 0.22f;
                 case EventKind.HpLost:
                     SpawnNumber(e.TargetIndex, $"-{e.Amount}", new Color(0.8f, 0.4f, 0.9f));
+                    ApplyHpSnapshot(e.TargetIndex, e.RemainingHp);
                     if (e.TargetIndex == CombatEngine.PlayerIndex) _hud.PlayHitShake();
                     return 0.15f;
                 case EventKind.HpHealed:
                     SpawnNumber(e.TargetIndex, $"+{e.Amount}", new Color(0.4f, 0.95f, 0.5f));
+                    ApplyHpSnapshot(e.TargetIndex, e.RemainingHp);
                     return 0.15f;
                 case EventKind.BlockGained:
                     SpawnNumber(e.SourceIndex, $"盾+{e.Amount}", new Color(0.6f, 0.8f, 1f));
@@ -643,6 +647,16 @@ namespace STS.Game.UI
             }
         }
 
+        /// <summary>把事件帶的剩餘血量餵給對應的視圖(-1 = 玩家)。</summary>
+        private void ApplyHpSnapshot(int combatantIndex, int remainingHp)
+        {
+            if (combatantIndex == CombatEngine.PlayerIndex) _hud.ApplyHpSnapshot(remainingHp);
+            else if (combatantIndex >= 0 && combatantIndex < _enemyViews.Count)
+            {
+                _enemyViews[combatantIndex].ApplyHpSnapshot(remainingHp);
+            }
+        }
+
         private void SpawnNumber(int combatantIndex, string text, Color color)
         {
             Vector3 pos = combatantIndex == CombatEngine.PlayerIndex
@@ -651,6 +665,7 @@ namespace STS.Game.UI
             _damagePool.Spawn(pos, text, color);
         }
 
+        /// <summary>格擋/狀態/意圖等即時重繪;**血量不在這裡**,它由事件快照驅動。</summary>
         private void RefreshUnits()
         {
             _hud.RefreshFrom(_engine);
@@ -661,9 +676,19 @@ namespace STS.Game.UI
             }
         }
 
+        private void SyncHpToEngine()
+        {
+            _hud.SyncHp(_engine);
+            foreach (var enemyView in _enemyViews)
+            {
+                enemyView.SyncHp(_engine);
+            }
+        }
+
         private void RefreshAll()
         {
             RefreshUnits();
+            SyncHpToEngine();   // 播放結束(或剛建畫面):血量該對齊引擎現況了
             _hand.Rebuild(_engine);
             _drawPileLabel.text = $"抽牌 {_engine.State.DrawPile.Count}";
             _discardPileLabel.text = $"棄牌 {_engine.State.DiscardPile.Count}";
