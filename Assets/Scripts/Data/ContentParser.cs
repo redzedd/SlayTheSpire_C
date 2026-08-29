@@ -355,10 +355,10 @@ namespace STS.Data
                     // 成長型公式是 amount + secondaryAmount × 數量;沒有 secondaryAmount 就永遠不成長,是資料寫錯
                     Require(step.SecondaryAmount != 0, $"{context}:{step.AmountKind} 需要 secondaryAmount(每單位加成)");
                 }
-                if (step.Op == EffectOp.AddCardToPile)
+                if (step.Op == EffectOp.AddCardToPile || step.Op == EffectOp.TransformAttacksInHand)
                 {
-                    Require(!string.IsNullOrEmpty(step.CardId), $"{context}:AddCardToPile 缺 cardId");
-                    Require(cardIds.Contains(step.CardId), $"{context}:AddCardToPile 參照不存在的卡——{step.CardId}");
+                    Require(!string.IsNullOrEmpty(step.CardId), $"{context}:{step.Op} 缺 cardId");
+                    Require(cardIds.Contains(step.CardId), $"{context}:{step.Op} 參照不存在的卡——{step.CardId}");
                 }
                 if (step.Op == EffectOp.Custom)
                 {

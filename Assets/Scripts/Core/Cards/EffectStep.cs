@@ -38,6 +38,13 @@ namespace STS.Core.Cards
         PlayTopOfDraw,
         /// <summary>永久提高最大生命並回滿同等點數(狂宴型);會寫回 run 狀態。</summary>
         GainMaxHp,
+        /// <summary>
+        /// 從候選池隨機生一張攻擊牌到手上(地獄之刃型)。
+        /// SecondaryAmount 非 0 = 該張本回合可免費打出。
+        /// </summary>
+        AddRandomAttackToHand,
+        /// <summary>把手上所有攻擊牌變成 CardId 指定的卡(原始力量型)。</summary>
+        TransformAttacksInHand,
         /// <summary>把 Amount 點傷害永久加到「正在打出的這張牌」上,只在本場戰鬥有效(暴走型)。</summary>
         GrowThisCardDamage,
         /// <summary>消耗手上一張隨機攻擊牌,把它的傷害加到正在打出的這張牌上(痛毆型)。</summary>

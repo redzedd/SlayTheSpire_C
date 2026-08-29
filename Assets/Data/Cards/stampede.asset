@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 864927395ecc3534e9fd9f61f33a2072, type: 3}
-  m_Name: rampage
+  m_Name: stampede
   m_EditorClassIdentifier: STS.Game::STS.Game.DataAssets.CardDataAsset
-  id: rampage
-  type: 0
+  id: stampede
+  type: 2
   rarity: 2
   costIsX: 0
   unplayable: 0
@@ -23,63 +23,37 @@ MonoBehaviour:
   costScaling: 0
   playCondition: 0
   playConditionAmount: 0
-  baseName: "\u66B4\u8D70"
-  baseCost: 1
-  baseDescription: "\u9020\u6210 {dmg} \u9EDE\u50B7\u5BB3\u3002\u672C\u5834\u6230\u9B25\u4E2D,\u9019\u5F35\u724C\u7684\u50B7\u5BB3\u589E\u52A0
-    5\u3002"
+  baseName: "\u9A5A\u9003"
+  baseCost: 2
+  baseDescription: "\u56DE\u5408\u7D50\u675F\u6642,\u96A8\u6A5F\u6253\u51FA\u624B\u4E0A\u4E00\u5F35\u653B\u64CA\u724C\u3002"
   baseSteps:
-  - op: 0
-    target: 1
-    amount: 9
-    amountKind: 0
-    secondaryAmount: 0
-    repeat: 0
-    repeatKind: 0
-    condition: 0
-    status: 0
-    cardId: 
-    pile: 2
-    customId: 
-  - op: 22
+  - op: 2
     target: 0
-    amount: 5
+    amount: 1
     amountKind: 0
     secondaryAmount: 0
     repeat: 0
     repeatKind: 0
     condition: 0
-    status: 0
+    status: 37
     cardId: 
     pile: 2
     customId: 
   baseTurnEndSteps: []
   hasUpgrade: 1
-  upgradeName: "\u66B4\u8D70+"
+  upgradeName: "\u9A5A\u9003+"
   upgradeCost: 1
-  upgradeDescription: "\u9020\u6210 {dmg} \u9EDE\u50B7\u5BB3\u3002\u672C\u5834\u6230\u9B25\u4E2D,\u9019\u5F35\u724C\u7684\u50B7\u5BB3\u589E\u52A0
-    9\u3002"
+  upgradeDescription: "\u56DE\u5408\u7D50\u675F\u6642,\u96A8\u6A5F\u6253\u51FA\u624B\u4E0A\u4E00\u5F35\u653B\u64CA\u724C\u3002"
   upgradeSteps:
-  - op: 0
-    target: 1
-    amount: 9
-    amountKind: 0
-    secondaryAmount: 0
-    repeat: 0
-    repeatKind: 0
-    condition: 0
-    status: 0
-    cardId: 
-    pile: 2
-    customId: 
-  - op: 22
+  - op: 2
     target: 0
-    amount: 9
+    amount: 1
     amountKind: 0
     secondaryAmount: 0
     repeat: 0
     repeatKind: 0
     condition: 0
-    status: 0
+    status: 37
     cardId: 
     pile: 2
     customId: 

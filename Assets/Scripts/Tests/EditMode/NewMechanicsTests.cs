@@ -1120,6 +1120,139 @@ namespace STS.Core.Tests
         }
 
         [Test]
+        public void 地獄之刃_生一張攻擊牌到手上且本回合免費()
+        {
+            var 地獄之刃 = new CardDef
+            {
+                Id = "blade", Name = "地獄之刃", Type = CardType.Skill, Rarity = CardRarity.Uncommon, Cost = 0,
+                DescriptionTemplate = "生成攻擊牌。", Exhausts = true,
+                Steps = new[] { new EffectStep(EffectOp.AddRandomAttackToHand, EffectTarget.Self, 1, secondaryAmount: 1) }
+            };
+            // 候選池由 Run 層灌入,測試自己填
+            var db = 基礎DB(地獄之刃);
+            db.Enemies["dummy"] = 木樁(hp: 200);
+            var setup = 基礎Setup(new[] { "blade", "defend", "defend", "defend", "defend" });
+            setup.EnemyIds.Add("dummy");
+            setup.RandomAttackPool.Add("strike");
+            var engine = 引擎(db, setup);
+            engine.StartCombat();
+
+            出牌(engine, "blade");
+            int strikeIndex = 手牌位置(engine, "strike");
+            Assert.GreaterOrEqual(strikeIndex, 0, "要生一張攻擊牌到手上");
+
+            var strikeCard = engine.State.Hand[strikeIndex];
+            Assert.AreEqual(0, engine.GetCardCost(engine.GetCardDef(strikeCard), strikeCard),
+                "生出來的那張本回合應該免費");
+            Assert.AreEqual(3, engine.State.Energy);
+            engine.PlayCard(strikeIndex, 0);
+            Assert.AreEqual(3, engine.State.Energy, "免費打出不該扣能量");
+            Assert.AreEqual(194, engine.State.Enemies[0].Hp);
+        }
+
+        [Test]
+        public void 原始力量_把手上攻擊牌全變成巨石()
+        {
+            var 巨石 = new CardDef
+            {
+                Id = "giant_rock", Name = "巨石", Type = CardType.Attack, Rarity = CardRarity.Common, Cost = 1,
+                DescriptionTemplate = "造成 {dmg} 點傷害。",
+                Steps = new[] { new EffectStep(EffectOp.Damage, EffectTarget.TargetEnemy, 16) }
+            };
+            var 原始力量 = new CardDef
+            {
+                Id = "primal", Name = "原始力量", Type = CardType.Skill, Rarity = CardRarity.Rare, Cost = 0,
+                DescriptionTemplate = "把手上攻擊牌變成巨石。",
+                Steps = new[] { new EffectStep(EffectOp.TransformAttacksInHand, EffectTarget.Self, cardId: "giant_rock") }
+            };
+            var engine = 標準引擎(new[] { "primal", "strike", "strike", "defend", "defend" },
+                enemyHp: 200, extraDefs: new[] { 巨石, 原始力量 });
+            engine.StartCombat();
+
+            出牌(engine, "primal");
+            int rocks = 0;
+            for (int i = 0; i < engine.State.Hand.Count; i++)
+            {
+                if (engine.State.Hand[i].CardId == "giant_rock") rocks++;
+            }
+            Assert.AreEqual(2, rocks, "兩張打擊要變成兩顆巨石");
+            Assert.AreEqual(-1, 手牌位置(engine, "strike"), "原本的打擊要不見");
+
+            出牌(engine, "giant_rock");
+            Assert.AreEqual(184, engine.State.Enemies[0].Hp);
+        }
+
+        [Test]
+        public void 雜耍_第三張攻擊牌複製一份到手上()
+        {
+            var 雜耍 = 能力("jug", "雜耍", StatusId.Juggling, 1);
+            var engine = 標準引擎(new[] { "jug", "strike", "strike", "strike", "defend" },
+                enemyHp: 200, extraDefs: new[] { 雜耍 });
+            engine.StartCombat();
+
+            出牌(engine, "jug");
+            出牌(engine, "strike");
+            出牌(engine, "strike");
+            // 開場 5 張 → 打掉能力牌與兩張打擊 = 2 張;前兩張不該複製,所以就是 2
+            Assert.AreEqual(2, engine.State.Hand.Count, "前兩張攻擊牌不該複製");
+
+            int handBefore = engine.State.Hand.Count;
+            出牌(engine, "strike");   // 第三張
+            Assert.AreEqual(handBefore, engine.State.Hand.Count,
+                "打掉一張又複製回一張,手牌數不變");
+            Assert.GreaterOrEqual(手牌位置(engine, "strike"), 0, "第三張攻擊牌要複製一份回手上");
+        }
+
+        [Test]
+        public void 驚逃_回合結束自動打出一張攻擊牌()
+        {
+            var 驚逃 = 能力("stamp", "驚逃", StatusId.Stampede, 1);
+            var engine = 標準引擎(new[] { "stamp", "strike", "defend", "defend", "defend" },
+                enemyHp: 200, enemyAttack: 0, extraDefs: new[] { 驚逃 });
+            engine.StartCombat();
+
+            出牌(engine, "stamp");
+            Assert.AreEqual(200, engine.State.Enemies[0].Hp);
+
+            engine.EndPlayerTurn();
+            Assert.AreEqual(194, engine.State.Enemies[0].Hp, "回合結束要自動打出那張打擊");
+        }
+
+        [Test]
+        public void 地獄狂徒_抽到打擊就自動打出()
+        {
+            var 狂徒 = 能力("hell", "地獄狂徒", StatusId.Hellraiser, 1);
+            var engine = 標準引擎(new[] { "hell", "strike", "strike", "strike", "strike", "strike" },
+                enemyHp: 300, enemyAttack: 0, extraDefs: new[] { 狂徒 });
+            engine.StartCombat();
+
+            if (手牌位置(engine, "hell") < 0) Assert.Ignore("這個種子沒把地獄狂徒抽進手裡");
+            出牌(engine, "hell");
+            int hpAfterPower = engine.State.Enemies[0].Hp;
+
+            engine.EndPlayerTurn();   // 下回合抽牌 → 每抽到一張打擊就自動打出
+            Assert.Less(engine.State.Enemies[0].Hp, hpAfterPower, "抽到打擊要自動打出去");
+            Assert.AreEqual(-1, 手牌位置(engine, "strike"), "自動打出的牌不該留在手上");
+        }
+
+        [Test]
+        public void 好勇鬥狠_回合開始從棄牌堆撈攻擊牌並升級()
+        {
+            var 好勇鬥狠 = 能力("agg", "好勇鬥狠", StatusId.Aggression, 1);
+            var engine = 標準引擎(new[] { "agg", "strike", "defend", "defend", "defend" },
+                enemyHp: 200, enemyAttack: 0, extraDefs: new[] { 好勇鬥狠, 打擊升級版() });
+            engine.StartCombat();
+
+            出牌(engine, "agg");
+            出牌(engine, "strike");   // 進棄牌堆,成為下回合的撈取對象
+            engine.EndPlayerTurn();
+
+            int index = 手牌位置(engine, "strike");
+            Assert.GreaterOrEqual(index, 0, "回合開始要把棄牌堆的打擊撈回手上");
+            Assert.AreEqual("打擊+", engine.GetCardDef(engine.State.Hand[index]).Name, "撈回來的要順便升級");
+        }
+
+        [Test]
         public void 餘燼_消耗抽牌堆最上面一張()
         {
             var 餘燼 = new CardDef

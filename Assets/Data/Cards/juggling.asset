@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 864927395ecc3534e9fd9f61f33a2072, type: 3}
-  m_Name: rampage
+  m_Name: juggling
   m_EditorClassIdentifier: STS.Game::STS.Game.DataAssets.CardDataAsset
-  id: rampage
-  type: 0
+  id: juggling
+  type: 2
   rarity: 2
   costIsX: 0
   unplayable: 0
@@ -23,63 +23,37 @@ MonoBehaviour:
   costScaling: 0
   playCondition: 0
   playConditionAmount: 0
-  baseName: "\u66B4\u8D70"
+  baseName: "\u96DC\u800D"
   baseCost: 1
-  baseDescription: "\u9020\u6210 {dmg} \u9EDE\u50B7\u5BB3\u3002\u672C\u5834\u6230\u9B25\u4E2D,\u9019\u5F35\u724C\u7684\u50B7\u5BB3\u589E\u52A0
-    5\u3002"
+  baseDescription: "\u6BCF\u56DE\u5408\u4F60\u6253\u51FA\u7684\u7B2C\u4E09\u5F35\u653B\u64CA\u724C,\u6703\u628A\u4E00\u5F35\u8907\u88FD\u54C1\u52A0\u5165\u624B\u724C\u3002"
   baseSteps:
-  - op: 0
-    target: 1
-    amount: 9
-    amountKind: 0
-    secondaryAmount: 0
-    repeat: 0
-    repeatKind: 0
-    condition: 0
-    status: 0
-    cardId: 
-    pile: 2
-    customId: 
-  - op: 22
+  - op: 2
     target: 0
-    amount: 5
+    amount: 1
     amountKind: 0
     secondaryAmount: 0
     repeat: 0
     repeatKind: 0
     condition: 0
-    status: 0
+    status: 38
     cardId: 
     pile: 2
     customId: 
   baseTurnEndSteps: []
   hasUpgrade: 1
-  upgradeName: "\u66B4\u8D70+"
-  upgradeCost: 1
-  upgradeDescription: "\u9020\u6210 {dmg} \u9EDE\u50B7\u5BB3\u3002\u672C\u5834\u6230\u9B25\u4E2D,\u9019\u5F35\u724C\u7684\u50B7\u5BB3\u589E\u52A0
-    9\u3002"
+  upgradeName: "\u96DC\u800D+"
+  upgradeCost: 0
+  upgradeDescription: "\u6BCF\u56DE\u5408\u4F60\u6253\u51FA\u7684\u7B2C\u4E09\u5F35\u653B\u64CA\u724C,\u6703\u628A\u4E00\u5F35\u8907\u88FD\u54C1\u52A0\u5165\u624B\u724C\u3002"
   upgradeSteps:
-  - op: 0
-    target: 1
-    amount: 9
-    amountKind: 0
-    secondaryAmount: 0
-    repeat: 0
-    repeatKind: 0
-    condition: 0
-    status: 0
-    cardId: 
-    pile: 2
-    customId: 
-  - op: 22
+  - op: 2
     target: 0
-    amount: 9
+    amount: 1
     amountKind: 0
     secondaryAmount: 0
     repeat: 0
     repeatKind: 0
     condition: 0
-    status: 0
+    status: 38
     cardId: 
     pile: 2
     customId: 

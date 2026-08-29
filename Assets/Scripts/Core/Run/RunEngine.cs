@@ -186,6 +186,13 @@ namespace STS.Core.Run
             {
                 if (potionId != null) setup.PotionIds.Add(potionId);
             }
+            // 「隨機生一張攻擊牌」的候選池:引擎看不到全卡池,由這裡灌進去
+            foreach (var card in _catalog.AllCardDefs)
+            {
+                if (card.Type != CardType.Attack) continue;
+                if (card.Id.EndsWith("+")) continue;
+                setup.RandomAttackPool.Add(card.Id);
+            }
             return setup;
         }
 

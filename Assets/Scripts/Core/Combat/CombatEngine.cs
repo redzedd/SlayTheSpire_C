@@ -39,6 +39,7 @@ namespace STS.Core.Combat
         private int _pendingTargetIndex;
         private CardInstance _pendingPlayedCard;
         private CardDef _pendingPlayedDef;
+        private readonly List<string> _randomAttackPool = new List<string>();
         /// <summary>自動打出的巢狀層數;破滅翻到破滅時靠它收斂。</summary>
         private int _autoPlayDepth;
         private const int 自動打出上限 = 4;
@@ -93,6 +94,7 @@ namespace STS.Core.Combat
             }
             Relics.AddRange(setup.Relics);
             State.PotionSlots.AddRange(setup.PotionIds);
+            _randomAttackPool.AddRange(setup.RandomAttackPool);
         }
 
         public void ClearEvents()
@@ -121,6 +123,13 @@ namespace STS.Core.Combat
         /// 分頭各算一次,卡面顯示 3 費、實際扣 1 費這種 bug 就是這樣長出來的。
         /// X 費卡不適用(它吃光能量,由呼叫端另外處理)。
         /// </summary>
+        /// <summary>連同「這一張實體」的臨時免費狀態一起算(地獄之刃)。</summary>
+        public int GetCardCost(CardDef def, CardInstance card)
+        {
+            if (card != null && State.FreeThisTurn.Contains(card.InstanceId)) return 0;
+            return GetCardCost(def);
+        }
+
         public int GetCardCost(CardDef def)
         {
             if (def.CostIsX) return 0;
@@ -154,7 +163,7 @@ namespace STS.Core.Combat
                 reason = "此卡不可打出";
                 return false;
             }
-            if (!def.CostIsX && State.Energy < GetCardCost(def))
+            if (!def.CostIsX && State.Energy < GetCardCost(def, State.Hand[handIndex]))
             {
                 reason = "能量不足";
                 return false;
@@ -191,7 +200,7 @@ namespace STS.Core.Combat
             var card = State.Hand[handIndex];
             var def = GetCardDef(card);
 
-            int cost = def.CostIsX ? State.Energy : GetCardCost(def);
+            int cost = def.CostIsX ? State.Energy : GetCardCost(def, card);
             _xEnergySpent = def.CostIsX ? State.Energy : 0;
             State.Energy -= cost;
             // 無情猛攻的「下一張攻擊 0 費」在打出攻擊牌時就用掉,不管實際有沒有省到能量
@@ -206,7 +215,8 @@ namespace STS.Core.Combat
                 cardId: card.CardId, cardInstanceId: card.InstanceId));
 
             // 出牌 hook(激怒/尖刺皮/雙節棍)在效果結算前觸發([近似] StS 時序,測試鎖定)
-            FireHook(new HookContext(HookPoint.CardPlayed, sourceIndex: PlayerIndex, cardType: def.Type));
+            FireHook(new HookContext(HookPoint.CardPlayed, sourceIndex: PlayerIndex, cardType: def.Type,
+                cardId: card.CardId));
             if (!State.Player.IsAlive)
             {
                 CheckOutcome();
@@ -453,6 +463,7 @@ namespace STS.Core.Combat
             State.LostHpThisTurn = false;
             State.ExhaustedThisTurn = false;
             State.PlayerBlockGainsThisTurn = 0;
+            State.FreeThisTurn.Clear();
             // 格擋在「自己回合開始」清除,不是回合結束——回合末獲得的格擋要活過敵方回合(R5)
             // 壁壘:整條清除規則失效,格擋累積不掉
             ClearTurnStartStatuses(PlayerIndex);
@@ -965,6 +976,7 @@ namespace STS.Core.Combat
                 State.DrawPile.RemoveAt(top);
                 State.Hand.Add(card);
                 Emit(new CombatEvent(EventKind.CardDrawn, cardId: card.CardId, cardInstanceId: card.InstanceId));
+                FireHook(new HookContext(HookPoint.CardDrawn, sourceIndex: PlayerIndex, cardId: card.CardId));
             }
         }
 
@@ -1163,6 +1175,118 @@ namespace STS.Core.Combat
             State.Player.Hp += amount;
             Emit(new CombatEvent(EventKind.HpHealed, targetIndex: PlayerIndex,
                 amount: amount, remainingHp: State.Player.Hp));
+        }
+
+        /// <summary>
+        /// 自動打出手上第 handIndex 張牌(地獄狂徒/驚逃),不花能量、目標隨機。
+        /// 與 PlayTopOfDraw 共用同一道重入閘與 autoPlay 規則。
+        /// </summary>
+        internal void PlayHandCardAuto(int handIndex)
+        {
+            if (_autoPlayDepth >= 自動打出上限) return;
+            if (handIndex < 0 || handIndex >= State.Hand.Count) return;
+            if (!State.Player.IsAlive) return;
+
+            var card = State.Hand[handIndex];
+            var def = GetCardDef(card);
+            State.Hand.RemoveAt(handIndex);
+
+            _autoPlayDepth++;
+            try
+            {
+                Emit(new CombatEvent(EventKind.CardPlayed, sourceIndex: PlayerIndex,
+                    cardId: card.CardId, cardInstanceId: card.InstanceId));
+                if (!def.Unplayable)
+                {
+                    if (def.Type == CardType.Attack) State.AttacksPlayedThisTurn++;
+                    FireHook(new HookContext(HookPoint.CardPlayed, sourceIndex: PlayerIndex,
+                        cardType: def.Type, cardId: card.CardId));
+                    EffectResolver.Resolve(this, def.Steps, PlayerIndex, PickRandomLivingEnemy(), autoPlay: true);
+                }
+            }
+            finally
+            {
+                _autoPlayDepth--;
+            }
+
+            if (def.Type == CardType.Power) State.PowersPlayed.Add(card);
+            else if (def.Exhausts) ExhaustCard(card);
+            else State.DiscardPile.Add(card);
+            CheckOutcome();
+        }
+
+        /// <summary>剛抽到的牌(手牌尾端)名字含指定字串就立刻自動打出它(地獄狂徒)。</summary>
+        internal void AutoPlayLastDrawnIfNameContains(string fragment)
+        {
+            if (string.IsNullOrEmpty(fragment) || State.Hand.Count == 0) return;
+            int last = State.Hand.Count - 1;
+            var name = GetCardDef(State.Hand[last]).Name;
+            if (name != null && name.Contains(fragment))
+            {
+                PlayHandCardAuto(last);
+            }
+        }
+
+        /// <summary>從棄牌堆隨機撈一張攻擊牌到手上並在本場戰鬥內升級它(好勇鬥狠)。</summary>
+        internal void PullRandomAttackFromDiscardAndUpgrade()
+        {
+            if (State.Hand.Count >= CombatState.HandLimit) return;
+            var candidates = new List<int>(State.DiscardPile.Count);
+            for (int i = 0; i < State.DiscardPile.Count; i++)
+            {
+                if (GetCardDef(State.DiscardPile[i]).Type == CardType.Attack) candidates.Add(i);
+            }
+            if (candidates.Count == 0) return;
+
+            int pick = candidates[_rng.CombatMisc.NextInt(candidates.Count)];
+            var card = State.DiscardPile[pick];
+            State.DiscardPile.RemoveAt(pick);
+            State.Hand.Add(card);
+            Emit(new CombatEvent(EventKind.CardAddedToPile, amount: (int)PileType.Hand,
+                cardId: card.CardId, cardInstanceId: card.InstanceId));
+            UpgradeCardForCombat(card);
+        }
+
+        /// <summary>手上第一張攻擊牌的索引;沒有就回 -1。</summary>
+        internal int FindRandomAttackInHand()
+        {
+            var candidates = new List<int>(State.Hand.Count);
+            for (int i = 0; i < State.Hand.Count; i++)
+            {
+                if (GetCardDef(State.Hand[i]).Type == CardType.Attack) candidates.Add(i);
+            }
+            if (candidates.Count == 0) return -1;
+            return candidates[_rng.CombatMisc.NextInt(candidates.Count)];
+        }
+
+        /// <summary>
+        /// 從候選池隨機生一張攻擊牌到手上(地獄之刃);freeThisTurn = 本回合免費打出。
+        /// 候選池由 Run 層灌入,空的話什麼都不做。
+        /// </summary>
+        internal void AddRandomAttackToHand(bool freeThisTurn)
+        {
+            if (_randomAttackPool.Count == 0) return;
+            if (State.Hand.Count >= CombatState.HandLimit) return;
+            string cardId = _randomAttackPool[_rng.CombatMisc.NextInt(_randomAttackPool.Count)];
+            var card = new CardInstance(_nextInstanceId++, cardId);
+            State.Hand.Add(card);
+            if (freeThisTurn) State.FreeThisTurn.Add(card.InstanceId);
+            Emit(new CombatEvent(EventKind.CardAddedToPile, amount: (int)PileType.Hand,
+                cardId: card.CardId, cardInstanceId: card.InstanceId));
+        }
+
+        /// <summary>把手上所有攻擊牌換成指定卡(原始力量)。換成新實體,舊的直接消失。</summary>
+        internal void TransformAttacksInHand(string cardId, bool upgraded)
+        {
+            if (string.IsNullOrEmpty(cardId)) return;
+            for (int i = 0; i < State.Hand.Count; i++)
+            {
+                if (GetCardDef(State.Hand[i]).Type != CardType.Attack) continue;
+                var replacement = new CardInstance(_nextInstanceId++, cardId, upgraded);
+                State.Hand[i] = replacement;
+                Emit(new CombatEvent(EventKind.CardAddedToPile, amount: (int)PileType.Hand,
+                    cardId: replacement.CardId, cardInstanceId: replacement.InstanceId));
+            }
         }
 
         /// <summary>對所有活著的敵人造成一次真正的攻擊傷害(彼岸咆哮的回合起始重擊)。</summary>

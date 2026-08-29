@@ -67,6 +67,14 @@
     { "id": "Vicious", "name": "兇惡",
       "description": "每當你對敵人施加易傷,抽 {n} 張牌。" },
     { "id": "NoEnergyGain", "name": "力竭",
-      "description": "本回合不再獲得額外能量。" }
+      "description": "本回合不再獲得額外能量。" },
+    { "id": "Aggression", "name": "好勇鬥狠",
+      "description": "回合開始時,從棄牌堆拿一張隨機攻擊牌到手上並升級它。" },
+    { "id": "Hellraiser", "name": "地獄狂徒",
+      "description": "每當你抽到名字含「打擊」的牌,立刻對一名隨機敵人打出它。" },
+    { "id": "Stampede", "name": "驚逃",
+      "description": "回合結束時,隨機打出手上一張攻擊牌。" },
+    { "id": "Juggling", "name": "雜耍",
+      "description": "每回合你打出的第三張攻擊牌,會把一張複製品加入手牌。" }
   ]
 }

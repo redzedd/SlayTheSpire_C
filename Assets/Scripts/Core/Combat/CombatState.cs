@@ -81,6 +81,8 @@ namespace STS.Core.Combat
         /// 寫下去會變成永久升級。
         /// </summary>
         public readonly HashSet<int> UpgradedInCombat = new HashSet<int>();
+        /// <summary>本回合可免費打出的特定卡(地獄之刃生成的那張);回合開始清空。</summary>
+        public readonly HashSet<int> FreeThisTurn = new HashSet<int>();
 
         /// <summary>選卡中斷時,要從哪個牌堆選、選完要做什麼(UI 據此決定怎麼呈現)。</summary>
         public ChoiceSource PendingChoiceSource;

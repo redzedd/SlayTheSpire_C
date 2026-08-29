@@ -100,6 +100,20 @@ namespace STS.Core.Combat
                         engine.GainMaxHp(step.Amount);
                         break;
 
+                    case EffectOp.AddRandomAttackToHand:
+                    {
+                        int copies = step.Amount <= 0 ? 1 : step.Amount;
+                        for (int c = 0; c < copies; c++)
+                        {
+                            engine.AddRandomAttackToHand(step.SecondaryAmount != 0);
+                        }
+                        break;
+                    }
+
+                    case EffectOp.TransformAttacksInHand:
+                        engine.TransformAttacksInHand(step.CardId, step.SecondaryAmount != 0);
+                        break;
+
                     case EffectOp.GrowThisCardDamage:
                         engine.GrowCurrentCardDamage(step.Amount);
                         break;

@@ -456,6 +456,55 @@
     },
 
     {
+      "id": "giant_rock", "type": "Attack", "rarity": "Common", "colorless": true,
+      "base": { "name": "巨石", "cost": 1, "description": "造成 {dmg} 點傷害。",
+        "steps": [ { "op": "Damage", "target": "TargetEnemy", "amount": 16 } ] },
+      "upgrade": { "name": "巨石+", "cost": 1, "description": "造成 {dmg} 點傷害。",
+        "steps": [ { "op": "Damage", "target": "TargetEnemy", "amount": 22 } ] }
+    },
+    {
+      "id": "primal_force", "type": "Skill", "rarity": "Rare",
+      "base": { "name": "原始力量", "cost": 0, "description": "把手牌中所有攻擊牌變成巨石。",
+        "steps": [ { "op": "TransformAttacksInHand", "target": "Self", "cardId": "giant_rock" } ] },
+      "upgrade": { "name": "原始力量+", "cost": 0, "description": "把手牌中所有攻擊牌變成巨石+。",
+        "steps": [ { "op": "TransformAttacksInHand", "target": "Self", "cardId": "giant_rock", "secondaryAmount": 1 } ] }
+    },
+    {
+      "id": "infernal_blade", "type": "Skill", "rarity": "Uncommon", "exhausts": true,
+      "base": { "name": "地獄之刃", "cost": 1, "description": "將一張隨機攻擊牌加入手牌,它本回合可免費打出。消耗。",
+        "steps": [ { "op": "AddRandomAttackToHand", "target": "Self", "amount": 1, "secondaryAmount": 1 } ] },
+      "upgrade": { "name": "地獄之刃+", "cost": 0, "description": "將一張隨機攻擊牌加入手牌,它本回合可免費打出。消耗。",
+        "steps": [ { "op": "AddRandomAttackToHand", "target": "Self", "amount": 1, "secondaryAmount": 1 } ] }
+    },
+    {
+      "id": "aggression", "type": "Power", "rarity": "Rare",
+      "base": { "name": "好勇鬥狠", "cost": 1, "description": "回合開始時,從棄牌堆拿一張隨機攻擊牌到手上並升級它。",
+        "steps": [ { "op": "ApplyStatus", "target": "Self", "amount": 1, "status": "Aggression" } ] },
+      "upgrade": { "name": "好勇鬥狠+", "cost": 0, "description": "回合開始時,從棄牌堆拿一張隨機攻擊牌到手上並升級它。",
+        "steps": [ { "op": "ApplyStatus", "target": "Self", "amount": 1, "status": "Aggression" } ] }
+    },
+    {
+      "id": "hellraiser", "type": "Power", "rarity": "Rare",
+      "base": { "name": "地獄狂徒", "cost": 2, "description": "每當你抽到名字含「打擊」的牌,立刻對一名隨機敵人打出它。",
+        "steps": [ { "op": "ApplyStatus", "target": "Self", "amount": 1, "status": "Hellraiser" } ] },
+      "upgrade": { "name": "地獄狂徒+", "cost": 1, "description": "每當你抽到名字含「打擊」的牌,立刻對一名隨機敵人打出它。",
+        "steps": [ { "op": "ApplyStatus", "target": "Self", "amount": 1, "status": "Hellraiser" } ] }
+    },
+    {
+      "id": "stampede", "type": "Power", "rarity": "Uncommon",
+      "base": { "name": "驚逃", "cost": 2, "description": "回合結束時,隨機打出手上一張攻擊牌。",
+        "steps": [ { "op": "ApplyStatus", "target": "Self", "amount": 1, "status": "Stampede" } ] },
+      "upgrade": { "name": "驚逃+", "cost": 1, "description": "回合結束時,隨機打出手上一張攻擊牌。",
+        "steps": [ { "op": "ApplyStatus", "target": "Self", "amount": 1, "status": "Stampede" } ] }
+    },
+    {
+      "id": "juggling", "type": "Power", "rarity": "Uncommon",
+      "base": { "name": "雜耍", "cost": 1, "description": "每回合你打出的第三張攻擊牌,會把一張複製品加入手牌。",
+        "steps": [ { "op": "ApplyStatus", "target": "Self", "amount": 1, "status": "Juggling" } ] },
+      "upgrade": { "name": "雜耍+", "cost": 0, "description": "每回合你打出的第三張攻擊牌,會把一張複製品加入手牌。",
+        "steps": [ { "op": "ApplyStatus", "target": "Self", "amount": 1, "status": "Juggling" } ] }
+    },
+    {
       "id": "stone_armor", "type": "Power", "rarity": "Uncommon",
       "base": { "name": "岩石鎧甲", "cost": 1, "description": "獲得 4 點覆甲。",
         "steps": [ { "op": "ApplyStatus", "target": "Self", "amount": 4, "status": "Plating" } ] },

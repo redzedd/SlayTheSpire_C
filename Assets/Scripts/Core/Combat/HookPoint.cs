@@ -20,6 +20,8 @@ namespace STS.Core.Combat
         BlockGained,
         /// <summary>某個狀態被「加上」(兇惡);只在層數增加時觸發,衰減/移除不觸發。</summary>
         StatusApplied,
+        /// <summary>玩家抽到一張牌(地獄狂徒);CardId 帶那張牌的 id。</summary>
+        CardDrawn,
         Shuffled,
         CombatVictory,
         EnemyDied
@@ -45,11 +47,14 @@ namespace STS.Core.Combat
         public readonly int Amount;
         /// <summary>StatusApplied 時被施加的狀態種類。</summary>
         public readonly Statuses.StatusId Status;
+        /// <summary>CardPlayed/CardDrawn 時該張牌的 id(雜耍要複製它、地獄狂徒要認名字)。</summary>
+        public readonly string CardId;
 
         public HookContext(HookPoint point, int sourceIndex = NoIndex, int targetIndex = NoIndex,
             CardType cardType = CardType.Attack, int amount = 0,
-            Statuses.StatusId status = Statuses.StatusId.None)
+            Statuses.StatusId status = Statuses.StatusId.None, string cardId = null)
         {
+            CardId = cardId;
             Point = point;
             SourceIndex = sourceIndex;
             TargetIndex = targetIndex;

@@ -10,11 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 864927395ecc3534e9fd9f61f33a2072, type: 3}
-  m_Name: rampage
+  m_Name: aggression
   m_EditorClassIdentifier: STS.Game::STS.Game.DataAssets.CardDataAsset
-  id: rampage
-  type: 0
-  rarity: 2
+  id: aggression
+  type: 2
+  rarity: 3
   costIsX: 0
   unplayable: 0
   exhausts: 0
@@ -23,63 +23,37 @@ MonoBehaviour:
   costScaling: 0
   playCondition: 0
   playConditionAmount: 0
-  baseName: "\u66B4\u8D70"
+  baseName: "\u597D\u52C7\u9B25\u72E0"
   baseCost: 1
-  baseDescription: "\u9020\u6210 {dmg} \u9EDE\u50B7\u5BB3\u3002\u672C\u5834\u6230\u9B25\u4E2D,\u9019\u5F35\u724C\u7684\u50B7\u5BB3\u589E\u52A0
-    5\u3002"
+  baseDescription: "\u56DE\u5408\u958B\u59CB\u6642,\u5F9E\u68C4\u724C\u5806\u62FF\u4E00\u5F35\u96A8\u6A5F\u653B\u64CA\u724C\u5230\u624B\u4E0A\u4E26\u5347\u7D1A\u5B83\u3002"
   baseSteps:
-  - op: 0
-    target: 1
-    amount: 9
-    amountKind: 0
-    secondaryAmount: 0
-    repeat: 0
-    repeatKind: 0
-    condition: 0
-    status: 0
-    cardId: 
-    pile: 2
-    customId: 
-  - op: 22
+  - op: 2
     target: 0
-    amount: 5
+    amount: 1
     amountKind: 0
     secondaryAmount: 0
     repeat: 0
     repeatKind: 0
     condition: 0
-    status: 0
+    status: 35
     cardId: 
     pile: 2
     customId: 
   baseTurnEndSteps: []
   hasUpgrade: 1
-  upgradeName: "\u66B4\u8D70+"
-  upgradeCost: 1
-  upgradeDescription: "\u9020\u6210 {dmg} \u9EDE\u50B7\u5BB3\u3002\u672C\u5834\u6230\u9B25\u4E2D,\u9019\u5F35\u724C\u7684\u50B7\u5BB3\u589E\u52A0
-    9\u3002"
+  upgradeName: "\u597D\u52C7\u9B25\u72E0+"
+  upgradeCost: 0
+  upgradeDescription: "\u56DE\u5408\u958B\u59CB\u6642,\u5F9E\u68C4\u724C\u5806\u62FF\u4E00\u5F35\u96A8\u6A5F\u653B\u64CA\u724C\u5230\u624B\u4E0A\u4E26\u5347\u7D1A\u5B83\u3002"
   upgradeSteps:
-  - op: 0
-    target: 1
-    amount: 9
-    amountKind: 0
-    secondaryAmount: 0
-    repeat: 0
-    repeatKind: 0
-    condition: 0
-    status: 0
-    cardId: 
-    pile: 2
-    customId: 
-  - op: 22
+  - op: 2
     target: 0
-    amount: 9
+    amount: 1
     amountKind: 0
     secondaryAmount: 0
     repeat: 0
     repeatKind: 0
     condition: 0
-    status: 0
+    status: 35
     cardId: 
     pile: 2
     customId: 

@@ -209,6 +209,44 @@ namespace STS.Core.Combat.Statuses
                     }
                     break;
 
+                case StatusId.Aggression:
+                    // 好勇鬥狠:回合開始從棄牌堆撈一張攻擊牌到手上並升級
+                    if (IsOwnersTurnStart(ctx, ownerIndex) && ownerIndex == CombatEngine.PlayerIndex)
+                    {
+                        engine.PullRandomAttackFromDiscardAndUpgrade();
+                    }
+                    break;
+
+                case StatusId.Hellraiser:
+                    // 地獄狂徒:抽到名字含「打擊」的牌就立刻打出它(剛抽的牌在手牌尾端)
+                    if (ctx.Point == HookPoint.CardDrawn && ownerIndex == CombatEngine.PlayerIndex)
+                    {
+                        engine.AutoPlayLastDrawnIfNameContains("打擊");
+                    }
+                    break;
+
+                case StatusId.Stampede:
+                    // 驚逃:回合結束隨機打出手上一張攻擊牌
+                    if (IsOwnersTurnEnd(ctx, ownerIndex) && ownerIndex == CombatEngine.PlayerIndex)
+                    {
+                        int index = engine.FindRandomAttackInHand();
+                        if (index >= 0) engine.PlayHandCardAuto(index);
+                    }
+                    break;
+
+                case StatusId.Juggling:
+                    // 雜耍:本回合的第三張攻擊牌。計數在出牌結算完才 +1,
+                    // 所以 hook 當下的值是「這張之前已打出幾張」——第三張時它剛好是 2。
+                    if (ctx.Point == HookPoint.CardPlayed
+                        && ownerIndex == CombatEngine.PlayerIndex
+                        && ctx.CardType == Cards.CardType.Attack
+                        && engine.State.AttacksPlayedThisTurn == 2
+                        && !string.IsNullOrEmpty(ctx.CardId))
+                    {
+                        engine.AddCardToPile(ctx.CardId, Cards.PileType.Hand);
+                    }
+                    break;
+
                 case StatusId.Plating:
                     // 覆甲:回合結束給等量護甲,然後自己減 1
                     if (IsOwnersTurnEnd(ctx, ownerIndex))

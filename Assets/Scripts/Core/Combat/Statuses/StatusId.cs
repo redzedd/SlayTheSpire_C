@@ -64,6 +64,14 @@ namespace STS.Core.Combat.Statuses
         /// <summary>兇惡:每當你對敵人施加易傷,抽等同層數的牌。</summary>
         Vicious,
         /// <summary>躍躍欲試的副作用:本回合不再獲得任何額外能量(回合結束移除)。</summary>
-        NoEnergyGain
+        NoEnergyGain,
+        /// <summary>好勇鬥狠:回合開始時從棄牌堆撈一張隨機攻擊牌到手上並升級它。</summary>
+        Aggression,
+        /// <summary>地獄狂徒:每當你抽到名字含「打擊」的牌,立刻對隨機敵人打出它。</summary>
+        Hellraiser,
+        /// <summary>驚逃:回合結束時隨機打出手上一張攻擊牌。</summary>
+        Stampede,
+        /// <summary>雜耍:每回合你打出的第三張攻擊牌,把一張複製品加入手牌。</summary>
+        Juggling
     }
 }
